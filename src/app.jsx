@@ -1,9 +1,9 @@
-import * as React from 'react';
+import * as React from "react";
 
 import SidePandelWidget from "./components/sidebar-widget.jsx";
 
 const App = () => {
-    return <SidePandelWidget />;
-}
+  return <SidePandelWidget />;
+};
 
 export default App;
