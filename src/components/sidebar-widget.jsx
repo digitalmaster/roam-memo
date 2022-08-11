@@ -1,9 +1,23 @@
+import styled from "@emotion/styled";
+
+const Wrapper = styled.span`
+  display: flex;
+`;
+
 const SidePandelWidget = () => {
   return (
-    <>
-      <span className="bp3-icon bp3-icon-shop icon bp3-icon-small"></span>
-      <div>Review</div>
-    </>
+    <Wrapper className="w-full justify-between px-2">
+      <div>
+        <div className="flex">
+          <span className="bp3-icon bp3-icon-box icon bp3-icon-small flex items-center"></span>
+          <div>Review</div>
+        </div>
+      </div>
+      <div>
+        <span className="mr-2">0</span>
+        <span>1</span>
+      </div>
+    </Wrapper>
   );
 };
 
