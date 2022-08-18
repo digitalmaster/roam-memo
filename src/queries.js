@@ -2,7 +2,7 @@ import {
   getStringBetween,
   parseConfigString,
   parseRoamDateString,
-} from "./utils/string";
+} from './utils/string';
 
 const getPageReferenceIds = async (pageTitle) => {
   const q = `[
@@ -38,15 +38,15 @@ const getData = async ({ pageTitle, dataBlockName }) => {
     .q(q, pageTitle, dataBlockName)
     .map((arr) => arr[0])[0].children;
   const results = dataResults.reduce((acc, cur) => {
-    const uid = getStringBetween(cur.string, "((", "))");
+    const uid = getStringBetween(cur.string, '((', '))');
     acc[uid] = {};
 
     for (const field of cur.children) {
       const [key, value] = parseConfigString(field.string);
 
-      if (key === "nextDueDate") {
+      if (key === 'nextDueDate') {
         acc[uid][key] = parseRoamDateString(
-          getStringBetween(value, "[[", "]]")
+          getStringBetween(value, '[[', ']]')
         );
       } else {
         acc[uid][key] = Number(value);
@@ -73,10 +73,30 @@ const getDueCardUids = (data) => {
 };
 
 export const getCardData = async ({ tag, pluginPageTitle }) => {
-  const dataBlockName = "data";
+  const dataBlockName = 'data';
   const data = await getData({ pageTitle: pluginPageTitle, dataBlockName });
 
   // @TODO: Handle case where no data exists yet. Use references list to create default
   const referencesIds = await getPageReferenceIds(tag);
   return { cardData: data, dueCardUids: getDueCardUids(data) };
 };
+
+export const fetchBlockInfo = async (refUid) => {
+  const q = `[
+    :find (pull ?block [
+      :block/string
+      :block/children
+      {:block/children ...}])
+    :in $ ?refId
+    :where
+      [?block :block/uid ?refId]
+    ]`;
+
+  const dataResults = (await window.roamAlphaAPI.q(q, refUid))[0][0];
+  return {
+    questionBlockString: dataResults.string,
+    questionBlockChildren: dataResults.children.map((child) => child.string),
+  };
+};
+
+export const updateDateOrCreateData = async (refUid) => {};

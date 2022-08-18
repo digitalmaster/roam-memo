@@ -1,16 +1,17 @@
-import * as React from "react";
-import PracticeOverlay from "./components/PracticeOverlay.jsx";
-import SidePandelWidget from "./components/SidePandelWidget.jsx";
-import * as queries from "./queries.js";
+import * as React from 'react';
+import PracticeOverlay from './components/PracticeOverlay.jsx';
+import SidePandelWidget from './components/SidePandelWidget.jsx';
+import { practice } from './practice.js';
+import * as queries from './queries.js';
 
 const config = {
-  tag: "🐘",
-  pluginPageTitle: "roam/sr",
+  tag: '🐘',
+  pluginPageTitle: 'roam/sr',
 };
 
 const App = () => {
   const [cardData, setCardData] = React.useState({});
-  const [showPracticeOverlay, setShowPracticeOverlay] = React.useState(true);
+  const [showPracticeOverlay, setShowPracticeOverlay] = React.useState(false);
 
   const [dueCardUids, setDueCardUids] = React.useState([]);
 
@@ -29,15 +30,28 @@ const App = () => {
     fn();
   }, []);
 
+  const handleGradeClick = async (practiceProps) => {
+    await practice(practiceProps);
+  };
+
+  const [practiceCardUids, setPracticeCardUids] = React.useState([]);
+  const handlePracticeClick = async () => {
+    setPracticeCardUids(dueCardUids);
+    setShowPracticeOverlay(true);
+  };
+
   return (
     <>
-      <SidePandelWidget onClickCallback={() => setShowPracticeOverlay(true)} />
-      <PracticeOverlay
-        isOpen={showPracticeOverlay}
-        onClose={() => setShowPracticeOverlay(false)}
-        cardData={cardData}
-        dueCardUids={dueCardUids}
-      />
+      <SidePandelWidget onClickCallback={handlePracticeClick} />
+      {showPracticeOverlay && (
+        <PracticeOverlay
+          isOpen={true}
+          onClose={() => setShowPracticeOverlay(false)}
+          cardData={cardData}
+          practiceCardUids={practiceCardUids}
+          onGradeClick={handleGradeClick}
+        />
+      )}
     </>
   );
 };

@@ -1,16 +1,16 @@
-import App from "./app.jsx";
+import App from './app.jsx';
 
-console.log("Roam SR2 initializing...");
+console.log('Roam Memo initializing...');
 
-const container_id = "roam-sr2-wrapper";
+const container_id = 'roam-memo-wrapper';
 
 const createAndRenderContainer = () => {
   const starredPagesWrapperElm = document.getElementsByClassName(
-    "starred-pages-wrapper"
+    'starred-pages-wrapper'
   )[0];
-  const newContainerElm = document.createElement("div");
+  const newContainerElm = document.createElement('div');
   newContainerElm.id = container_id;
-  newContainerElm.classList.add("log-button"); // match style
+  newContainerElm.classList.add('log-button'); // match style
   const starredPagesWrapperElmParent = starredPagesWrapperElm.parentNode;
   starredPagesWrapperElmParent.insertBefore(
     newContainerElm,
@@ -23,7 +23,7 @@ function onload() {
   const container = createAndRenderContainer();
   ReactDOM.render(<App />, container);
 
-  console.log("Loaded roam/sr2");
+  console.log('Loaded roam/memo');
 }
 
 function onunload() {
@@ -32,7 +32,7 @@ function onunload() {
   ReactDOM.unmountComponentAtNode(container);
   container.remove();
 
-  console.log("Unloaded roam/sr2");
+  console.log('Unloaded roam/memo');
 }
 
 export default {

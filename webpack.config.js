@@ -1,8 +1,10 @@
 module.exports = {
   entry: "./src/extension.js",
+  externalsType: "window",
   externals: {
     react: "React",
     "chrono-node": "ChronoNode",
+    "@blueprintjs/core": ["Blueprint", "Core"],
   },
   output: {
     filename: "extension.js",
@@ -11,7 +13,6 @@ module.exports = {
       type: "module",
     },
   },
-  externalsType: "window",
   experiments: {
     outputModule: true,
   },
