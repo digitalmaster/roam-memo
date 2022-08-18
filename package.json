@@ -20,6 +20,7 @@
   "license": "ISC",
   "keywords": [],
   "dependencies": {
+    "@blueprintjs/core": "^3.50.4",
     "@emotion/react": "^11.10.0",
     "@emotion/styled": "^11.10.0",
     "dayjs": "^1.11.5",

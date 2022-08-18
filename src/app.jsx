@@ -1,6 +1,6 @@
 import * as React from "react";
-
-import SidePandelWidget from "./components/sidebar-widget.jsx";
+import PracticeOverlay from "./components/PracticeOverlay.jsx";
+import SidePandelWidget from "./components/SidePandelWidget.jsx";
 import * as queries from "./queries.js";
 
 const config = {
@@ -9,20 +9,37 @@ const config = {
 };
 
 const App = () => {
+  const [cardData, setCardData] = React.useState({});
+  const [showPracticeOverlay, setShowPracticeOverlay] = React.useState(true);
+
+  const [dueCardUids, setDueCardUids] = React.useState([]);
+
   React.useEffect(() => {
     const fn = async () => {
-      // Get all cards
-      const cards = await queries.getCards({
+      // Get all card data
+      const { cardData, dueCardUids } = await queries.getCardData({
         tag: config.tag,
         pluginPageTitle: config.pluginPageTitle,
       });
-      console.log("DEBUG:: ~ cards", cards);
+
+      setCardData(cardData);
+      setDueCardUids(dueCardUids);
     };
 
     fn();
   }, []);
 
-  return <SidePandelWidget />;
+  return (
+    <>
+      <SidePandelWidget onClickCallback={() => setShowPracticeOverlay(true)} />
+      <PracticeOverlay
+        isOpen={showPracticeOverlay}
+        onClose={() => setShowPracticeOverlay(false)}
+        cardData={cardData}
+        dueCardUids={dueCardUids}
+      />
+    </>
+  );
 };
 
 export default App;

@@ -6,3 +6,6 @@ export const getStringBetween = (string, from, to) =>
 
 export const parseRoamDateString = (roamDateString) =>
   dayjs(roamDateString, "MMMM Do, YYYY").toDate();
+
+export const parseConfigString = (configString) =>
+  configString.split("::").map((s) => s.trim());

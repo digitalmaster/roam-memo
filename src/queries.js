@@ -1,4 +1,8 @@
-import { getStringBetween, parseRoamDateString } from "./utils/string";
+import {
+  getStringBetween,
+  parseConfigString,
+  parseRoamDateString,
+} from "./utils/string";
 
 const getPageReferenceIds = async (pageTitle) => {
   const q = `[
@@ -38,7 +42,7 @@ const getData = async ({ pageTitle, dataBlockName }) => {
     acc[uid] = {};
 
     for (const field of cur.children) {
-      const [key, value] = field.string.split("::").map((s) => s.trim());
+      const [key, value] = parseConfigString(field.string);
 
       if (key === "nextDueDate") {
         acc[uid][key] = parseRoamDateString(
@@ -54,16 +58,25 @@ const getData = async ({ pageTitle, dataBlockName }) => {
   return results;
 };
 
-const getCardData = async ({ tag, pluginPageTitle }) => {
+const getDueCardUids = (data) => {
+  const results = [];
+  const now = new Date();
+  Object.keys(data).forEach((cardUid) => {
+    const cardData = data[cardUid];
+    const nextDueDate = cardData.nextDueDate;
+
+    if (nextDueDate <= now) {
+      results.push(cardUid);
+    }
+  });
+  return results;
+};
+
+export const getCardData = async ({ tag, pluginPageTitle }) => {
   const dataBlockName = "data";
   const data = await getData({ pageTitle: pluginPageTitle, dataBlockName });
 
   // @TODO: Handle case where no data exists yet. Use references list to create default
   const referencesIds = await getPageReferenceIds(tag);
-  return data;
-};
-
-export const getCards = async ({ tag, pluginPageTitle }) => {
-  const results = await getCardData({ tag, pluginPageTitle });
-  return results;
+  return { cardData: data, dueCardUids: getDueCardUids(data) };
 };
