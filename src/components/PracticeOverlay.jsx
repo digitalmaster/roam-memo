@@ -1,9 +1,9 @@
-import * as Blueprint from '@blueprintjs/core';
 import * as React from 'react';
+import * as Blueprint from '@blueprintjs/core';
 import { fetchBlockInfo } from '../queries';
 
 const FooterWrapper = ({ children }) => (
-  <div class="bp3-multistep-dialog-footer rounded-b-md">{children}</div>
+  <div className="bp3-multistep-dialog-footer rounded-b-md">{children}</div>
 );
 
 const PracticeOverlay = ({
@@ -19,8 +19,8 @@ const PracticeOverlay = ({
   const [showBlockChildren, setShowBlockChildren] = React.useState(false);
   const hasBlockChildren =
     blockInfo.questionBlockChildren && blockInfo.questionBlockChildren.length;
+
   React.useEffect(() => {
-    const refUid = practiceCardUids[currentIndex];
     const fetch = async () => {
       const blockInfo = await fetchBlockInfo(refUid);
       setBlockInfo(blockInfo);
@@ -39,12 +39,12 @@ const PracticeOverlay = ({
 
       {showBlockChildren &&
         hasBlockChildren &&
-        blockInfo.questionBlockChildren.map((childString) => (
-          <div>{childString}</div>
+        blockInfo.questionBlockChildren.map((childString, index) => (
+          <div key={index}>{childString}</div>
         ))}
 
       <FooterWrapper>
-        <div class="bp3-dialog-footer-actions justify-around">
+        <div className="bp3-dialog-footer-actions justify-around">
           {hasBlockChildren && !showBlockChildren ? (
             <Blueprint.Button
               intent="none"

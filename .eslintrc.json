@@ -1,8 +1,15 @@
 {
-  "extends": ["eslint:recommended"],
-  "parser": "babel-eslint",
+  "extends": [
+    "eslint:recommended",
+    "plugin:react/recommended",
+    "plugin:react/jsx-runtime"
+  ],
+  "parser": "@babel/eslint-parser",
   "parserOptions": {
     "sourceType": "module",
     "allowImportExportEverywhere": true
+  },
+  "rules": {
+    "react/prop-types": "off"
   }
 }
