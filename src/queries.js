@@ -28,25 +28,11 @@ const getPageReferenceIds = async (pageTitle) => {
   return results;
 };
 
-const getData = async ({ pageTitle, dataBlockName }) => {
-  const q = `[
-    :find (pull ?pluginPageChildren [
-            :block/string
-            :block/children
-            :block/order
-            {:block/children ...}])
-    :in $ ?pageTitle ?dataBlockName
-    :where
-      [?page :node/title ?pageTitle]
-      [?page :block/children ?pluginPageChildren]
-      [?pluginPageChildren :block/string ?dataBlockName]
-    ]`;
+const mapPluginPageData = (queryResultsData) => {
+  queryResultsData.map((arr) => arr[0])[0].children;
+  console.log('DEBUG:: ~ dataResults', queryResultsData);
 
-  const dataResults = await window.roamAlphaAPI
-    .q(q, pageTitle, dataBlockName)
-    .map((arr) => arr[0])[0].children;
-
-  const results = dataResults.reduce((acc, cur) => {
+  const results = queryResultsData.reduce((acc, cur) => {
     const uid = getStringBetween(cur.string, '((', '))');
     acc[uid] = {};
 
@@ -72,8 +58,34 @@ const getData = async ({ pageTitle, dataBlockName }) => {
   return results;
 };
 
+const getPluginPageData = async ({ pluginPageTitle, dataBlockName }) => {
+  const q = `[
+    :find (pull ?pluginPageChildren [
+            :block/string
+            :block/children
+            :block/order
+            {:block/children ...}])
+    :in $ ?pageTitle ?dataBlockName
+    :where
+      [?page :node/title ?pageTitle]
+      [?page :block/children ?pluginPageChildren]
+      [?pluginPageChildren :block/string ?dataBlockName]
+    ]`;
+
+  const dataResults = await window.roamAlphaAPI.q(
+    q,
+    pluginPageTitle,
+    dataBlockName
+  );
+
+  if (!dataResults.length) return [];
+  return mapPluginPageData(dataResults);
+};
+
 const getDueCardUids = (data) => {
   const results = [];
+  if (!data.length) return results;
+
   const now = new Date();
   Object.keys(data).forEach((cardUid) => {
     const cardData = data[cardUid];
@@ -89,7 +101,7 @@ const getDueCardUids = (data) => {
 
 export const getCardData = async ({ tag, pluginPageTitle }) => {
   const dataBlockName = 'data';
-  const data = await getData({ pageTitle: pluginPageTitle, dataBlockName });
+  const data = await getPluginPageData({ pluginPageTitle, dataBlockName });
 
   // @TODO: Handle case where no data exists yet. Use references list to create default
   const referencesIds = await getPageReferenceIds(tag);
