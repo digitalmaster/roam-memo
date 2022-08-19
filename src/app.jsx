@@ -10,17 +10,20 @@ const App = () => {
   const [showPracticeOverlay, setShowPracticeOverlay] = React.useState(false);
 
   const [dueCardUids, setDueCardUids] = React.useState([]);
+  const [newCardUids, setNewCardUids] = React.useState([]);
 
   React.useEffect(() => {
     const fn = async () => {
       // Get all card data
-      const { cardData, dueCardUids } = await queries.getCardData({
-        tag: config.tag,
-        pluginPageTitle: config.pluginPageTitle,
-      });
+      const { cardsData, newCardsData, dueCardUids } =
+        await queries.getCardData({
+          tag: config.tag,
+          pluginPageTitle: config.pluginPageTitle,
+        });
 
-      setCardData(cardData);
+      setCardData({ ...cardsData, ...newCardsData });
       setDueCardUids(dueCardUids);
+      setNewCardUids(Object.keys(newCardsData));
     };
 
     fn();
@@ -33,7 +36,8 @@ const App = () => {
 
   const [practiceCardUids, setPracticeCardUids] = React.useState([]);
   const handlePracticeClick = async () => {
-    setPracticeCardUids(dueCardUids);
+    // Always practice new cards first
+    setPracticeCardUids([...newCardUids, ...dueCardUids]);
     setShowPracticeOverlay(true);
   };
 

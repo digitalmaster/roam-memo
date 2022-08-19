@@ -28,35 +28,31 @@ const getPageReferenceIds = async (pageTitle) => {
   return results;
 };
 
-const mapPluginPageData = (queryResultsData) => {
-  queryResultsData.map((arr) => arr[0])[0].children;
-  console.log('DEBUG:: ~ dataResults', queryResultsData);
+const mapPluginPageData = (queryResultsData) =>
+  queryResultsData
+    .map((arr) => arr[0])[0]
+    .children.reduce((acc, cur) => {
+      const uid = getStringBetween(cur.string, '((', '))');
+      acc[uid] = {};
 
-  const results = queryResultsData.reduce((acc, cur) => {
-    const uid = getStringBetween(cur.string, '((', '))');
-    acc[uid] = {};
+      // Add date
+      acc[uid].dateCreated = parseRoamDateString(
+        getStringBetween(cur.children[0].string, '[[', ']]')
+      );
+      const latestChild = cur.children.find((child) => child.order === 0);
+      for (const field of latestChild.children) {
+        const [key, value] = parseConfigString(field.string);
 
-    // Add date
-    acc[uid].dateCreated = parseRoamDateString(
-      getStringBetween(cur.children[0].string, '[[', ']]')
-    );
-    const latestChild = cur.children.find((child) => child.order === 0);
-    for (const field of latestChild.children) {
-      const [key, value] = parseConfigString(field.string);
-
-      if (key === 'nextDueDate') {
-        acc[uid][key] = parseRoamDateString(
-          getStringBetween(value, '[[', ']]')
-        );
-      } else {
-        acc[uid][key] = Number(value);
+        if (key === 'nextDueDate') {
+          acc[uid][key] = parseRoamDateString(
+            getStringBetween(value, '[[', ']]')
+          );
+        } else {
+          acc[uid][key] = Number(value);
+        }
       }
-    }
-    return acc;
-  }, {});
-
-  return results;
-};
+      return acc;
+    }, {});
 
 const getPluginPageData = async ({ pluginPageTitle, dataBlockName }) => {
   const q = `[
@@ -78,7 +74,7 @@ const getPluginPageData = async ({ pluginPageTitle, dataBlockName }) => {
     dataBlockName
   );
 
-  if (!dataResults.length) return [];
+  if (!dataResults.length) return {};
   return mapPluginPageData(dataResults);
 };
 
@@ -99,13 +95,33 @@ const getDueCardUids = (data) => {
   return results;
 };
 
+const generateNewCardProps = () => ({
+  dateCreated: new Date(),
+  eFactor: 2.5,
+  interval: 0,
+  repetitions: 0,
+});
+
 export const getCardData = async ({ tag, pluginPageTitle }) => {
   const dataBlockName = 'data';
-  const data = await getPluginPageData({ pluginPageTitle, dataBlockName });
+  const cardsData = await getPluginPageData({ pluginPageTitle, dataBlockName });
 
-  // @TODO: Handle case where no data exists yet. Use references list to create default
+  // Create new cards for all referenced cards with no data yet
   const referencesIds = await getPageReferenceIds(tag);
-  return { cardData: data, dueCardUids: getDueCardUids(data) };
+  const newCardsData = {};
+  referencesIds.forEach((referenceId) => {
+    if (!cardsData[referenceId]) {
+      newCardsData[referenceId] = {
+        ...generateNewCardProps(),
+      };
+    }
+  });
+
+  return {
+    cardsData,
+    newCardsData,
+    dueCardUids: getDueCardUids(cardsData),
+  };
 };
 
 export const fetchBlockInfo = async (refUid) => {
