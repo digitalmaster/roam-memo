@@ -1,9 +1,26 @@
-import { updateDateOrCreateData } from "./queries";
+import { supermemo } from 'supermemo';
+import { savePracticeData } from '~/queries';
+import * as dateUtils from '~/utils/date';
 
-export const practice = async ({ refUid }) => {
+const practice = async ({ interval, repetitions, eFactor, grade, refUid }) => {
+  const supermemoInput = {
+    interval,
+    repetition: repetitions,
+    efactor: eFactor,
+  };
+
   // call supermemo API
+  const supermemoResults = supermemo(supermemoInput, grade);
+  const nextDueDate = dateUtils.addDays(new Date(), supermemoResults.interval);
 
-  // update data props
-  await updateDateOrCreateData(refUid);
-  return;
+  await savePracticeData({
+    refUid: refUid,
+    grade,
+    repetitions: supermemoResults.repetition,
+    interval: supermemoResults.interval,
+    eFactor: supermemoResults.efactor,
+    nextDueDate,
+  });
 };
+
+export default practice;

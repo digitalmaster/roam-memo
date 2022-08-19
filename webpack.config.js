@@ -1,16 +1,22 @@
+const path = require('path');
 module.exports = {
-  entry: "./src/extension.js",
-  externalsType: "window",
+  entry: './src/extension.js',
+  externalsType: 'window',
+  resolve: {
+    alias: {
+      '~': path.resolve(__dirname, 'src/'),
+    },
+  },
   externals: {
-    react: "React",
-    "chrono-node": "ChronoNode",
-    "@blueprintjs/core": ["Blueprint", "Core"],
+    react: 'React',
+    'chrono-node': 'ChronoNode',
+    '@blueprintjs/core': ['Blueprint', 'Core'],
   },
   output: {
-    filename: "extension.js",
+    filename: 'extension.js',
     path: __dirname,
     library: {
-      type: "module",
+      type: 'module',
     },
   },
   experiments: {
@@ -22,9 +28,9 @@ module.exports = {
         test: /\.(js|jsx)$/,
         exclude: /node_modules/,
         use: {
-          loader: "babel-loader",
+          loader: 'babel-loader',
           options: {
-            presets: ["@babel/preset-env"],
+            presets: ['@babel/preset-env'],
           },
         },
       },

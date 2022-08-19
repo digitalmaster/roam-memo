@@ -4,6 +4,15 @@
     "plugin:react/recommended",
     "plugin:react/jsx-runtime"
   ],
+  "env": {
+    "browser": true,
+    "node": true,
+    "es6": true
+  },
+  "globals": {
+    "roamAlphaAPI": "readonly"
+  },
+  "ignorePatterns": ["node_modules/*", "extension.js"],
   "parser": "@babel/eslint-parser",
   "parserOptions": {
     "sourceType": "module",
