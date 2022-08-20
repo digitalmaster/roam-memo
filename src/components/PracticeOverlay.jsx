@@ -18,6 +18,7 @@ const PracticeOverlay = ({
 }) => {
   const hasCards = practiceCardUids.length > 0;
   const [currentIndex, setCurrentIndex] = React.useState(0);
+  const isDone = currentIndex > practiceCardUids.length - 1;
   const refUid = practiceCardUids[currentIndex];
 
   const [blockInfo, setBlockInfo] = React.useState({});
@@ -25,8 +26,14 @@ const PracticeOverlay = ({
   const hasBlockChildren =
     blockInfo.questionBlockChildren && blockInfo.questionBlockChildren.length;
 
+  const onGradeClick = (props) => {
+    handleGradeClick(props);
+    setCurrentIndex(currentIndex + 1);
+  };
+
   React.useEffect(() => {
     if (!hasCards) return;
+    if (isDone) return;
     const fetch = async () => {
       const blockInfo = await fetchBlockInfo(refUid);
       setBlockInfo(blockInfo);
@@ -42,17 +49,20 @@ const PracticeOverlay = ({
       className="pb-0"
       icon="box"
     >
-      {!hasCards && (
+      {(!hasCards || isDone) && (
         <ContentWrapper>
           <div>No cards left to review!</div>
         </ContentWrapper>
       )}
-      {hasCards && (
+
+      {hasCards && !isDone && (
         <>
           <ContentWrapper>
             {hasCards && (
               <>
-                <div className="mb-2">{blockInfo.questionBlockString}</div>
+                <div className={showBlockChildren && 'mb-2'}>
+                  {blockInfo.questionBlockString}
+                </div>
 
                 {showBlockChildren &&
                   hasBlockChildren &&
@@ -77,21 +87,21 @@ const PracticeOverlay = ({
                 <>
                   <Blueprint.Button
                     intent="danger"
-                    onClick={() => handleGradeClick({ grade: 0, refUid })}
+                    onClick={() => onGradeClick({ grade: 0, refUid })}
                     outlined
                   >
                     Forgot
                   </Blueprint.Button>
                   <Blueprint.Button
                     intent="warning"
-                    onClick={() => handleGradeClick({ grade: 3, refUid })}
+                    onClick={() => onGradeClick({ grade: 3, refUid })}
                     outlined
                   >
                     Hard
                   </Blueprint.Button>
                   <Blueprint.Button
                     intent="success"
-                    onClick={() => handleGradeClick({ grade: 5, refUid })}
+                    onClick={() => onGradeClick({ grade: 5, refUid })}
                     outlined
                   >
                     Perfect

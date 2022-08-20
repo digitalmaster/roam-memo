@@ -31,7 +31,7 @@ const getPageReferenceIds = async (pageTitle) => {
 const mapPluginPageData = (queryResultsData) =>
   queryResultsData
     .map((arr) => arr[0])[0]
-    .children.reduce((acc, cur) => {
+    .children?.reduce((acc, cur) => {
       const uid = getStringBetween(cur.string, '((', '))');
       acc[uid] = {};
 
@@ -52,7 +52,7 @@ const mapPluginPageData = (queryResultsData) =>
         }
       }
       return acc;
-    }, {});
+    }, {}) || {};
 
 const getPluginPageData = async ({ pluginPageTitle, dataBlockName }) => {
   const q = `[
@@ -75,6 +75,7 @@ const getPluginPageData = async ({ pluginPageTitle, dataBlockName }) => {
   );
 
   if (!dataResults.length) return {};
+
   return mapPluginPageData(dataResults);
 };
 
@@ -120,7 +121,7 @@ export const getCardData = async ({ tag, pluginPageTitle }) => {
   return {
     cardsData,
     newCardsData,
-    dueCardUids: getDueCardUids(cardsData),
+    dueCardsUids: getDueCardUids(cardsData),
   };
 };
 

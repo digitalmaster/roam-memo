@@ -5,7 +5,8 @@
   "author": "Jose Browne <josebrowne@gmail.com> (http://josebrowne.com/)",
   "scripts": {
     "dev": "webpack --watch --mode development",
-    "build": "webpack build --mode production"
+    "build": "webpack build --mode production",
+    "format": "prettier --write \"./**/*.{js,jsx,json}\""
   },
   "devDependencies": {
     "@babel/core": "^7.18.10",
