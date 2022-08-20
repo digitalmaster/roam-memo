@@ -13,9 +13,7 @@ const App = () => {
 
   const init = async ({ launchPractice = false } = {}) => {
     // Get all card data
-    const { cardsData, newCardsData, dueCardsUids } = await queries.getCardData(
-      { ...config }
-    );
+    const { cardsData, newCardsData, dueCardsUids } = await queries.getCardData({ ...config });
 
     setCardData({ ...cardsData, ...newCardsData });
 

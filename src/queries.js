@@ -1,8 +1,4 @@
-import {
-  getStringBetween,
-  parseConfigString,
-  parseRoamDateString,
-} from '~/utils/string';
+import { getStringBetween, parseConfigString, parseRoamDateString } from '~/utils/string';
 import config from '~/config';
 import * as stringUtils from '~/utils/string';
 import * as dateUtils from '~/utils/date';
@@ -21,9 +17,7 @@ const getPageReferenceIds = async (pageTitle) => {
         [?tagRefs :block/uid ?refUid]
     ]`;
 
-  const results = (await window.roamAlphaAPI.q(q, pageTitle)).map(
-    (arr) => arr[0]
-  );
+  const results = (await window.roamAlphaAPI.q(q, pageTitle)).map((arr) => arr[0]);
 
   return results;
 };
@@ -44,9 +38,7 @@ const mapPluginPageData = (queryResultsData) =>
         const [key, value] = parseConfigString(field.string);
 
         if (key === 'nextDueDate') {
-          acc[uid][key] = parseRoamDateString(
-            getStringBetween(value, '[[', ']]')
-          );
+          acc[uid][key] = parseRoamDateString(getStringBetween(value, '[[', ']]'));
         } else {
           acc[uid][key] = Number(value);
         }
@@ -68,11 +60,7 @@ const getPluginPageData = async ({ pluginPageTitle, dataBlockName }) => {
       [?pluginPageChildren :block/string ?dataBlockName]
     ]`;
 
-  const dataResults = await window.roamAlphaAPI.q(
-    q,
-    pluginPageTitle,
-    dataBlockName
-  );
+  const dataResults = await window.roamAlphaAPI.q(q, pluginPageTitle, dataBlockName);
 
   if (!dataResults.length) return {};
 
@@ -289,18 +277,10 @@ const getOrCreateChildBlock = async (parent_uid, block, order) => {
 
 export const savePracticeData = async ({ refUid, ...data }) => {
   await getOrCreatePage(config.pluginPageTitle);
-  const dataBlockUid = await getOrCreateBlockOnPage(
-    config.pluginPageTitle,
-    'data',
-    -1
-  );
+  const dataBlockUid = await getOrCreateBlockOnPage(config.pluginPageTitle, 'data', -1);
 
   // Get child that matches refUid
-  const cardDataBlockUid = await getOrCreateChildBlock(
-    dataBlockUid,
-    `((${refUid}))`,
-    0
-  );
+  const cardDataBlockUid = await getOrCreateChildBlock(dataBlockUid, `((${refUid}))`, 0);
 
   // Create new date child Note: Not using returned block id here because it
   // will be wrong if we practice the same question on the same day. This is
@@ -309,15 +289,9 @@ export const savePracticeData = async ({ refUid, ...data }) => {
   // top one
   const todayRoamDateString = stringUtils.dateToRoamDateString(new Date());
   const emoji = data.grade < 3 ? '🔴' : data.grade > 3 ? '🟢' : '🟠';
-  await createChildBlock(
-    cardDataBlockUid,
-    `[[${todayRoamDateString}}]] ${emoji}`,
-    0
-  );
+  await createChildBlock(cardDataBlockUid, `[[${todayRoamDateString}}]] ${emoji}`, 0);
   const updatedCardBlocks = getChildrenBlocks(cardDataBlockUid);
-  const newDataBlockId = updatedCardBlocks.find(
-    (block) => block.order === 0
-  ).uid;
+  const newDataBlockId = updatedCardBlocks.find((block) => block.order === 0).uid;
 
   // Insert new block info
   const nextDueDate = dateUtils.addDays(new Date(), data.interval);

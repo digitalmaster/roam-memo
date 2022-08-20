@@ -9,8 +9,6 @@ export const getStringBetween = (string, from, to) =>
 export const parseRoamDateString = (roamDateString) =>
   dayjs(roamDateString, 'MMMM Do, YYYY').toDate();
 
-export const dateToRoamDateString = (jsDateObject) =>
-  dayjs(jsDateObject).format('MMMM Do, YYYY');
+export const dateToRoamDateString = (jsDateObject) => dayjs(jsDateObject).format('MMMM Do, YYYY');
 
-export const parseConfigString = (configString) =>
-  configString.split('::').map((s) => s.trim());
+export const parseConfigString = (configString) => configString.split('::').map((s) => s.trim());
