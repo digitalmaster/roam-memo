@@ -43,7 +43,7 @@ const App = () => {
       {showPracticeOverlay && (
         <PracticeOverlay
           isOpen={true}
-          onClose={() => setShowPracticeOverlay(false)}
+          setShowPracticeOverlay={setShowPracticeOverlay}
           practiceCardUids={practiceCardUids}
           handleGradeClick={handleGradeClick}
         />
