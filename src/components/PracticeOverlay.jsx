@@ -32,11 +32,11 @@ const PracticeOverlay = ({
       isOpen={isOpen}
       onClose={() => setShowPracticeOverlay(false)}
       title="Review"
-      className="pb-0 min-h]"
+      className="pb-0"
       icon="box"
       canEscapeKeyClose={false}
     >
-      <div className="bp3-dialog-body">
+      <div className="bp3-dialog-body overflow-y-scroll m-0 p-5">
         {currentCardRefUid ? (
           <CardBlock refUid={currentCardRefUid} showBlockChildren={showBlockChildren} />
         ) : (
@@ -84,9 +84,6 @@ const CardBlock = ({ refUid, showBlockChildren }) => {
   return <ContentWrapper ref={ref} showBlockChildren={showBlockChildren} />;
 };
 
-const FooterWrapper = ({ children }) => (
-  <div className="bp3-multistep-dialog-footer rounded-b-md">{children}</div>
-);
 const ContentWrapper = styled.div`
   & .rm-block-children {
     display: ${(props) => (props.showBlockChildren ? 'flex' : 'none')};
@@ -96,6 +93,10 @@ const ContentWrapper = styled.div`
 const Dialog = styled(Blueprint.Dialog)`
   min-height: 70vh;
   max-height: 80vh;
+`;
+
+const FooterWrapper = styled.div`
+  height: 60px;
 `;
 
 const Footer = ({
@@ -109,41 +110,43 @@ const Footer = ({
   setShowPracticeOverlay,
 }) => {
   return (
-    <FooterWrapper>
-      <div className="bp3-dialog-footer-actions justify-around">
-        {isDone || !hasCards ? (
-          <Blueprint.Button intent="none" onClick={() => setShowPracticeOverlay(false)} outlined>
-            Close
-          </Blueprint.Button>
-        ) : hasBlockChildren && !showBlockChildren ? (
-          <Blueprint.Button intent="none" onClick={() => setShowBlockChildren(true)} outlined>
-            Show Answer
-          </Blueprint.Button>
-        ) : (
-          <>
-            <Blueprint.Button
-              intent="danger"
-              onClick={() => onGradeClick({ grade: 0, refUid })}
-              outlined
-            >
-              Forgot
+    <FooterWrapper className="bp3-multistep-dialog-footer rounded-b-md p-0">
+      <div className="flex justify-center items-center h-full">
+        <div className="bp3-dialog-footer-actions justify-around w-full">
+          {isDone || !hasCards ? (
+            <Blueprint.Button intent="none" onClick={() => setShowPracticeOverlay(false)} outlined>
+              Close
             </Blueprint.Button>
-            <Blueprint.Button
-              intent="warning"
-              onClick={() => onGradeClick({ grade: 3, refUid })}
-              outlined
-            >
-              Hard
+          ) : hasBlockChildren && !showBlockChildren ? (
+            <Blueprint.Button intent="none" onClick={() => setShowBlockChildren(true)} outlined>
+              Show Answer
             </Blueprint.Button>
-            <Blueprint.Button
-              intent="success"
-              onClick={() => onGradeClick({ grade: 5, refUid })}
-              outlined
-            >
-              Perfect
-            </Blueprint.Button>
-          </>
-        )}
+          ) : (
+            <>
+              <Blueprint.Button
+                intent="danger"
+                onClick={() => onGradeClick({ grade: 0, refUid })}
+                outlined
+              >
+                Forgot
+              </Blueprint.Button>
+              <Blueprint.Button
+                intent="warning"
+                onClick={() => onGradeClick({ grade: 3, refUid })}
+                outlined
+              >
+                Hard
+              </Blueprint.Button>
+              <Blueprint.Button
+                intent="success"
+                onClick={() => onGradeClick({ grade: 5, refUid })}
+                outlined
+              >
+                Perfect
+              </Blueprint.Button>
+            </>
+          )}
+        </div>
       </div>
     </FooterWrapper>
   );
