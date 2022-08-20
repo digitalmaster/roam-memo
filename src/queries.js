@@ -122,9 +122,10 @@ export const fetchBlockInfo = async (refUid) => {
     ]`;
 
   const dataResults = (await window.roamAlphaAPI.q(q, refUid))[0][0];
+
   return {
     string: dataResults.string,
-    children: dataResults.children.map((child) => child.string),
+    children: dataResults.children?.map((child) => child.string),
   };
 };
 
