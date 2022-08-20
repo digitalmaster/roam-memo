@@ -2,10 +2,7 @@ import { getStringBetween, parseConfigString, parseRoamDateString } from '~/util
 import config from '~/config';
 import * as stringUtils from '~/utils/string';
 import * as dateUtils from '~/utils/date';
-
-const sleep = (ms) => {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-};
+import * as asyncUtils from '~/utils/async';
 
 const getPageReferenceIds = async (pageTitle) => {
   const q = `[
@@ -126,8 +123,8 @@ export const fetchBlockInfo = async (refUid) => {
 
   const dataResults = (await window.roamAlphaAPI.q(q, refUid))[0][0];
   return {
-    questionBlockString: dataResults.string,
-    questionBlockChildren: dataResults.children.map((child) => child.string),
+    string: dataResults.string,
+    children: dataResults.children.map((child) => child.string),
   };
 };
 
@@ -155,7 +152,7 @@ const getOrCreatePage = async (page) => {
   roamAlphaAPI.createPage({ page: { title: page } });
   let result;
   while (!result) {
-    await sleep(25);
+    await asyncUtils.sleep(25);
     result = getPage(page);
   }
   return result;
@@ -240,7 +237,7 @@ const createChildBlock = async (parent_uid, block, order) => {
   });
   let block_uid;
   while (!block_uid) {
-    await sleep(25);
+    await asyncUtils.sleep(25);
     block_uid = getChildBlock(parent_uid, block);
   }
   return block_uid;

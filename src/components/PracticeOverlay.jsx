@@ -1,18 +1,9 @@
 import * as React from 'react';
 import * as Blueprint from '@blueprintjs/core';
 import styled from '@emotion/styled';
-import { fetchBlockInfo } from '~/queries';
-
-const FooterWrapper = ({ children }) => (
-  <div className="bp3-multistep-dialog-footer rounded-b-md">{children}</div>
-);
-
-const ContentWrapper = ({ children }) => <div className="bp3-dialog-body">{children}</div>;
-
-const Dialog = styled(Blueprint.Dialog)`
-  min-height: 70vh;
-  max-height: 80vh;
-`;
+import useBlockInfo from '~/hooks/useBlockInfo.jsx';
+import * as domUtils from '~/utils/dom';
+import * as asyncUtils from '~/utils/async';
 
 const PracticeOverlay = ({
   isOpen,
@@ -23,25 +14,16 @@ const PracticeOverlay = ({
   const hasCards = practiceCardUids.length > 0;
   const [currentIndex, setCurrentIndex] = React.useState(0);
   const isDone = currentIndex > practiceCardUids.length - 1;
-  const refUid = practiceCardUids[currentIndex];
+  const currentCardRefUid = practiceCardUids[currentIndex];
 
   const [showBlockChildren, setShowBlockChildren] = React.useState(false);
+  const { data: blockInfo } = useBlockInfo({ refUid: currentCardRefUid });
 
-  const [blockInfo, setBlockInfo] = React.useState({});
-  const hasBlockChildren =
-    blockInfo.questionBlockChildren && blockInfo.questionBlockChildren.length;
-  React.useEffect(() => {
-    if (!hasCards) return;
-    if (isDone) return;
-    const fetch = async () => {
-      const blockInfo = await fetchBlockInfo(refUid);
-      setBlockInfo(blockInfo);
-    };
-    fetch(refUid);
-  }, [currentIndex, hasCards]);
+  const hasBlockChildren = blockInfo.children && blockInfo.children.length;
 
   const onGradeClick = (props) => {
     handleGradeClick(props);
+    setShowBlockChildren(false);
     setCurrentIndex(currentIndex + 1);
   };
 
@@ -52,16 +34,17 @@ const PracticeOverlay = ({
       title="Review"
       className="pb-0 min-h]"
       icon="box"
+      canEscapeKeyClose={false}
     >
-      <CardContent
-        hasCards={hasCards}
-        isDone={isDone}
-        hasBlockChildren={hasBlockChildren}
-        showBlockChildren={showBlockChildren}
-        blockInfo={blockInfo}
-      />
+      <div className="bp3-dialog-body">
+        {currentCardRefUid ? (
+          <CardBlock refUid={currentCardRefUid} showBlockChildren={showBlockChildren} />
+        ) : (
+          <div>No cards left to review!</div>
+        )}
+      </div>
       <Footer
-        refUid={refUid}
+        refUid={currentCardRefUid}
         onGradeClick={onGradeClick}
         hasBlockChildren={hasBlockChildren}
         setShowBlockChildren={setShowBlockChildren}
@@ -74,27 +57,46 @@ const PracticeOverlay = ({
   );
 };
 
-const CardContent = ({ hasCards, isDone, hasBlockChildren, showBlockChildren, blockInfo }) => {
-  return (
-    <ContentWrapper>
-      {hasCards && !isDone ? (
-        <>
-          <div className={`${showBlockChildren && 'mb-2'} font-medium`}>
-            {blockInfo.questionBlockString}
-          </div>
+const CardBlock = ({ refUid, showBlockChildren }) => {
+  const ref = React.useRef();
 
-          {showBlockChildren &&
-            hasBlockChildren &&
-            blockInfo.questionBlockChildren.map((childString, index) => (
-              <div key={index}>{childString}</div>
-            ))}
-        </>
-      ) : (
-        <div>No cards left to review!</div>
-      )}
-    </ContentWrapper>
-  );
+  React.useEffect(() => {
+    const asyncFn = async () => {
+      await window.roamAlphaAPI.ui.components.unmountNode({ el: ref.current });
+      await window.roamAlphaAPI.ui.components.renderBlock({ uid: refUid, el: ref.current });
+
+      // Ensure block is not collapsed (so we can reveal children programatically)
+      const roamBlockElm = ref.current.querySelector('.rm-block');
+      const isCollapsed = roamBlockElm.classList.contains('rm-block--closed');
+      if (isCollapsed) {
+        // Currently no Roam API to toggle block collapse, so had to find this hacky
+        // way to do it by simulating click
+        const expandControlBtn = ref.current.querySelector('.block-expand .rm-caret');
+        await asyncUtils.sleep(100);
+        domUtils.simulateMouseClick(expandControlBtn);
+        await asyncUtils.sleep(100);
+        domUtils.simulateMouseClick(expandControlBtn);
+      }
+    };
+    asyncFn();
+  }, [ref, refUid]);
+
+  return <ContentWrapper ref={ref} showBlockChildren={showBlockChildren} />;
 };
+
+const FooterWrapper = ({ children }) => (
+  <div className="bp3-multistep-dialog-footer rounded-b-md">{children}</div>
+);
+const ContentWrapper = styled.div`
+  & .rm-block-children {
+    display: ${(props) => (props.showBlockChildren ? 'flex' : 'none')};
+  }
+`;
+
+const Dialog = styled(Blueprint.Dialog)`
+  min-height: 70vh;
+  max-height: 80vh;
+`;
 
 const Footer = ({
   hasBlockChildren,
