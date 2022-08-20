@@ -40,15 +40,20 @@ const App = () => {
     init({ launchPractice: true });
   };
 
+  const onClosePracticeOverlayCallback = () => {
+    setShowPracticeOverlay(false);
+    init();
+  };
+
   return (
     <>
       <SidePandelWidget onClickCallback={handlePracticeClick} displayCardCount={displayCardCount} />
       {showPracticeOverlay && (
         <PracticeOverlay
           isOpen={true}
-          setShowPracticeOverlay={setShowPracticeOverlay}
           practiceCardUids={practiceCardUids}
           handleGradeClick={handleGradeClick}
+          onCloseCallback={onClosePracticeOverlayCallback}
         />
       )}
     </>

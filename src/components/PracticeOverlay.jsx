@@ -5,12 +5,7 @@ import useBlockInfo from '~/hooks/useBlockInfo.jsx';
 import * as domUtils from '~/utils/dom';
 import * as asyncUtils from '~/utils/async';
 
-const PracticeOverlay = ({
-  isOpen,
-  setShowPracticeOverlay,
-  practiceCardUids,
-  handleGradeClick,
-}) => {
+const PracticeOverlay = ({ isOpen, onCloseCallback, practiceCardUids, handleGradeClick }) => {
   const hasCards = practiceCardUids.length > 0;
   const [currentIndex, setCurrentIndex] = React.useState(0);
   const isDone = currentIndex > practiceCardUids.length - 1;
@@ -31,7 +26,7 @@ const PracticeOverlay = ({
   return (
     <Dialog
       isOpen={isOpen}
-      onClose={() => setShowPracticeOverlay(false)}
+      onClose={onCloseCallback}
       className="pb-0 bg-white"
       canEscapeKeyClose={false}
     >
@@ -46,7 +41,7 @@ const PracticeOverlay = ({
         <button
           aria-label="Close"
           className="bp3-dialog-close-button bp3-button bp3-minimal bp3-icon-cross"
-          onClick={() => setShowPracticeOverlay(false)}
+          onClick={onCloseCallback}
         ></button>
       </div>
       <div className="bp3-dialog-body overflow-y-scroll m-0 p-5">
@@ -64,7 +59,7 @@ const PracticeOverlay = ({
         showBlockChildren={showBlockChildren}
         isDone={isDone}
         hasCards={hasCards}
-        setShowPracticeOverlay={setShowPracticeOverlay}
+        onCloseCallback={onCloseCallback}
       />
     </Dialog>
   );
@@ -135,14 +130,14 @@ const Footer = ({
   onGradeClick,
   isDone,
   hasCards,
-  setShowPracticeOverlay,
+  onCloseCallback,
 }) => {
   return (
     <FooterWrapper className="bp3-multistep-dialog-footer rounded-b-md p-0">
       <div className="flex justify-center items-center h-full">
         <div className="bp3-dialog-footer-actions justify-around w-full">
           {isDone || !hasCards ? (
-            <Blueprint.Button intent="none" onClick={() => setShowPracticeOverlay(false)} outlined>
+            <Blueprint.Button intent="none" onClick={onCloseCallback} outlined>
               Close
             </Blueprint.Button>
           ) : hasBlockChildren && !showBlockChildren ? (
