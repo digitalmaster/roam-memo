@@ -8,18 +8,21 @@ import * as queries from '~/queries.js';
 const App = () => {
   const [cardsData, setCardData] = React.useState({});
   const [showPracticeOverlay, setShowPracticeOverlay] = React.useState(false);
+  const [displayCardCount, setDisplayCardCount] = React.useState(0);
 
   const [practiceCardUids, setPracticeCardUids] = React.useState([]);
 
   const init = async ({ launchPractice = false } = {}) => {
     // Get all card data
     const { cardsData, newCardsData, dueCardsUids } = await queries.getCardData({ ...config });
+    const practiceCardUids = [...Object.keys(newCardsData), ...dueCardsUids];
 
     setCardData({ ...cardsData, ...newCardsData });
+    setDisplayCardCount(practiceCardUids.length);
 
     if (launchPractice) {
       // Always practice new cards first
-      setPracticeCardUids([...Object.keys(newCardsData), ...dueCardsUids]);
+      setPracticeCardUids(practiceCardUids);
       setShowPracticeOverlay(true);
     }
   };
@@ -39,7 +42,7 @@ const App = () => {
 
   return (
     <>
-      <SidePandelWidget onClickCallback={handlePracticeClick} />
+      <SidePandelWidget onClickCallback={handlePracticeClick} displayCardCount={displayCardCount} />
       {showPracticeOverlay && (
         <PracticeOverlay
           isOpen={true}
