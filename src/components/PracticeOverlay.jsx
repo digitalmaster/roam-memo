@@ -15,6 +15,7 @@ const PracticeOverlay = ({
   const [currentIndex, setCurrentIndex] = React.useState(0);
   const isDone = currentIndex > practiceCardUids.length - 1;
   const currentCardRefUid = practiceCardUids[currentIndex];
+  const totalCardsCount = practiceCardUids.length;
 
   const [showBlockChildren, setShowBlockChildren] = React.useState(false);
   const { data: blockInfo } = useBlockInfo({ refUid: currentCardRefUid });
@@ -31,11 +32,23 @@ const PracticeOverlay = ({
     <Dialog
       isOpen={isOpen}
       onClose={() => setShowPracticeOverlay(false)}
-      title="Review"
-      className="pb-0"
-      icon="box"
+      className="pb-0 bg-white"
       canEscapeKeyClose={false}
     >
+      <div className="bp3-dialog-header">
+        <DialogHeaderIcon className="bp3-icon-large bp3-icon-box"></DialogHeaderIcon>
+        <DialogHeading className="bp3-heading">Review </DialogHeading>
+        <span className="text-sm mx-2 font-medium">
+          <span>{currentIndex + 1}</span>
+          <span className="opacity-50 mx-1">/</span>
+          <span className="opacity-50">{totalCardsCount}</span>
+        </span>
+        <button
+          aria-label="Close"
+          className="bp3-dialog-close-button bp3-button bp3-minimal bp3-icon-cross"
+          onClick={() => setShowPracticeOverlay(false)}
+        ></button>
+      </div>
       <div className="bp3-dialog-body overflow-y-scroll m-0 p-5">
         {currentCardRefUid ? (
           <CardBlock refUid={currentCardRefUid} showBlockChildren={showBlockChildren} />
@@ -85,18 +98,33 @@ const CardBlock = ({ refUid, showBlockChildren }) => {
 };
 
 const ContentWrapper = styled.div`
+  position: relative;
+  left: -14px;
+
   & .rm-block-children {
     display: ${(props) => (props.showBlockChildren ? 'flex' : 'none')};
+  }
+
+  & .rm-block-separator {
+    min-width: unset; // Keeping roam block from expanding 100
   }
 `;
 
 const Dialog = styled(Blueprint.Dialog)`
-  min-height: 70vh;
   max-height: 80vh;
 `;
 
+const DialogHeaderIcon = styled.span`
+  font-size: 18x !important;
+`;
+
+const DialogHeading = styled.h4`
+  color: #5c7080;
+`;
+
 const FooterWrapper = styled.div`
-  height: 60px;
+  height: 50px;
+  min-height: 50px;
 `;
 
 const Footer = ({
