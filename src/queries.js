@@ -27,6 +27,7 @@ const mapPluginPageData = (queryResultsData) =>
       acc[uid] = {};
 
       // Add date
+      if (!cur.children) return acc;
       acc[uid].dateCreated = parseRoamDateString(
         getStringBetween(cur.children[0].string, '[[', ']]')
       );
