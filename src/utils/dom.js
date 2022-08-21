@@ -1,6 +1,5 @@
-export const simulateMouseClick = (element) => {
-  const mouseClickEvents = ['mouseenter', 'mouseover', 'mousedown', 'click', 'mouseup'];
-  mouseClickEvents.forEach((mouseEventType) =>
+export const simulateMouseEvents = (element, events = []) => {
+  events.forEach((mouseEventType) =>
     element.dispatchEvent(
       new MouseEvent(mouseEventType, {
         view: window,
@@ -10,4 +9,8 @@ export const simulateMouseClick = (element) => {
       })
     )
   );
+};
+export const simulateMouseClick = (element) => {
+  const mouseClickEvents = ['mouseenter', 'mouseover', 'mousedown', 'click', 'mouseup'];
+  simulateMouseEvents(element, mouseClickEvents);
 };
