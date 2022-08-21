@@ -5,7 +5,7 @@ const getSettings = () => {
     pluginPageTitle: 'roam/memo',
   };
   return {
-    defaultSettings,
+    ...defaultSettings,
     ...settings,
   };
 };
