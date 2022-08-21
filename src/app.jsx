@@ -24,6 +24,9 @@ const App = () => {
       // Always practice new cards first
       setPracticeCardUids(practiceCardUids);
       setShowPracticeOverlay(true);
+
+      // @TODO: Maybe make this configurable
+      await window.roamAlphaAPI.ui.leftSidebar.close();
     }
   };
 

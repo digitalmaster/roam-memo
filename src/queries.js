@@ -274,6 +274,21 @@ const getOrCreateChildBlock = async (parent_uid, block, order) => {
   return createChildBlock(parent_uid, block, order);
 };
 
+const getEmojiFromGrade = (grade) => {
+  switch (grade) {
+    case 5:
+      return '🟢';
+    case 4:
+      return '🔵';
+    case 3:
+      return '🟠';
+    case 0:
+      return '🔴';
+    default:
+      break;
+  }
+};
+
 export const savePracticeData = async ({ refUid, ...data }) => {
   await getOrCreatePage(config.pluginPageTitle);
   const dataBlockUid = await getOrCreateBlockOnPage(config.pluginPageTitle, 'data', -1);
@@ -287,7 +302,7 @@ export const savePracticeData = async ({ refUid, ...data }) => {
   // block yet. As a workaround, i'm refetching children again and grabing the
   // top one
   const todayRoamDateString = stringUtils.dateToRoamDateString(new Date());
-  const emoji = data.grade < 3 ? '🔴' : data.grade > 3 ? '🟢' : '🟠';
+  const emoji = getEmojiFromGrade(data.grade);
   await createChildBlock(cardDataBlockUid, `[[${todayRoamDateString}}]] ${emoji}`, 0);
   const updatedCardBlocks = getChildrenBlocks(cardDataBlockUid);
   const newDataBlockId = updatedCardBlocks.find((block) => block.order === 0).uid;

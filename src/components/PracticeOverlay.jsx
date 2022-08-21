@@ -30,8 +30,8 @@ const PracticeOverlay = ({ isOpen, onCloseCallback, practiceCardUids, handleGrad
       className="pb-0 bg-white"
       canEscapeKeyClose={false}
     >
-      <div className="bp3-dialog-header">
-        <DialogHeaderIcon className="bp3-icon-large bp3-icon-box"></DialogHeaderIcon>
+      <Header className="bp3-dialog-header">
+        <Blueprint.Icon icon="box" size={14} />
         <DialogHeading className="bp3-heading">Review </DialogHeading>
         <span className="text-sm mx-2 font-medium">
           <span>{currentIndex + 1}</span>
@@ -43,7 +43,7 @@ const PracticeOverlay = ({ isOpen, onCloseCallback, practiceCardUids, handleGrad
           className="bp3-dialog-close-button bp3-button bp3-minimal bp3-icon-cross"
           onClick={onCloseCallback}
         ></button>
-      </div>
+      </Header>
       <div className="bp3-dialog-body overflow-y-scroll m-0 p-5">
         {currentCardRefUid ? (
           <CardBlock refUid={currentCardRefUid} showBlockChildren={showBlockChildren} />
@@ -109,17 +109,23 @@ const Dialog = styled(Blueprint.Dialog)`
   max-height: 80vh;
 `;
 
-const DialogHeaderIcon = styled.span`
-  font-size: 18x !important;
+const Header = styled.div`
+  color: #5c7080;
+  background-color: #f6f9fd;
+  box-shadow: 0 1px 0 rgb(16 22 26 / 10%);
 `;
 
 const DialogHeading = styled.h4`
+  font-size: 15px !important;
+  font-weight: 500;
   color: #5c7080;
 `;
 
 const FooterWrapper = styled.div`
+  background-color: #f6f9fd;
   height: 50px;
   min-height: 50px;
+  border-top: 1px solid rgba(16, 22, 26, 0.1);
 `;
 
 const Footer = ({
@@ -137,11 +143,16 @@ const Footer = ({
       <div className="flex justify-center items-center h-full">
         <div className="bp3-dialog-footer-actions justify-around w-full">
           {isDone || !hasCards ? (
-            <Blueprint.Button intent="none" onClick={onCloseCallback} outlined>
+            <Blueprint.Button intent="none" onClick={onCloseCallback} outlined small>
               Close
             </Blueprint.Button>
           ) : hasBlockChildren && !showBlockChildren ? (
-            <Blueprint.Button intent="none" onClick={() => setShowBlockChildren(true)} outlined>
+            <Blueprint.Button
+              intent="none"
+              onClick={() => setShowBlockChildren(true)}
+              outlined
+              small
+            >
               Show Answer
             </Blueprint.Button>
           ) : (
@@ -150,6 +161,7 @@ const Footer = ({
                 intent="danger"
                 onClick={() => onGradeClick({ grade: 0, refUid })}
                 outlined
+                small
               >
                 Forgot
               </Blueprint.Button>
@@ -157,13 +169,23 @@ const Footer = ({
                 intent="warning"
                 onClick={() => onGradeClick({ grade: 3, refUid })}
                 outlined
+                small
               >
                 Hard
+              </Blueprint.Button>
+              <Blueprint.Button
+                intent="primary"
+                onClick={() => onGradeClick({ grade: 4, refUid })}
+                outlined
+                small
+              >
+                Good
               </Blueprint.Button>
               <Blueprint.Button
                 intent="success"
                 onClick={() => onGradeClick({ grade: 5, refUid })}
                 outlined
+                small
               >
                 Perfect
               </Blueprint.Button>
