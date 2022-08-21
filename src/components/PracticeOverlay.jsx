@@ -112,6 +112,7 @@ const ContentWrapper = styled.div`
 
 const Dialog = styled(Blueprint.Dialog)`
   max-height: 80vh;
+  width: 60vw;
 `;
 
 const HeaderWrapper = styled.div`
