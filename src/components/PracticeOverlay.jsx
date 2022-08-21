@@ -1,11 +1,20 @@
 import * as React from 'react';
 import * as Blueprint from '@blueprintjs/core';
+import * as BlueprintSelect from '@blueprintjs/select';
 import styled from '@emotion/styled';
 import useBlockInfo from '~/hooks/useBlockInfo.jsx';
 import * as domUtils from '~/utils/dom';
 import * as asyncUtils from '~/utils/async';
 
-const PracticeOverlay = ({ isOpen, onCloseCallback, practiceCardUids, handleGradeClick }) => {
+const PracticeOverlay = ({
+  isOpen,
+  tagsList,
+  selectedTag,
+  onCloseCallback,
+  practiceCardUids,
+  handleGradeClick,
+  handleMemoTagChange,
+}) => {
   const hasCards = practiceCardUids.length > 0;
   const [currentIndex, setCurrentIndex] = React.useState(0);
   const isDone = currentIndex > practiceCardUids.length - 1;
@@ -30,20 +39,16 @@ const PracticeOverlay = ({ isOpen, onCloseCallback, practiceCardUids, handleGrad
       className="pb-0 bg-white"
       canEscapeKeyClose={false}
     >
-      <Header className="bp3-dialog-header">
-        <Blueprint.Icon icon="box" size={14} />
-        <DialogHeading className="bp3-heading">Review </DialogHeading>
-        <span className="text-sm mx-2 font-medium">
-          <span>{currentIndex + 1}</span>
-          <span className="opacity-50 mx-1">/</span>
-          <span className="opacity-50">{totalCardsCount}</span>
-        </span>
-        <button
-          aria-label="Close"
-          className="bp3-dialog-close-button bp3-button bp3-minimal bp3-icon-cross"
-          onClick={onCloseCallback}
-        ></button>
-      </Header>
+      <Header
+        className="bp3-dialog-header"
+        tagsList={tagsList}
+        selectedTag={selectedTag}
+        currentIndex={currentIndex}
+        totalCardsCount={totalCardsCount}
+        onCloseCallback={onCloseCallback}
+        handleMemoTagChange={handleMemoTagChange}
+      />
+
       <div className="bp3-dialog-body overflow-y-scroll m-0 p-5">
         {currentCardRefUid ? (
           <CardBlock refUid={currentCardRefUid} showBlockChildren={showBlockChildren} />
@@ -109,11 +114,69 @@ const Dialog = styled(Blueprint.Dialog)`
   max-height: 80vh;
 `;
 
-const Header = styled.div`
+const HeaderWrapper = styled.div`
+  justify-content: space-between;
   color: #5c7080;
   background-color: #f6f9fd;
   box-shadow: 0 1px 0 rgb(16 22 26 / 10%);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  word-wrap: normal;
+  line-height: inherit;
+  margin: 0;
 `;
+
+const Header = ({
+  tagsList,
+  selectedTag,
+  currentIndex,
+  onCloseCallback,
+  totalCardsCount,
+  handleMemoTagChange,
+  className,
+}) => {
+  return (
+    <HeaderWrapper className={className}>
+      <div className="flex items-center">
+        <Blueprint.Icon icon="box" size={14} />
+        <DialogHeading className="mr-1">Review: </DialogHeading>
+        <BlueprintSelect.Select
+          items={tagsList}
+          activeItem={selectedTag}
+          filterable={false}
+          itemRenderer={(tag, { handleClick, modifiers }) => {
+            return (
+              <Blueprint.MenuItem
+                active={modifiers.active}
+                disabled={modifiers.disabled}
+                key={tag}
+                onClick={handleClick}
+                text={tag}
+              />
+            );
+          }}
+          onItemSelect={(tag) => handleMemoTagChange(tag)}
+          popoverProps={{ minimal: true }}
+        >
+          <Blueprint.Button text={selectedTag} rightIcon="caret-down" minimal />
+        </BlueprintSelect.Select>
+      </div>
+      <div className="flex items-center justify-end">
+        <span className="text-sm mx-2 font-medium">
+          <span>{currentIndex + 1}</span>
+          <span className="opacity-50 mx-1">/</span>
+          <span className="opacity-50">{totalCardsCount}</span>
+        </span>
+        <button
+          aria-label="Close"
+          className="bp3-dialog-close-button bp3-button bp3-minimal bp3-icon-cross"
+          onClick={onCloseCallback}
+        ></button>
+      </div>
+    </HeaderWrapper>
+  );
+};
 
 const DialogHeading = styled.h4`
   font-size: 15px !important;
@@ -126,6 +189,10 @@ const FooterWrapper = styled.div`
   height: 50px;
   min-height: 50px;
   border-top: 1px solid rgba(16, 22, 26, 0.1);
+
+  & .bp3-button.bp3-outlined {
+    background: white;
+  }
 `;
 
 const Footer = ({

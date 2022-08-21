@@ -14,7 +14,7 @@ const SidePandelWidget = ({ onClickCallback, displayCardCount }) => {
           <div>Review</div>
         </div>
       </div>
-      <div className="mr-2">
+      <div className="ml-2">
         <Blueprint.Tag active minimal intent="primary">
           {displayCardCount}
         </Blueprint.Tag>

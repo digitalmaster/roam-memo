@@ -11,6 +11,7 @@ module.exports = {
     react: 'React',
     'chrono-node': 'ChronoNode',
     '@blueprintjs/core': ['Blueprint', 'Core'],
+    '@blueprintjs/select': ['Blueprint', 'Select'],
   },
   output: {
     filename: 'extension.js',

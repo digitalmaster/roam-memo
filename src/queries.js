@@ -1,5 +1,5 @@
 import { getStringBetween, parseConfigString, parseRoamDateString } from '~/utils/string';
-import config from '~/config';
+import getSettings from '~/getSettings';
 import * as stringUtils from '~/utils/string';
 import * as dateUtils from '~/utils/date';
 import * as asyncUtils from '~/utils/async';
@@ -290,8 +290,8 @@ const getEmojiFromGrade = (grade) => {
 };
 
 export const savePracticeData = async ({ refUid, ...data }) => {
-  await getOrCreatePage(config.pluginPageTitle);
-  const dataBlockUid = await getOrCreateBlockOnPage(config.pluginPageTitle, 'data', -1);
+  await getOrCreatePage(getSettings().pluginPageTitle);
+  const dataBlockUid = await getOrCreateBlockOnPage(getSettings().pluginPageTitle, 'data', -1);
 
   // Get child that matches refUid
   const cardDataBlockUid = await getOrCreateChildBlock(dataBlockUid, `((${refUid}))`, 0);

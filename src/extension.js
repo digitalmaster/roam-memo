@@ -1,11 +1,12 @@
 import App from './app.jsx';
+import settingsPanelConfig from '~/settingsPanelConfig.js';
 
 console.log('Roam Memo initializing...');
 
 const container_id = 'roam-memo-wrapper';
 
 const createAndRenderContainer = () => {
-  // @TODO: This is where I want it personally, but maybe make this a config option?
+  // @TODO: This is where I want it personally, but maybe make this a configurable setting?
   const siblingElm = document.querySelector('.rm-left-sidebar__daily-notes');
   const newContainerElm = document.createElement('div');
   newContainerElm.id = container_id;
@@ -14,7 +15,13 @@ const createAndRenderContainer = () => {
 
   return newContainerElm;
 };
-function onload() {
+function onload({ extensionAPI }) {
+  extensionAPI.settings.panel.create(settingsPanelConfig);
+
+  // This just makes life easier (instead of having to pipe it down everywhere I
+  // want to dynamically fetch the latest config)
+  window.extensionAPI = extensionAPI;
+
   const container = createAndRenderContainer();
   ReactDOM.render(<App />, container);
 
