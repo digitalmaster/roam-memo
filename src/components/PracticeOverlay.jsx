@@ -164,7 +164,7 @@ const Header = ({
       </div>
       <div className="flex items-center justify-end">
         <span className="text-sm mx-2 font-medium">
-          <span>{currentIndex + 1}</span>
+          <span>{totalCardsCount > 0 ? currentIndex + 1 : 0}</span>
           <span className="opacity-50 mx-1">/</span>
           <span className="opacity-50">{totalCardsCount}</span>
         </span>
