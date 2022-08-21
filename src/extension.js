@@ -1,5 +1,4 @@
 import App from './app.jsx';
-import settingsPanelConfig from '~/settingsPanelConfig.js';
 
 console.log('Roam Memo initializing...');
 
@@ -16,8 +15,6 @@ const createAndRenderContainer = () => {
   return newContainerElm;
 };
 function onload({ extensionAPI }) {
-  extensionAPI.settings.panel.create(settingsPanelConfig);
-
   // This just makes life easier (instead of having to pipe it down everywhere I
   // want to dynamically fetch the latest config)
   window.extensionAPI = extensionAPI;

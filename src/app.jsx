@@ -1,4 +1,5 @@
 import * as React from 'react';
+import settingsPanelConfig from '~/settingsPanelConfig.js';
 import getSettings from '~/getSettings';
 import PracticeOverlay from '~/components/PracticeOverlay.jsx';
 import SidePandelWidget from '~/components/SidePandelWidget.jsx';
@@ -15,6 +16,7 @@ const App = () => {
   const [practiceCardUids, setPracticeCardUids] = React.useState([]);
 
   const init = async ({ launchPractice = false, tag } = {}) => {
+    console.log('Roam Memo initializing state...');
     const settings = getSettings();
     const tagsList = settings.tagsList.split(',').map((tag) => tag.trim());
     const selectedTag = tag || tagsList[0];
@@ -39,6 +41,7 @@ const App = () => {
   };
 
   React.useEffect(() => {
+    extensionAPI.settings.panel.create(settingsPanelConfig({ initFn: init }));
     init();
   }, []);
 
