@@ -32,11 +32,14 @@ const PracticeOverlay = ({
     handleMemoTagChange(tag);
   };
 
-  const onGradeClick = (props) => {
-    handleGradeClick(props);
-    setShowBlockChildren(false);
-    setCurrentIndex(currentIndex + 1);
-  };
+  const onGradeClick = React.useCallback(
+    (props) => {
+      handleGradeClick(props);
+      setShowBlockChildren(false);
+      setCurrentIndex(currentIndex + 1);
+    },
+    [currentIndex, handleGradeClick]
+  );
 
   const hotkeys = React.useMemo(
     () => [
@@ -71,7 +74,7 @@ const PracticeOverlay = ({
         onKeyDown: () => onGradeClick({ grade: 4, refUid: currentCardRefUid }),
       },
     ],
-    [hasBlockChildren, showBlockChildren, currentCardRefUid]
+    [hasBlockChildren, showBlockChildren, currentCardRefUid, onGradeClick]
   );
   const { handleKeyDown, handleKeyUp } = Blueprint.useHotkeys(hotkeys);
 

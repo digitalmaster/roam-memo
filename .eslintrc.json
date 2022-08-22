@@ -1,15 +1,19 @@
 {
-  "extends": ["eslint:recommended", "plugin:react/recommended", "plugin:react/jsx-runtime"],
+  "extends": [
+    "eslint:recommended",
+    "plugin:react/recommended",
+    "plugin:react-hooks/recommended",
+    "plugin:react/jsx-runtime"
+  ],
   "env": {
     "browser": true,
     "node": true,
-    "es6": true,
-    "extensionAPI": true
+    "es6": true
   },
   "globals": {
+    "extensionAPI": "readonly",
     "roamAlphaAPI": "readonly"
   },
-  "ignorePatterns": ["node_modules/*", "extension.js"],
   "parser": "@babel/eslint-parser",
   "parserOptions": {
     "sourceType": "module",
@@ -17,5 +21,10 @@
   },
   "rules": {
     "react/prop-types": "off"
+  },
+  "settings": {
+    "react": {
+      "version": "detect" // React version. "detect" automatically picks the version you have installed.
+    }
   }
 }

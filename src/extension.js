@@ -1,3 +1,4 @@
+import ReactDOM from 'react-dom';
 import App from './app.jsx';
 
 console.log('Roam Memo initializing...');
