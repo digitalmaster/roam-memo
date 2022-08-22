@@ -26,10 +26,14 @@ const PracticeOverlay = ({
 
   const hasBlockChildren = blockInfo.children && blockInfo.children.length;
 
-  const onTagChange = (tag) => {
+  const onTagChange = async (tag) => {
     setShowBlockChildren(false);
     setCurrentIndex(0);
     handleMemoTagChange(tag);
+
+    // To prevent 'space' key event from triggering dropdown
+    await asyncUtils.sleep(200);
+    document?.activeElement.blur();
   };
 
   const onGradeClick = React.useCallback(
@@ -182,6 +186,46 @@ const HeaderWrapper = styled.div`
   }
 `;
 
+const TagSelector = ({ tagsList, selectedTag, onTagChange }) => {
+  return (
+    <BlueprintSelect.Select
+      items={tagsList}
+      activeItem={selectedTag}
+      filterable={false}
+      itemRenderer={(tag, { handleClick, modifiers }) => {
+        return (
+          <TagSelectorItem text={tag} active={modifiers.active} key={tag} onClick={handleClick} />
+        );
+      }}
+      onItemSelect={(tag) => {
+        onTagChange(tag);
+      }}
+      popoverProps={{ minimal: true }}
+    >
+      <Blueprint.Button text={selectedTag} rightIcon="caret-down" minimal />
+    </BlueprintSelect.Select>
+  );
+};
+
+const TagSelectorItemWrapper = styled.div`
+  padding: 4px 6px;
+  background-color: ${({ active }) => (active ? '#e8edf4' : 'white')};
+  user-select: none;
+
+  &:hover {
+    cursor: pointer;
+    background-color: ${({ active }) => (active ? '#e8edf4' : '#f6f9fd')};
+  }
+`;
+
+const TagSelectorItem = ({ text, onClick, active, key }) => {
+  return (
+    <TagSelectorItemWrapper onClick={onClick} active={active} key={key} tabIndex={-1}>
+      {text}
+    </TagSelectorItemWrapper>
+  );
+};
+
 const Header = ({
   tagsList,
   selectedTag,
@@ -196,26 +240,9 @@ const Header = ({
       <div className="flex items-center">
         <Blueprint.Icon icon="box" size={14} />
         <DialogHeading className="mr-1">Review: </DialogHeading>
-        <BlueprintSelect.Select
-          items={tagsList}
-          activeItem={selectedTag}
-          filterable={false}
-          itemRenderer={(tag, { handleClick, modifiers }) => {
-            return (
-              <Blueprint.MenuItem
-                active={modifiers.active}
-                disabled={modifiers.disabled}
-                key={tag}
-                onClick={handleClick}
-                text={tag}
-              />
-            );
-          }}
-          onItemSelect={(tag) => onTagChange(tag)}
-          popoverProps={{ minimal: true }}
-        >
-          <Blueprint.Button text={selectedTag} rightIcon="caret-down" minimal />
-        </BlueprintSelect.Select>
+        <div tabIndex={-1}>
+          <TagSelector tagsList={tagsList} selectedTag={selectedTag} onTagChange={onTagChange} />
+        </div>
       </div>
       <div className="flex items-center justify-end">
         <span className="text-sm mx-2 font-medium">
