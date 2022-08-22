@@ -26,6 +26,12 @@ const PracticeOverlay = ({
 
   const hasBlockChildren = blockInfo.children && blockInfo.children.length;
 
+  const onTagChange = (tag) => {
+    setShowBlockChildren(false);
+    setCurrentIndex(0);
+    handleMemoTagChange(tag);
+  };
+
   const onGradeClick = (props) => {
     handleGradeClick(props);
     setShowBlockChildren(false);
@@ -86,7 +92,7 @@ const PracticeOverlay = ({
           currentIndex={currentIndex}
           totalCardsCount={totalCardsCount}
           onCloseCallback={onCloseCallback}
-          handleMemoTagChange={handleMemoTagChange}
+          onTagChange={onTagChange}
         />
 
         <div className="bp3-dialog-body overflow-y-scroll m-0 pt-6 pb-8 pl-4">
@@ -176,7 +182,7 @@ const Header = ({
   currentIndex,
   onCloseCallback,
   totalCardsCount,
-  handleMemoTagChange,
+  onTagChange,
   className,
 }) => {
   return (
@@ -199,7 +205,7 @@ const Header = ({
               />
             );
           }}
-          onItemSelect={(tag) => handleMemoTagChange(tag)}
+          onItemSelect={(tag) => onTagChange(tag)}
           popoverProps={{ minimal: true }}
         >
           <Blueprint.Button text={selectedTag} rightIcon="caret-down" minimal />
