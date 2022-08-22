@@ -1,7 +1,7 @@
 import ReactDOM from 'react-dom';
 import App from './app.jsx';
 
-console.log('Roam Memo initializing...');
+console.log('Memo: Initializing...');
 
 const container_id = 'roam-memo-wrapper';
 
@@ -23,7 +23,7 @@ function onload({ extensionAPI }) {
   const container = createAndRenderContainer();
   ReactDOM.render(<App />, container);
 
-  console.log('Loaded roam/memo');
+  console.log('Memo: Initialized');
 }
 
 function onunload() {
@@ -32,7 +32,7 @@ function onunload() {
   ReactDOM.unmountComponentAtNode(container);
   container.remove();
 
-  console.log('Unloaded roam/memo');
+  console.log('Memo: Unloaded');
 }
 
 export default {

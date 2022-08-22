@@ -17,7 +17,6 @@ const App = () => {
   const [practiceCardUids, setPracticeCardUids] = React.useState([]);
 
   const init = async ({ launchPractice = false, tag } = {}) => {
-    console.log('Roam Memo initializing state...');
     const settings = getSettings();
     const tagsList = settings.tagsList.split(',').map((tag) => tag.trim());
     const selectedTag = tag || tagsList[0];
