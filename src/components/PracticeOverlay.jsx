@@ -45,7 +45,7 @@ const PracticeOverlay = ({
         global: true,
         label: 'Show Block Children',
         onKeyDown: () => {
-          if (!showBlockChildren) {
+          if (hasBlockChildren && !showBlockChildren) {
             setShowBlockChildren(true);
           } else {
             onGradeClick({ grade: 5, refUid: currentCardRefUid });
@@ -71,49 +71,47 @@ const PracticeOverlay = ({
         onKeyDown: () => onGradeClick({ grade: 4, refUid: currentCardRefUid }),
       },
     ],
-    [showBlockChildren]
+    [hasBlockChildren, showBlockChildren, currentCardRefUid]
   );
   const { handleKeyDown, handleKeyUp } = Blueprint.useHotkeys(hotkeys);
 
   return (
-    <Blueprint.HotkeysProvider>
-      <Dialog
-        isOpen={isOpen}
-        onClose={onCloseCallback}
-        className="pb-0 bg-white"
-        canEscapeKeyClose={false}
-        onKeyDown={handleKeyDown}
-        onKeyUp={handleKeyUp}
-      >
-        <Header
-          className="bp3-dialog-header"
-          tagsList={tagsList}
-          selectedTag={selectedTag}
-          currentIndex={currentIndex}
-          totalCardsCount={totalCardsCount}
-          onCloseCallback={onCloseCallback}
-          onTagChange={onTagChange}
-        />
+    <Dialog
+      isOpen={isOpen}
+      onClose={onCloseCallback}
+      className="pb-0 bg-white"
+      canEscapeKeyClose={false}
+      onKeyDown={handleKeyDown}
+      onKeyUp={handleKeyUp}
+    >
+      <Header
+        className="bp3-dialog-header"
+        tagsList={tagsList}
+        selectedTag={selectedTag}
+        currentIndex={currentIndex}
+        totalCardsCount={totalCardsCount}
+        onCloseCallback={onCloseCallback}
+        onTagChange={onTagChange}
+      />
 
-        <div className="bp3-dialog-body overflow-y-scroll m-0 pt-6 pb-8 pl-4">
-          {currentCardRefUid ? (
-            <CardBlock refUid={currentCardRefUid} showBlockChildren={showBlockChildren} />
-          ) : (
-            <div>No cards left to review!</div>
-          )}
-        </div>
-        <Footer
-          refUid={currentCardRefUid}
-          onGradeClick={onGradeClick}
-          hasBlockChildren={hasBlockChildren}
-          setShowBlockChildren={setShowBlockChildren}
-          showBlockChildren={showBlockChildren}
-          isDone={isDone}
-          hasCards={hasCards}
-          onCloseCallback={onCloseCallback}
-        />
-      </Dialog>
-    </Blueprint.HotkeysProvider>
+      <div className="bp3-dialog-body overflow-y-scroll m-0 pt-6 pb-8 pl-4">
+        {currentCardRefUid ? (
+          <CardBlock refUid={currentCardRefUid} showBlockChildren={showBlockChildren} />
+        ) : (
+          <div>No cards left to review!</div>
+        )}
+      </div>
+      <Footer
+        refUid={currentCardRefUid}
+        onGradeClick={onGradeClick}
+        hasBlockChildren={hasBlockChildren}
+        setShowBlockChildren={setShowBlockChildren}
+        showBlockChildren={showBlockChildren}
+        isDone={isDone}
+        hasCards={hasCards}
+        onCloseCallback={onCloseCallback}
+      />
+    </Dialog>
   );
 };
 

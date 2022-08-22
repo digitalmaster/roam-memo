@@ -1,4 +1,5 @@
 import * as React from 'react';
+import * as Blueprint from '@blueprintjs/core';
 import settingsPanelConfig from '~/settingsPanelConfig.js';
 import getSettings from '~/getSettings';
 import PracticeOverlay from '~/components/PracticeOverlay.jsx';
@@ -64,7 +65,7 @@ const App = () => {
   };
 
   return (
-    <>
+    <Blueprint.HotkeysProvider>
       <SidePandelWidget onClickCallback={handlePracticeClick} displayCardCount={displayCardCount} />
       {showPracticeOverlay && (
         <PracticeOverlay
@@ -77,7 +78,7 @@ const App = () => {
           selectedTag={selectedTag}
         />
       )}
-    </>
+    </Blueprint.HotkeysProvider>
   );
 };
 
