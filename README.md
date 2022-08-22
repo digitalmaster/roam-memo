@@ -4,7 +4,7 @@ A simple spaced repetition plugin for Roam. It uses the [SuperMemo 2](https://su
 
 ### Installation
 
-Just install through Roam Depot, then go to settings and configure the page tags you want to use for reviews and that's it. Enjoy.
+Just install through Roam Depot, then go to settings and configure the page tags you want to use for reviews (default is `#memo`) and that's it. Enjoy.
 
 ### Features
 
