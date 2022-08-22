@@ -16,10 +16,11 @@ Just install through Roam Depot, then go to settings and configure the page tags
 ## Coming Soon
 
 - Review grade interval previews
-- Migration from roam/sr
 - Skip control
-- Lots of UI Tweaks
+- Breadcrumbs
+- Migration from roam/sr
 - History Explorer
+- Plus more UI tweaks
 
 ## Bug Reports and Feature Requests
 
