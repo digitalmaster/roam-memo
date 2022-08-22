@@ -175,6 +175,11 @@ const HeaderWrapper = styled.div`
   line-height: inherit;
   margin: 0;
   min-height: 50px;
+
+  /* Shortcut way to tag selector color */
+  & .bp3-button {
+    color: #5c7080;
+  }
 `;
 
 const Header = ({
