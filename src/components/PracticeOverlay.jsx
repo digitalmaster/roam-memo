@@ -32,41 +32,82 @@ const PracticeOverlay = ({
     setCurrentIndex(currentIndex + 1);
   };
 
-  return (
-    <Dialog
-      isOpen={isOpen}
-      onClose={onCloseCallback}
-      className="pb-0 bg-white"
-      canEscapeKeyClose={false}
-    >
-      <Header
-        className="bp3-dialog-header"
-        tagsList={tagsList}
-        selectedTag={selectedTag}
-        currentIndex={currentIndex}
-        totalCardsCount={totalCardsCount}
-        onCloseCallback={onCloseCallback}
-        handleMemoTagChange={handleMemoTagChange}
-      />
+  const hotkeys = React.useMemo(
+    () => [
+      {
+        combo: 'space',
+        global: true,
+        label: 'Show Block Children',
+        onKeyDown: () => {
+          if (!showBlockChildren) {
+            setShowBlockChildren(true);
+          } else {
+            onGradeClick({ grade: 5, refUid: currentCardRefUid });
+          }
+        },
+      },
+      {
+        combo: 'F',
+        global: true,
+        label: 'Grade 0',
+        onKeyDown: () => onGradeClick({ grade: 0, refUid: currentCardRefUid }),
+      },
+      {
+        combo: 'H',
+        global: true,
+        label: 'Grade 3',
+        onKeyDown: () => onGradeClick({ grade: 3, refUid: currentCardRefUid }),
+      },
+      {
+        combo: 'G',
+        global: true,
+        label: 'Grade 4',
+        onKeyDown: () => onGradeClick({ grade: 4, refUid: currentCardRefUid }),
+      },
+    ],
+    [showBlockChildren]
+  );
+  const { handleKeyDown, handleKeyUp } = Blueprint.useHotkeys(hotkeys);
 
-      <div className="bp3-dialog-body overflow-y-scroll m-0 p-5">
-        {currentCardRefUid ? (
-          <CardBlock refUid={currentCardRefUid} showBlockChildren={showBlockChildren} />
-        ) : (
-          <div>No cards left to review!</div>
-        )}
-      </div>
-      <Footer
-        refUid={currentCardRefUid}
-        onGradeClick={onGradeClick}
-        hasBlockChildren={hasBlockChildren}
-        setShowBlockChildren={setShowBlockChildren}
-        showBlockChildren={showBlockChildren}
-        isDone={isDone}
-        hasCards={hasCards}
-        onCloseCallback={onCloseCallback}
-      />
-    </Dialog>
+  return (
+    <Blueprint.HotkeysProvider>
+      <Dialog
+        isOpen={isOpen}
+        onClose={onCloseCallback}
+        className="pb-0 bg-white"
+        canEscapeKeyClose={false}
+        onKeyDown={handleKeyDown}
+        onKeyUp={handleKeyUp}
+      >
+        <Header
+          className="bp3-dialog-header"
+          tagsList={tagsList}
+          selectedTag={selectedTag}
+          currentIndex={currentIndex}
+          totalCardsCount={totalCardsCount}
+          onCloseCallback={onCloseCallback}
+          handleMemoTagChange={handleMemoTagChange}
+        />
+
+        <div className="bp3-dialog-body overflow-y-scroll m-0 pt-6 pb-8 pl-4">
+          {currentCardRefUid ? (
+            <CardBlock refUid={currentCardRefUid} showBlockChildren={showBlockChildren} />
+          ) : (
+            <div>No cards left to review!</div>
+          )}
+        </div>
+        <Footer
+          refUid={currentCardRefUid}
+          onGradeClick={onGradeClick}
+          hasBlockChildren={hasBlockChildren}
+          setShowBlockChildren={setShowBlockChildren}
+          showBlockChildren={showBlockChildren}
+          isDone={isDone}
+          hasCards={hasCards}
+          onCloseCallback={onCloseCallback}
+        />
+      </Dialog>
+    </Blueprint.HotkeysProvider>
   );
 };
 
@@ -126,6 +167,7 @@ const HeaderWrapper = styled.div`
   word-wrap: normal;
   line-height: inherit;
   margin: 0;
+  min-height: 50px;
 `;
 
 const Header = ({
@@ -138,7 +180,7 @@ const Header = ({
   className,
 }) => {
   return (
-    <HeaderWrapper className={className}>
+    <HeaderWrapper className={className} tabIndex={0}>
       <div className="flex items-center">
         <Blueprint.Icon icon="box" size={14} />
         <DialogHeading className="mr-1">Review: </DialogHeading>
@@ -194,6 +236,21 @@ const FooterWrapper = styled.div`
   & .bp3-button.bp3-outlined {
     background: white;
   }
+
+  & .bp3-button-text {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+`;
+
+const ButtonTags = styled.span`
+  background-color: rgba(138, 155, 168, 0.1);
+  color: #abbbc9;
+  text-transform: uppercase;
+  font-size: 9px;
+  padding: 1px 2px;
+  border-radius: 2px;
 `;
 
 const Footer = ({
@@ -211,51 +268,71 @@ const Footer = ({
       <div className="flex justify-center items-center h-full">
         <div className="bp3-dialog-footer-actions justify-around w-full">
           {isDone || !hasCards ? (
-            <Blueprint.Button intent="none" onClick={onCloseCallback} outlined small>
+            <Blueprint.Button
+              className="text-base font-medium py-1"
+              intent="none"
+              onClick={onCloseCallback}
+              outlined
+            >
               Close
             </Blueprint.Button>
           ) : hasBlockChildren && !showBlockChildren ? (
             <Blueprint.Button
+              className="text-base font-medium py-1"
               intent="none"
               onClick={() => setShowBlockChildren(true)}
               outlined
-              small
             >
-              Show Answer
+              Show Answer{' '}
+              <span className="ml-2">
+                <ButtonTags>SPACE</ButtonTags>
+              </span>
             </Blueprint.Button>
           ) : (
             <>
               <Blueprint.Button
+                className="text-base font-medium py-1"
                 intent="danger"
                 onClick={() => onGradeClick({ grade: 0, refUid })}
                 outlined
-                small
               >
-                Forgot
+                Forgot{' '}
+                <span className="ml-2">
+                  <ButtonTags>F</ButtonTags>
+                </span>
               </Blueprint.Button>
               <Blueprint.Button
+                className="text-base font-medium py-1"
                 intent="warning"
                 onClick={() => onGradeClick({ grade: 3, refUid })}
                 outlined
-                small
               >
-                Hard
+                Hard{' '}
+                <span className="ml-2">
+                  <ButtonTags>H</ButtonTags>
+                </span>
               </Blueprint.Button>
               <Blueprint.Button
+                className="text-base font-medium py-1"
                 intent="primary"
                 onClick={() => onGradeClick({ grade: 4, refUid })}
                 outlined
-                small
               >
-                Good
+                Good{' '}
+                <span className="ml-2">
+                  <ButtonTags>G</ButtonTags>
+                </span>
               </Blueprint.Button>
               <Blueprint.Button
+                className="text-base font-medium py-1"
                 intent="success"
                 onClick={() => onGradeClick({ grade: 5, refUid })}
                 outlined
-                small
               >
-                Perfect
+                Perfect{' '}
+                <span className="ml-2">
+                  <ButtonTags>SPACE</ButtonTags>
+                </span>
               </Blueprint.Button>
             </>
           )}
