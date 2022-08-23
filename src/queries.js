@@ -65,7 +65,7 @@ const getPluginPageData = async ({ pluginPageTitle, dataBlockName }) => {
   return mapPluginPageData(dataResults);
 };
 
-const getDueCardUids = (data) => {
+export const getDueCardUids = (data) => {
   const results = [];
   if (!Object.keys(data).length) return results;
 
@@ -87,6 +87,7 @@ const generateNewCardProps = () => ({
   eFactor: 2.5,
   interval: 0,
   repetitions: 0,
+  isNew: true,
 });
 
 export const getCardData = async ({ tag, pluginPageTitle }) => {

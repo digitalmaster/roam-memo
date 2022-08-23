@@ -12,6 +12,7 @@ const PracticeOverlay = ({
   selectedTag,
   onCloseCallback,
   practiceCardUids,
+  practiceCardData,
   handleGradeClick,
   handleMemoTagChange,
 }) => {
@@ -20,6 +21,7 @@ const PracticeOverlay = ({
   const isDone = currentIndex > practiceCardUids.length - 1;
   const currentCardRefUid = practiceCardUids[currentIndex];
   const totalCardsCount = practiceCardUids.length;
+  const isNew = practiceCardData[currentCardRefUid].isNew;
 
   const [showBlockChildren, setShowBlockChildren] = React.useState(false);
   const { data: blockInfo } = useBlockInfo({ refUid: currentCardRefUid });
@@ -99,6 +101,7 @@ const PracticeOverlay = ({
         totalCardsCount={totalCardsCount}
         onCloseCallback={onCloseCallback}
         onTagChange={onTagChange}
+        isNew={isNew}
       />
 
       <div className="bp3-dialog-body overflow-y-scroll m-0 pt-6 pb-8 pl-4">
@@ -234,6 +237,7 @@ const Header = ({
   totalCardsCount,
   onTagChange,
   className,
+  isNew,
 }) => {
   return (
     <HeaderWrapper className={className} tabIndex={0}>
@@ -245,6 +249,11 @@ const Header = ({
         </div>
       </div>
       <div className="flex items-center justify-end">
+        {isNew && (
+          <Blueprint.Tag intent="success" minimal>
+            New
+          </Blueprint.Tag>
+        )}
         <span className="text-sm mx-2 font-medium">
           <span>{totalCardsCount > 0 ? currentIndex + 1 : 0}</span>
           <span className="opacity-50 mx-1">/</span>

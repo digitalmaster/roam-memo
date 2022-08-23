@@ -15,6 +15,7 @@ const App = () => {
   const [selectedTag, setSelectedTag] = React.useState();
 
   const [practiceCardUids, setPracticeCardUids] = React.useState([]);
+  const [practiceCardData, setPracticeCardData] = React.useState({});
 
   const init = async ({ launchPractice = false, tag } = {}) => {
     const settings = getSettings();
@@ -26,7 +27,10 @@ const App = () => {
       tag: selectedTag,
       pluginPageTitle: settings.pluginPageTitle,
     });
-    const practiceCardUids = [...Object.keys(newCardsData), ...dueCardsUids];
+
+    // Always practice due cards first
+    // @TODO: Perhaps make this order configurable?
+    const practiceCardUids = [...dueCardsUids, ...Object.keys(newCardsData)];
 
     setCardData({ ...cardsData, ...newCardsData });
     setDisplayCardCount(practiceCardUids.length);
@@ -34,8 +38,8 @@ const App = () => {
     if (launchPractice) {
       setTagsList(tagsList);
       setSelectedTag(selectedTag);
-      // Always practice new cards first
       setPracticeCardUids(practiceCardUids);
+      setPracticeCardData({ ...cardsData, ...newCardsData });
       setShowPracticeOverlay(true);
     }
   };
@@ -70,6 +74,7 @@ const App = () => {
         <PracticeOverlay
           isOpen={true}
           practiceCardUids={practiceCardUids}
+          practiceCardData={practiceCardData}
           handleGradeClick={handleGradeClick}
           onCloseCallback={onClosePracticeOverlayCallback}
           handleMemoTagChange={handleMemoTagChange}
