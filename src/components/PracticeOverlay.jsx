@@ -5,6 +5,7 @@ import styled from '@emotion/styled';
 import useBlockInfo from '~/hooks/useBlockInfo.jsx';
 import * as domUtils from '~/utils/dom';
 import * as asyncUtils from '~/utils/async';
+import mediaQueries from '~/utils/mediaQueries';
 
 const PracticeOverlay = ({
   isOpen,
@@ -167,7 +168,15 @@ const ContentWrapper = styled.div`
 
 const Dialog = styled(Blueprint.Dialog)`
   max-height: 80vh;
-  width: 60vw;
+  width: 90vw;
+
+  ${mediaQueries.lg} {
+    width: 80vw;
+  }
+
+  ${mediaQueries.xl} {
+    width: 70vw;
+  }
 `;
 
 const HeaderWrapper = styled.div`
