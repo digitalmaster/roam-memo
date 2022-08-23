@@ -13,7 +13,7 @@ const PracticeOverlay = ({
   selectedTag,
   onCloseCallback,
   practiceCardUids,
-  practiceCardData,
+  practiceCardsData,
   handleGradeClick,
   handleMemoTagChange,
 }) => {
@@ -22,7 +22,7 @@ const PracticeOverlay = ({
   const isDone = currentIndex > practiceCardUids.length - 1;
   const currentCardRefUid = practiceCardUids[currentIndex];
   const totalCardsCount = practiceCardUids.length;
-  const isNew = practiceCardData[currentCardRefUid].isNew;
+  const isNew = practiceCardsData[currentCardRefUid]?.isNew;
 
   const [showBlockChildren, setShowBlockChildren] = React.useState(false);
   const { data: blockInfo } = useBlockInfo({ refUid: currentCardRefUid });
@@ -105,13 +105,13 @@ const PracticeOverlay = ({
         isNew={isNew}
       />
 
-      <div className="bp3-dialog-body overflow-y-scroll m-0 pt-6 pb-8 pl-4">
+      <DialogBody className="bp3-dialog-body overflow-y-scroll m-0 pt-6 pb-8 pl-4">
         {currentCardRefUid ? (
           <CardBlock refUid={currentCardRefUid} showBlockChildren={showBlockChildren} />
         ) : (
           <div>No cards left to review!</div>
         )}
-      </div>
+      </DialogBody>
       <Footer
         refUid={currentCardRefUid}
         onGradeClick={onGradeClick}
@@ -177,6 +177,10 @@ const Dialog = styled(Blueprint.Dialog)`
   ${mediaQueries.xl} {
     width: 70vw;
   }
+`;
+
+const DialogBody = styled.div`
+  min-height: 200px;
 `;
 
 const HeaderWrapper = styled.div`

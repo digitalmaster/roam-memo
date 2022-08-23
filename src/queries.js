@@ -90,16 +90,28 @@ const generateNewCardProps = () => ({
   isNew: true,
 });
 
-export const getCardData = async ({ tag, pluginPageTitle }) => {
+export const getPracticeCardData = async ({ selectedTag, pluginPageTitle }) => {
   const dataBlockName = 'data';
-  const cardsData = await getPluginPageData({ pluginPageTitle, dataBlockName });
+  const pluginPageData = await getPluginPageData({ pluginPageTitle, dataBlockName });
+
+  const selectedTagReferencesIds = await getPageReferenceIds(selectedTag);
+  const cardsData = { ...pluginPageData };
+  const newCardsUids = [];
+
+  // Filter out due cards that aren't references to the currently selected tag
+  // @TODO: we could probably do this at getPluginPageData query for a
+  // performance boost
+  const dueCardsUids = getDueCardUids(cardsData).filter(
+    (dueCardUid) => selectedTagReferencesIds.indexOf(dueCardUid) > -1
+  );
 
   // Create new cards for all referenced cards with no data yet
-  const referencesIds = await getPageReferenceIds(tag);
-  const newCardsData = {};
-  referencesIds.forEach((referenceId) => {
-    if (!cardsData[referenceId]) {
-      newCardsData[referenceId] = {
+  selectedTagReferencesIds.forEach((referenceId) => {
+    if (!pluginPageData[referenceId]) {
+      // New
+      newCardsUids.push(referenceId);
+
+      cardsData[referenceId] = {
         ...generateNewCardProps(),
       };
     }
@@ -107,8 +119,8 @@ export const getCardData = async ({ tag, pluginPageTitle }) => {
 
   return {
     cardsData,
-    newCardsData,
-    dueCardsUids: getDueCardUids(cardsData),
+    newCardsUids,
+    dueCardsUids,
   };
 };
 

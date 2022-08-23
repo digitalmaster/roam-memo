@@ -1,9 +1,9 @@
 import * as asyncUtils from '~/utils/async';
 
-const settingsPanelConfig = ({ initFn }) => {
+const settingsPanelConfig = ({ fetchPracticeData }) => {
   const syncFn = async (e) => {
     await extensionAPI.settings.set('tagsList', e.target.value);
-    initFn();
+    fetchPracticeData();
   };
   const processChange = asyncUtils.debounce((e) => syncFn(e));
   return {
