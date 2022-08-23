@@ -5,6 +5,7 @@ import styled from '@emotion/styled';
 import useBlockInfo from '~/hooks/useBlockInfo.jsx';
 import * as domUtils from '~/utils/dom';
 import * as asyncUtils from '~/utils/async';
+import * as dateUtils from '~/utils/date';
 import mediaQueries from '~/utils/mediaQueries';
 
 const PracticeOverlay = ({
@@ -17,12 +18,15 @@ const PracticeOverlay = ({
   handleGradeClick,
   handleMemoTagChange,
 }) => {
-  const hasCards = practiceCardUids.length > 0;
   const [currentIndex, setCurrentIndex] = React.useState(0);
+  const totalCardsCount = practiceCardUids.length;
+  const hasCards = totalCardsCount > 0;
   const isDone = currentIndex > practiceCardUids.length - 1;
   const currentCardRefUid = practiceCardUids[currentIndex];
-  const totalCardsCount = practiceCardUids.length;
-  const isNew = practiceCardsData[currentCardRefUid]?.isNew;
+  const currentCardData = practiceCardsData[currentCardRefUid];
+  const isNew = currentCardData.isNew;
+  const isDueToday = dateUtils.daysBetween(currentCardData.nextDueDate, new Date()) === 0;
+  const status = isNew ? 'new' : isDueToday ? 'dueToday' : 'pastDue';
 
   const [showBlockChildren, setShowBlockChildren] = React.useState(false);
   const { data: blockInfo } = useBlockInfo({ refUid: currentCardRefUid });
@@ -102,7 +106,8 @@ const PracticeOverlay = ({
         totalCardsCount={totalCardsCount}
         onCloseCallback={onCloseCallback}
         onTagChange={onTagChange}
-        isNew={isNew}
+        status={status}
+        nextDueDate={currentCardData.nextDueDate}
       />
 
       <DialogBody className="bp3-dialog-body overflow-y-scroll m-0 pt-6 pb-8 pl-4">
@@ -242,6 +247,34 @@ const TagSelectorItem = ({ text, onClick, active, key }) => {
   );
 };
 
+const StatusBadge = ({ status, nextDueDate }) => {
+  switch (status) {
+    case 'new':
+      return (
+        <Blueprint.Tag intent="success" minimal>
+          New
+        </Blueprint.Tag>
+      );
+
+    case 'dueToday':
+      return (
+        <Blueprint.Tag intent="primary" minimal>
+          Due Today
+        </Blueprint.Tag>
+      );
+
+    case 'pastDue':
+      const timeAgo = dateUtils.fromNow(nextDueDate);
+      return (
+        <Blueprint.Tag intent="warning" title={`Due ${timeAgo}`} minimal>
+          Past Due
+        </Blueprint.Tag>
+      );
+    default:
+      break;
+  }
+};
+
 const Header = ({
   tagsList,
   selectedTag,
@@ -250,7 +283,8 @@ const Header = ({
   totalCardsCount,
   onTagChange,
   className,
-  isNew,
+  status,
+  nextDueDate,
 }) => {
   return (
     <HeaderWrapper className={className} tabIndex={0}>
@@ -262,11 +296,7 @@ const Header = ({
         </div>
       </div>
       <div className="flex items-center justify-end">
-        {isNew && (
-          <Blueprint.Tag intent="success" minimal>
-            New
-          </Blueprint.Tag>
-        )}
+        <StatusBadge status={status} nextDueDate={nextDueDate} />
         <span className="text-sm mx-2 font-medium">
           <span>{totalCardsCount > 0 ? currentIndex + 1 : 0}</span>
           <span className="opacity-50 mx-1">/</span>

@@ -43,3 +43,28 @@ describe('subtractDays', () => {
     expect(lastMonth).toEqual(lastMonthResult);
   });
 });
+describe('daysBetween', () => {
+  test('Same time', () => {
+    const dayInMs = 1000 * 60 * 60 * 24;
+    const today = new Date();
+
+    expect(dateUtils.daysBetween(today, today)).toEqual(0);
+  });
+
+  test('Same day', () => {
+    const hourInMs = 1000 * 60 * 60;
+    const dayInMs = hourInMs * 24;
+    const today = new Date();
+    const earlierToday = new Date(today.getTime() - hourInMs * 13);
+
+    expect(dateUtils.daysBetween(today, earlierToday)).toEqual(0);
+  });
+
+  test('7 days ', () => {
+    const dayInMs = 1000 * 60 * 60 * 24;
+    const today = new Date();
+    const lastWeek = new Date(new Date().getTime() - dayInMs * 7);
+
+    expect(dateUtils.daysBetween(lastWeek, today)).toEqual(7);
+  });
+});

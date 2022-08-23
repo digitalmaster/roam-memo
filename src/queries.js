@@ -44,7 +44,7 @@ const mapPluginPageData = (queryResultsData) =>
       return acc;
     }, {}) || {};
 
-const getPluginPageData = async ({ pluginPageTitle, dataBlockName }) => {
+export const getPluginPageData = async ({ pluginPageTitle, dataBlockName }) => {
   const q = `[
     :find (pull ?pluginPageChildren [
             :block/string
@@ -58,11 +58,11 @@ const getPluginPageData = async ({ pluginPageTitle, dataBlockName }) => {
       [?pluginPageChildren :block/string ?dataBlockName]
     ]`;
 
-  const dataResults = await window.roamAlphaAPI.q(q, pluginPageTitle, dataBlockName);
+  const queryResultsData = await window.roamAlphaAPI.q(q, pluginPageTitle, dataBlockName);
 
-  if (!dataResults.length) return {};
+  if (!queryResultsData.length) return {};
 
-  return mapPluginPageData(dataResults);
+  return mapPluginPageData(queryResultsData);
 };
 
 export const getDueCardUids = (data) => {
