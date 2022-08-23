@@ -67,7 +67,7 @@ const getPluginPageData = async ({ pluginPageTitle, dataBlockName }) => {
 
 const getDueCardUids = (data) => {
   const results = [];
-  if (!data.length) return results;
+  if (!Object.keys(data).length) return results;
 
   const now = new Date();
   Object.keys(data).forEach((cardUid) => {
