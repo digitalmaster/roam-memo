@@ -25,16 +25,6 @@ const settingsPanelConfig = ({ setSettings, defaultSettings }) => {
           onChange: processChange,
         },
       },
-      {
-        id: 'import-roam-sr-data',
-        name: 'Import Roam/Sr Data',
-        description: 'Import Roam Sr Old data',
-        action: {
-          type: 'button',
-          onClick: importRoamSrOldData,
-          content: 'Button',
-        },
-      },
     ],
   };
 };
