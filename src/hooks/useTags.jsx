@@ -1,10 +1,17 @@
 import * as React from 'react';
-import getSettings from '~/getSettings';
 
-const useTags = () => {
-  const settings = getSettings();
-  const tagsList = settings.tagsList.split(',').map((tag) => tag.trim());
-  const [selectedTag, setSelectedTag] = React.useState(tagsList[0]);
+const useTags = ({ tagsListString }) => {
+  const [tagsList, setTagsList] = React.useState([]);
+  const [selectedTag, setSelectedTag] = React.useState();
+
+  React.useEffect(() => {
+    const tagsList = tagsListString.split(',').map((tag) => tag.trim());
+    setTagsList(tagsList);
+  }, [tagsListString, setTagsList]);
+
+  React.useEffect(() => {
+    setSelectedTag(tagsList[0]);
+  }, [tagsList]);
 
   return {
     selectedTag,

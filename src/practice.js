@@ -2,7 +2,7 @@ import { supermemo } from 'supermemo';
 import { savePracticeData } from '~/queries';
 import * as dateUtils from '~/utils/date';
 
-const practice = async ({ interval, repetitions, eFactor, grade, refUid }) => {
+const practice = async ({ interval, repetitions, eFactor, grade, refUid, pluginPageTitle }) => {
   const supermemoInput = {
     interval,
     repetition: repetitions,
@@ -15,6 +15,7 @@ const practice = async ({ interval, repetitions, eFactor, grade, refUid }) => {
 
   await savePracticeData({
     refUid: refUid,
+    pluginPageTitle,
     grade,
     repetitions: supermemoResults.repetition,
     interval: supermemoResults.interval,

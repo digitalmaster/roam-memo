@@ -1,23 +1,38 @@
 import * as asyncUtils from '~/utils/async';
 
-const settingsPanelConfig = ({ fetchPracticeData }) => {
+const settingsPanelConfig = ({ setSettings, defaultSettings }) => {
+
   const syncFn = async (e) => {
-    await extensionAPI.settings.set('tagsList', e.target.value);
-    fetchPracticeData();
+    const tagsListString = e.target.value.trim() || defaultSettings.tagsListString;
+    extensionAPI.settings.set('tagsListString', tagsListString);
+    setSettings((currentSettings) => {
+      return { ...currentSettings, tagsListString };
+    });
   };
+
   const processChange = asyncUtils.debounce((e) => syncFn(e));
   return {
     tabTitle: 'Memo',
     settings: [
       {
-        id: 'tagsList',
+        id: 'tagsListString',
         name: 'Tag Pages',
         description:
           'Separate multiple with commas. First one is the default page. Example: "memo, sr, 🐘, french words, fun facts"',
         action: {
           type: 'input',
-          placeholder: 'memo, sr, 🐘 Review',
+          placeholder: 'memo',
           onChange: processChange,
+        },
+      },
+      {
+        id: 'import-roam-sr-data',
+        name: 'Import Roam/Sr Data',
+        description: 'Import Roam Sr Old data',
+        action: {
+          type: 'button',
+          onClick: importRoamSrOldData,
+          content: 'Button',
         },
       },
     ],

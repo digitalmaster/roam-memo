@@ -1,5 +1,4 @@
 import { getStringBetween, parseConfigString, parseRoamDateString } from '~/utils/string';
-import getSettings from '~/getSettings';
 import * as stringUtils from '~/utils/string';
 import * as dateUtils from '~/utils/date';
 import * as asyncUtils from '~/utils/async';
@@ -306,9 +305,9 @@ const getEmojiFromGrade = (grade) => {
   }
 };
 
-export const savePracticeData = async ({ refUid, ...data }) => {
-  await getOrCreatePage(getSettings().pluginPageTitle);
-  const dataBlockUid = await getOrCreateBlockOnPage(getSettings().pluginPageTitle, 'data', -1, {
+export const savePracticeData = async ({ refUid, pluginPageTitle, ...data }) => {
+  await getOrCreatePage(pluginPageTitle);
+  const dataBlockUid = await getOrCreateBlockOnPage(pluginPageTitle, 'data', -1, {
     open: false,
     heading: 3,
   });

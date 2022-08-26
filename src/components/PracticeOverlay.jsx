@@ -24,9 +24,18 @@ const PracticeOverlay = ({
   const isDone = currentIndex > practiceCardUids.length - 1;
   const currentCardRefUid = practiceCardUids[currentIndex];
   const currentCardData = practiceCardsData[currentCardRefUid];
-  const isNew = currentCardData.isNew;
-  const isDueToday = dateUtils.daysBetween(currentCardData.nextDueDate, new Date()) === 0;
-  const status = isNew ? 'new' : isDueToday ? 'dueToday' : 'pastDue';
+
+  const isNew = currentCardData?.isNew;
+  const nextDueDate = currentCardData?.nextDueDate;
+
+  const isDueToday = dateUtils.daysBetween(nextDueDate, new Date()) === 0;
+  const status = isNew
+    ? 'new'
+    : isDueToday
+    ? 'dueToday'
+    : currentCardData?.nextDueDate
+    ? 'pastDue'
+    : null;
 
   const [showBlockChildren, setShowBlockChildren] = React.useState(false);
   const { data: blockInfo } = useBlockInfo({ refUid: currentCardRefUid });
@@ -107,7 +116,7 @@ const PracticeOverlay = ({
         onCloseCallback={onCloseCallback}
         onTagChange={onTagChange}
         status={status}
-        nextDueDate={currentCardData.nextDueDate}
+        nextDueDate={nextDueDate}
       />
 
       <DialogBody className="bp3-dialog-body overflow-y-scroll m-0 pt-6 pb-8 pl-4">
@@ -248,6 +257,8 @@ const TagSelectorItem = ({ text, onClick, active, key }) => {
 };
 
 const StatusBadge = ({ status, nextDueDate }) => {
+  console.log('DEBUG:: ~ file: PracticeOverlay.jsx ~ line 253 ~ status', status);
+
   switch (status) {
     case 'new':
       return (
@@ -263,15 +274,16 @@ const StatusBadge = ({ status, nextDueDate }) => {
         </Blueprint.Tag>
       );
 
-    case 'pastDue':
+    case 'pastDue': {
       const timeAgo = dateUtils.fromNow(nextDueDate);
       return (
         <Blueprint.Tag intent="warning" title={`Due ${timeAgo}`} minimal>
           Past Due
         </Blueprint.Tag>
       );
+    }
     default:
-      break;
+      return null;
   }
 };
 

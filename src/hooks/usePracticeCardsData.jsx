@@ -1,8 +1,7 @@
 import * as React from 'react';
-import getSettings from '~/getSettings';
 import * as queries from '~/queries.js';
 
-const usePracticeCardsData = ({ selectedTag }) => {
+const usePracticeCardsData = ({ selectedTag, pluginPageTitle }) => {
   const [practiceCardsUids, setPracticeCardsUids] = React.useState([]);
   const [practiceCardsData, setPracticeCardsData] = React.useState({});
   const [refetchTrigger, setRefetchTrigger] = React.useState(false);
@@ -11,7 +10,7 @@ const usePracticeCardsData = ({ selectedTag }) => {
     (async () => {
       const { cardsData, newCardsUids, dueCardsUids } = await queries.getPracticeCardData({
         selectedTag,
-        pluginPageTitle: getSettings().pluginPageTitle,
+        pluginPageTitle,
       });
 
       // Always practice due cards first
@@ -19,7 +18,7 @@ const usePracticeCardsData = ({ selectedTag }) => {
       setPracticeCardsData(cardsData);
       setPracticeCardsUids([...dueCardsUids, ...newCardsUids]);
     })();
-  }, [selectedTag, refetchTrigger]);
+  }, [selectedTag, pluginPageTitle, refetchTrigger]);
 
   return {
     practiceCardsUids,

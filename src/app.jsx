@@ -1,28 +1,27 @@
 import * as React from 'react';
 import * as Blueprint from '@blueprintjs/core';
-import settingsPanelConfig from '~/settingsPanelConfig.js';
 import PracticeOverlay from '~/components/PracticeOverlay.jsx';
 import SidePandelWidget from '~/components/SidePandelWidget.jsx';
 import practice from '~/practice.js';
 import usePracticeCardsData from '~/hooks/usePracticeCardsData.jsx';
 import useTags from '~/hooks/useTags.jsx';
+import useSettings from '~/hooks/useSettings';
 
 const App = () => {
   const [showPracticeOverlay, setShowPracticeOverlay] = React.useState(false);
-  const { selectedTag, setSelectedTag, tagsList } = useTags();
+  const { tagsListString, pluginPageTitle } = useSettings();
+
+  const { selectedTag, setSelectedTag, tagsList } = useTags({ tagsListString });
 
   const { practiceCardsUids, practiceCardsData, displayCardCount, fetchPracticeData } =
     usePracticeCardsData({
       selectedTag,
+      pluginPageTitle,
     });
-
-  React.useEffect(() => {
-    extensionAPI.settings.panel.create(settingsPanelConfig({ fetchPracticeData }));
-  }, []);
 
   const handleGradeClick = async ({ grade, refUid }) => {
     const cardData = practiceCardsData[refUid];
-    await practice({ ...cardData, grade, refUid });
+    await practice({ ...cardData, grade, refUid, pluginPageTitle });
   };
 
   const handlePracticeClick = () => {
