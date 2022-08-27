@@ -215,6 +215,7 @@ const getChildBlock = (parent_uid, block) => {
   }
 };
 
+// eslint-disable-next-line
 const getChildrenBlocks = (parent_uid) => {
   // returns the uids of children blocks underneath a specific parent block
   // _parent_uid_: the uid of the parent block.
@@ -243,12 +244,14 @@ const createChildBlock = async (parent_uid, block, order, blockProps = {}) => {
   if (!order) {
     order = 0;
   }
+
+  const uid = window.roamAlphaAPI.util.generateUID();
   await window.roamAlphaAPI.createBlock({
     location: { 'parent-uid': parent_uid, order: order },
-    block: { string: block, ...blockProps },
+    block: { string: block, uid, ...blockProps },
   });
 
-  return getChildBlock(parent_uid, block);
+  return uid;
 };
 
 const createBlockOnPage = async (page, block, order, blockProps) => {
@@ -314,11 +317,14 @@ export const savePracticeData = async ({ refUid, pluginPageTitle, ...data }) => 
   // top one
   const todayRoamDateString = stringUtils.dateToRoamDateString(new Date());
   const emoji = getEmojiFromGrade(data.grade);
-  await createChildBlock(cardDataBlockUid, `[[${todayRoamDateString}]] ${emoji}`, 0, {
-    open: false,
-  });
-  const updatedCardBlocks = getChildrenBlocks(cardDataBlockUid);
-  const newDataBlockId = updatedCardBlocks.find((block) => block.order === 0).uid;
+  const newDataBlockId = await createChildBlock(
+    cardDataBlockUid,
+    `[[${todayRoamDateString}]] ${emoji}`,
+    0,
+    {
+      open: false,
+    }
+  );
 
   // Insert new block info
   const nextDueDate = dateUtils.addDays(new Date(), data.interval);

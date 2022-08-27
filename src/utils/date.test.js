@@ -45,7 +45,6 @@ describe('subtractDays', () => {
 });
 describe('daysBetween', () => {
   test('Same time', () => {
-    const dayInMs = 1000 * 60 * 60 * 24;
     const today = new Date();
 
     expect(dateUtils.daysBetween(today, today)).toEqual(0);
@@ -53,7 +52,6 @@ describe('daysBetween', () => {
 
   test('Same day', () => {
     const hourInMs = 1000 * 60 * 60;
-    const dayInMs = hourInMs * 24;
     const today = new Date();
     const earlierToday = new Date(today.getTime() - hourInMs * 13);
 
