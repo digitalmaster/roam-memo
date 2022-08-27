@@ -12,7 +12,7 @@ const getPageReferenceIds = async (pageTitle) => {
         [?tagRefs :block/uid ?refUid]
     ]`;
 
-  const results = (await window.roamAlphaAPI.q(q, pageTitle)).map((arr) => arr[0]);
+  const results = window.roamAlphaAPI.q(q, pageTitle).map((arr) => arr[0]);
 
   return results;
 };
