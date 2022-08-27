@@ -324,7 +324,7 @@ export const savePracticeData = async ({ refUid, pluginPageTitle, ...data }) => 
   // top one
   const todayRoamDateString = stringUtils.dateToRoamDateString(new Date());
   const emoji = getEmojiFromGrade(data.grade);
-  await createChildBlock(cardDataBlockUid, `[[${todayRoamDateString}}]] ${emoji}`, 0, {
+  await createChildBlock(cardDataBlockUid, `[[${todayRoamDateString}]] ${emoji}`, 0, {
     open: false,
   });
   const updatedCardBlocks = getChildrenBlocks(cardDataBlockUid);
