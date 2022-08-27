@@ -257,8 +257,6 @@ const TagSelectorItem = ({ text, onClick, active, key }) => {
 };
 
 const StatusBadge = ({ status, nextDueDate }) => {
-  console.log('DEBUG:: ~ file: PracticeOverlay.jsx ~ line 253 ~ status', status);
-
   switch (status) {
     case 'new':
       return (
