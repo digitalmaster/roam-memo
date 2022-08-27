@@ -1,10 +1,9 @@
 import * as asyncUtils from '~/utils/async';
 
 const settingsPanelConfig = ({ setSettings, defaultSettings }) => {
-
   const syncFn = async (e) => {
     const tagsListString = e.target.value.trim() || defaultSettings.tagsListString;
-    extensionAPI.settings.set('tagsListString', tagsListString);
+    window.roamMemo.extensionAPI.settings.set('tagsListString', tagsListString);
     setSettings((currentSettings) => {
       return { ...currentSettings, tagsListString };
     });
