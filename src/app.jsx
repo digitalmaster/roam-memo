@@ -20,6 +20,8 @@ const App = () => {
     });
 
   const handleGradeClick = async ({ grade, refUid }) => {
+    if (!refUid) return;
+
     const cardData = practiceCardsData[refUid];
     await practice({ ...cardData, grade, refUid, pluginPageTitle });
   };

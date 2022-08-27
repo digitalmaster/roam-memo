@@ -22,6 +22,7 @@ const PracticeOverlay = ({
   const totalCardsCount = practiceCardUids.length;
   const hasCards = totalCardsCount > 0;
   const isDone = currentIndex > practiceCardUids.length - 1;
+
   const currentCardRefUid = practiceCardUids[currentIndex];
   const currentCardData = practiceCardsData[currentCardRefUid];
 
@@ -54,11 +55,13 @@ const PracticeOverlay = ({
 
   const onGradeClick = React.useCallback(
     (props) => {
+      if (isDone) return;
+
       handleGradeClick(props);
       setShowBlockChildren(false);
       setCurrentIndex(currentIndex + 1);
     },
-    [currentIndex, handleGradeClick]
+    [currentIndex, handleGradeClick, isDone]
   );
 
   const hotkeys = React.useMemo(
