@@ -1,7 +1,6 @@
 import { getStringBetween, parseConfigString, parseRoamDateString } from '~/utils/string';
 import * as stringUtils from '~/utils/string';
 import * as dateUtils from '~/utils/date';
-import * as asyncUtils from '~/utils/async';
 
 const getPageReferenceIds = async (pageTitle) => {
   const q = `[
@@ -167,13 +166,8 @@ const getPage = (page) => {
 const getOrCreatePage = async (page) => {
   // returns the uid of a specific page in your graph, creating it first if it does not already exist.
   // _page_: the title of the page.
-  roamAlphaAPI.createPage({ page: { title: page } });
-  let result;
-  while (!result) {
-    await asyncUtils.sleep(25);
-    result = getPage(page);
-  }
-  return result;
+  await roamAlphaAPI.createPage({ page: { title: page } });
+  return getPage(page);
 };
 
 const getBlockOnPage = (page, block) => {
@@ -253,12 +247,8 @@ const createChildBlock = async (parent_uid, block, order, blockProps = {}) => {
     location: { 'parent-uid': parent_uid, order: order },
     block: { string: block, ...blockProps },
   });
-  let block_uid;
-  while (!block_uid) {
-    await asyncUtils.sleep(25);
-    block_uid = getChildBlock(parent_uid, block);
-  }
-  return block_uid;
+
+  return getChildBlock(parent_uid, block);
 };
 
 const createBlockOnPage = async (page, block, order, blockProps) => {
