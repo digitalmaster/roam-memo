@@ -119,6 +119,7 @@ const PracticeOverlay = ({
         onCloseCallback={onCloseCallback}
         onTagChange={onTagChange}
         status={status}
+        isDone={isDone}
         nextDueDate={nextDueDate}
       />
 
@@ -297,6 +298,7 @@ const Header = ({
   onTagChange,
   className,
   status,
+  isDone,
   nextDueDate,
 }) => {
   return (
@@ -311,7 +313,7 @@ const Header = ({
       <div className="flex items-center justify-end">
         <StatusBadge status={status} nextDueDate={nextDueDate} />
         <span className="text-sm mx-2 font-medium">
-          <span>{totalCardsCount > 0 ? currentIndex + 1 : 0}</span>
+          <span>{totalCardsCount === 0 ? 0 : isDone ? currentIndex : currentIndex + 1}</span>
           <span className="opacity-50 mx-1">/</span>
           <span className="opacity-50">{totalCardsCount}</span>
         </span>
