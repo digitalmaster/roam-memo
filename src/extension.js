@@ -18,7 +18,9 @@ const createAndRenderContainer = () => {
 function onload({ extensionAPI }) {
   // This just makes life easier (instead of having to pipe it down everywhere I
   // want to dynamically fetch the latest config)
-  window.extensionAPI = extensionAPI;
+  window.roamMemo = {
+    extensionAPI,
+  };
 
   const container = createAndRenderContainer();
   ReactDOM.render(<App />, container);

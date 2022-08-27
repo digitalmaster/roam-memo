@@ -14,11 +14,13 @@ const useSettings = () => {
 
   React.useEffect(() => {
     // Init config panel
-    extensionAPI.settings.panel.create(settingsPanelConfig({ setSettings, defaultSettings }));
+    window.roamMemo.extensionAPI.settings.panel.create(
+      settingsPanelConfig({ setSettings, defaultSettings })
+    );
   }, [setSettings]);
 
   React.useEffect(() => {
-    const allSettings = window.extensionAPI.settings.getAll() || {};
+    const allSettings = window.roamMemo.extensionAPI.settings.getAll() || {};
 
     setSettings((currentSettings) => ({ ...currentSettings, ...allSettings }));
   }, [setSettings]);
