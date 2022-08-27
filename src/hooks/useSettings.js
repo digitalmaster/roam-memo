@@ -13,10 +13,17 @@ const useSettings = () => {
   const [settings, setSettings] = React.useState(defaultSettings);
 
   React.useEffect(() => {
+    if (!settings.tagsListString.trim()) {
+      setSettings((currentSettings) => ({
+        ...currentSettings,
+        tagsListString: defaultSettings.tagsListString,
+      }));
+    }
+  }, [settings]);
+
+  React.useEffect(() => {
     // Init config panel
-    window.roamMemo.extensionAPI.settings.panel.create(
-      settingsPanelConfig({ setSettings, defaultSettings })
-    );
+    window.roamMemo.extensionAPI.settings.panel.create(settingsPanelConfig({ setSettings }));
   }, [setSettings]);
 
   React.useEffect(() => {
