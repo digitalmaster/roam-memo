@@ -310,11 +310,6 @@ export const savePracticeData = async ({ refUid, pluginPageTitle, ...data }) => 
     open: false,
   });
 
-  // Create new date child Note: Not using returned block id here because it
-  // will be wrong if we practice the same question on the same day. This is
-  // because the create createBlock() API doesn't return a refId for the created
-  // block yet. As a workaround, i'm refetching children again and grabing the
-  // top one
   const todayRoamDateString = stringUtils.dateToRoamDateString(new Date());
   const emoji = getEmojiFromGrade(data.grade);
   const newDataBlockId = await createChildBlock(
