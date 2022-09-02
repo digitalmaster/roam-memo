@@ -3,7 +3,8 @@ import settingsPanelConfig from '~/settingsPanelConfig';
 
 const defaultSettings = {
   tagsListString: 'memo',
-  pluginPageTitle: 'roam/memo',
+  // pluginPageTitle: 'roam/memo',
+  pluginPageTitle: 'roam/memo/debug',
 };
 
 // @TODO: Refactor/Hoist this so we can call useSettings in multiple places
@@ -23,8 +24,10 @@ const useSettings = () => {
 
   React.useEffect(() => {
     // Init config panel
-    window.roamMemo.extensionAPI.settings.panel.create(settingsPanelConfig({ setSettings }));
-  }, [setSettings]);
+    window.roamMemo.extensionAPI.settings.panel.create(
+      settingsPanelConfig({ setSettings, pluginPageTitle: settings.pluginPageTitle })
+    );
+  }, [setSettings, settings.pluginPageTitle]);
 
   React.useEffect(() => {
     const allSettings = window.roamMemo.extensionAPI.settings.getAll() || {};

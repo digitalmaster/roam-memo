@@ -42,20 +42,21 @@ const mapPluginPageData = (queryResultsData) =>
       return acc;
     }, {}) || {};
 
-export const getPluginPageData = async ({ pluginPageTitle, dataBlockName }) => {
+export const getPluginPageData = async ({ pluginPageTitle }) => {
   const q = `[
     :find (pull ?pluginPageChildren [
-            :block/string
-            :block/children
-            :block/order
-            {:block/children ...}])
-    :in $ ?pageTitle ?dataBlockName
-    :where
+      :block/string
+      :block/children
+      :block/order
+      {:block/children ...}])
+      :in $ ?pageTitle ?dataBlockName
+      :where
       [?page :node/title ?pageTitle]
       [?page :block/children ?pluginPageChildren]
       [?pluginPageChildren :block/string ?dataBlockName]
     ]`;
 
+  const dataBlockName = 'data';
   const queryResultsData = await window.roamAlphaAPI.q(q, pluginPageTitle, dataBlockName);
 
   if (!queryResultsData.length) return {};
@@ -80,8 +81,8 @@ export const getDueCardUids = (data) => {
   return results;
 };
 
-const generateNewCardProps = () => ({
-  dateCreated: new Date(),
+export const generateNewCardProps = ({ dateCreated } = {}) => ({
+  dateCreated: dateCreated || new Date(),
   eFactor: 2.5,
   interval: 0,
   repetitions: 0,
@@ -89,8 +90,7 @@ const generateNewCardProps = () => ({
 });
 
 export const getPracticeCardData = async ({ selectedTag, pluginPageTitle }) => {
-  const dataBlockName = 'data';
-  const pluginPageData = await getPluginPageData({ pluginPageTitle, dataBlockName });
+  const pluginPageData = await getPluginPageData({ pluginPageTitle });
 
   const selectedTagReferencesIds = await getPageReferenceIds(selectedTag);
   const cardsData = { ...pluginPageData };
@@ -333,7 +333,7 @@ const getEmojiFromGrade = (grade) => {
   }
 };
 
-export const savePracticeData = async ({ refUid, pluginPageTitle, ...data }) => {
+export const savePracticeData = async ({ refUid, pluginPageTitle, dateCreated, ...data }) => {
   await getOrCreatePage(pluginPageTitle);
   const dataBlockUid = await getOrCreateBlockOnPage(pluginPageTitle, 'data', -1, {
     open: false,
@@ -345,11 +345,11 @@ export const savePracticeData = async ({ refUid, pluginPageTitle, ...data }) => 
     open: false,
   });
 
-  const todayRoamDateString = stringUtils.dateToRoamDateString(new Date());
+  const dateCreatedRoamDateString = stringUtils.dateToRoamDateString(dateCreated || new Date());
   const emoji = getEmojiFromGrade(data.grade);
   const newDataBlockId = await createChildBlock(
     cardDataBlockUid,
-    `[[${todayRoamDateString}]] ${emoji}`,
+    `[[${dateCreatedRoamDateString}]] ${emoji}`,
     0,
     {
       open: false,
@@ -366,4 +366,91 @@ export const savePracticeData = async ({ refUid, pluginPageTitle, ...data }) => 
 
     await createChildBlock(newDataBlockId, `${key}:: ${value}`, -1);
   }
+};
+
+const oldRoamSrGradeMap = {
+  ['r/1']: {
+    oldDisplayButtonText: 'Again',
+    memoDisplayButtonText: 'Forgot',
+    memoGrade: 0,
+  },
+  ['r/2']: {
+    oldDisplayButtonText: 'Hard',
+    memoDisplayButtonText: 'Hard',
+    memoGrade: 3,
+  },
+  ['r/3']: {
+    oldDisplayButtonText: 'Good',
+    memoDisplayButtonText: 'Good',
+    memoGrade: 4,
+  },
+  ['r/4']: {
+    oldDisplayButtonText: 'Easy',
+    memoDisplayButtonText: 'Perfect',
+    memoGrade: 5,
+  },
+};
+
+const mapOldRoamSrPracticeData = (data, pageTitle) => {
+  return data.reduce((acc, [result]) => {
+    const dateString = result.title;
+
+    result.children
+      // Filter out unrelated rows (could probably do this in query but ya 🤷🏽‍♂️)
+      .filter((row) => row.string === `[[${pageTitle}]]`)
+      // Filter out rows with no records
+      .filter((row) => !!row.children)
+      .forEach(({ children: recordList }) => {
+        for (const { string: record } of recordList) {
+          const values = record.split(' ');
+          // Skip all invalid records: [uid, gradeString]
+          if (values.length !== 2) continue;
+
+          const [refUidString, gradeString] = values;
+
+          // Skip empty string values 🤷🏽
+          if (!refUidString || !gradeString) continue;
+
+          const refUid = getStringBetween(refUidString, '((', '))');
+          if (!acc[refUid]) acc[refUid] = [];
+          acc[refUid].push({
+            refUid,
+            grade: oldRoamSrGradeMap[getStringBetween(gradeString, '[[', ']]')].memoGrade,
+            dateCreated: parseRoamDateString(dateString),
+          });
+        }
+      });
+
+    return acc;
+  }, {});
+};
+
+const sortOldRoamSrPracticeData = (mappedData) => {
+  for (const key in mappedData) {
+    mappedData[key] = mappedData[key].sort((a, b) => a.dateCreated - b.dateCreated);
+  }
+  return mappedData;
+};
+
+export const getOldRoamSrPracticeData = async () => {
+  const reviewTagPageName = 'roam/sr/review';
+  const reviewPageReferenceData = await window.roamAlphaAPI.q(
+    `
+    [:find (pull ?parentPageId [
+      :node/title
+      :block/string
+      :block/children
+      {:block/children ...}])
+     :in $ ?reviewTagPageName
+     :where
+     [?pageId :node/title ?reviewTagPageName]
+     [?refIds :block/refs ?pageId]
+     [?parentPageId :block/children, ?refIds]
+    ]`,
+    reviewTagPageName
+  );
+
+  return sortOldRoamSrPracticeData(
+    mapOldRoamSrPracticeData(reviewPageReferenceData, reviewTagPageName)
+  );
 };

@@ -38,7 +38,13 @@ export const supermemo = (item, grade) => {
   };
 };
 
-export const getPracticeResultData = ({ grade, interval, repetitions, eFactor }) => {
+export const generatePracticeData = ({
+  grade,
+  interval,
+  repetitions,
+  eFactor,
+  baseDate = new Date(),
+}) => {
   const supermemoInput = {
     interval,
     repetition: repetitions,
@@ -48,7 +54,7 @@ export const getPracticeResultData = ({ grade, interval, repetitions, eFactor })
   // call supermemo API
   const supermemoResults = supermemo(supermemoInput, grade);
 
-  const nextDueDate = dateUtils.addDays(new Date(), supermemoResults.interval);
+  const nextDueDate = dateUtils.addDays(baseDate, supermemoResults.interval);
 
   return {
     repetitions: supermemoResults.repetition,
@@ -59,22 +65,41 @@ export const getPracticeResultData = ({ grade, interval, repetitions, eFactor })
   };
 };
 
-const practice = async ({ interval, repetitions, eFactor, grade, refUid, pluginPageTitle }) => {
+interface Practice {
+  interval: number;
+  repetitions: number;
+  eFactor: number;
+  grade: number;
+  refUid: string;
+  pluginPageTitle: string;
+  dateCreated: null | Date;
+}
+
+const practice = async (
+  { interval, repetitions, eFactor, grade, refUid, pluginPageTitle, dateCreated = null }: Practice,
+  isDryRun = false
+) => {
   // Just don't want to store nextDueDateFromNow
   // eslint-disable-next-line no-unused-vars
-  const { nextDueDateFromNow, ...practiceResultData } = getPracticeResultData({
+  const { nextDueDateFromNow, ...practiceResultData } = generatePracticeData({
     grade,
     interval,
     repetitions,
     eFactor,
+    baseDate: dateCreated,
   });
 
-  await savePracticeData({
-    refUid: refUid,
-    pluginPageTitle,
-    grade,
-    ...practiceResultData,
-  });
+  if (!isDryRun) {
+    await savePracticeData({
+      refUid: refUid,
+      pluginPageTitle,
+      grade,
+      dateCreated,
+      ...practiceResultData,
+    });
+  }
+
+  return practiceResultData;
 };
 
 export default practice;

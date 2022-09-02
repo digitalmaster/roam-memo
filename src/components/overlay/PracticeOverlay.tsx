@@ -5,7 +5,7 @@ import styled from '@emotion/styled';
 import useBlockInfo from '~/hooks/useBlockInfo';
 import * as asyncUtils from '~/utils/async';
 import * as dateUtils from '~/utils/date';
-import { getPracticeResultData } from '~/practice';
+import { generatePracticeData } from '~/practice';
 import Lottie from 'react-lottie';
 import doneAnimationData from '~/lotties/done.json';
 import Tooltip from '~/components/Tooltip';
@@ -510,7 +510,7 @@ const Footer = ({
     const estimates = {};
 
     for (const grade of grades) {
-      const practiceResultData = getPracticeResultData({ grade, interval, repetitions, eFactor });
+      const practiceResultData = generatePracticeData({ grade, interval, repetitions, eFactor });
       estimates[grade] = practiceResultData;
     }
 

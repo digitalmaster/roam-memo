@@ -1,6 +1,8 @@
 import * as asyncUtils from '~/utils/async';
+import { importRoamSrOldData } from '~/utils/migration';
 
-const settingsPanelConfig = ({ setSettings }) => {
+const settingsPanelConfig = ({ setSettings, pluginPageTitle }) => {
+  // importRoamSrOldData({ pluginPageTitle }); // temp
   const syncFn = async (e) => {
     const tagsListString = e.target.value.trim();
     window.roamMemo.extensionAPI.settings.set('tagsListString', tagsListString);
@@ -22,6 +24,16 @@ const settingsPanelConfig = ({ setSettings }) => {
           type: 'input',
           placeholder: 'memo',
           onChange: processChange,
+        },
+      },
+      {
+        id: 'import-roam-sr-data',
+        name: 'Import Roam/Sr Data',
+        description: 'Import Roam Sr Old data',
+        action: {
+          type: 'button',
+          onClick: () => importRoamSrOldData({ pluginPageTitle }),
+          content: 'Fetch Data',
         },
       },
     ],

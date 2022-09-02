@@ -25,6 +25,8 @@ const App = () => {
     if (!refUid) return;
 
     const cardData = practiceCardsData[refUid];
+    console.log('DEBUG:: ~ file: app.jsx ~ line 26 ~ cardData', cardData);
+
     await practice({ ...cardData, grade, refUid, pluginPageTitle });
   };
 

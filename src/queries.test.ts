@@ -246,8 +246,6 @@ describe.skip('getPluginPageData', () => {
       },
     }));
 
-    expect(
-      queries.getPluginPageData({ pluginPageTitle: 'roam/memo', dataBlockName: 'data' })
-    ).resolves.toBe({});
+    expect(queries.getPluginPageData({ pluginPageTitle: 'roam/memo' })).resolves.toBe({});
   });
 });
