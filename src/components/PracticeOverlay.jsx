@@ -64,51 +64,12 @@ const PracticeOverlay = ({
     [currentIndex, handleGradeClick, isDone]
   );
 
-  const hotkeys = React.useMemo(
-    () => [
-      {
-        combo: 'space',
-        global: true,
-        label: 'Show Block Children',
-        onKeyDown: () => {
-          if (hasBlockChildren && !showBlockChildren) {
-            setShowBlockChildren(true);
-          } else {
-            onGradeClick({ grade: 5, refUid: currentCardRefUid });
-          }
-        },
-      },
-      {
-        combo: 'F',
-        global: true,
-        label: 'Grade 0',
-        onKeyDown: () => onGradeClick({ grade: 0, refUid: currentCardRefUid }),
-      },
-      {
-        combo: 'H',
-        global: true,
-        label: 'Grade 3',
-        onKeyDown: () => onGradeClick({ grade: 3, refUid: currentCardRefUid }),
-      },
-      {
-        combo: 'G',
-        global: true,
-        label: 'Grade 4',
-        onKeyDown: () => onGradeClick({ grade: 4, refUid: currentCardRefUid }),
-      },
-    ],
-    [hasBlockChildren, showBlockChildren, currentCardRefUid, onGradeClick]
-  );
-  const { handleKeyDown, handleKeyUp } = Blueprint.useHotkeys(hotkeys);
-
   return (
     <Dialog
       isOpen={isOpen}
       onClose={onCloseCallback}
       className="pb-0 bg-white"
       canEscapeKeyClose={false}
-      onKeyDown={handleKeyDown}
-      onKeyUp={handleKeyUp}
     >
       <Header
         className="bp3-dialog-header"
@@ -339,10 +300,6 @@ const FooterWrapper = styled.div`
   min-height: 50px;
   border-top: 1px solid rgba(16, 22, 26, 0.1);
 
-  & .bp3-button.bp3-outlined {
-    background: white;
-  }
-
   & .bp3-button-text {
     display: flex;
     justify-content: center;
@@ -359,6 +316,10 @@ const ButtonTags = styled.span`
   border-radius: 2px;
 `;
 
+const ControlButton = styled(Blueprint.Button)`
+  background: ${(props) => (props.active ? 'inherit' : 'white !important')};
+`;
+
 const Footer = ({
   hasBlockChildren,
   setShowBlockChildren,
@@ -369,77 +330,163 @@ const Footer = ({
   hasCards,
   onCloseCallback,
 }) => {
+  // So we can flash the activated button when using keyboard shortcuts before transitioning
+  const [activeButtonKey, setActiveButtonKey] = React.useState(null);
+  const activateButtonFn = async (key, callbackFn) => {
+    setActiveButtonKey(key);
+    await asyncUtils.sleep(150);
+    callbackFn();
+    setActiveButtonKey(null);
+  };
+
+  const showAnswerFn = React.useMemo(() => {
+    return () => setShowBlockChildren(true);
+  }, [setShowBlockChildren]);
+  const gradeFn = React.useMemo(
+    () => (grade) => {
+      let key;
+      switch (grade) {
+        case 0:
+          key = 'forgot-button';
+          break;
+        case 3:
+          key = 'hard-button';
+          break;
+        case 4:
+          key = 'good-button';
+          break;
+        case 5:
+          key = 'perfect-button';
+          break;
+
+        default:
+          break;
+      }
+      activateButtonFn(key, () => onGradeClick({ grade, refUid: refUid }));
+    },
+    [onGradeClick, refUid]
+  );
+
+  const hotkeys = React.useMemo(
+    () => [
+      {
+        combo: 'space',
+        global: true,
+        label: 'Show Block Children',
+        onKeyDown: () => {
+          if (hasBlockChildren && !showBlockChildren) {
+            activateButtonFn('space-button', showAnswerFn);
+          } else {
+            gradeFn(5);
+          }
+        },
+      },
+      {
+        combo: 'F',
+        global: true,
+        label: 'Grade 0',
+        onKeyDown: () => gradeFn(0),
+      },
+      {
+        combo: 'H',
+        global: true,
+        label: 'Grade 3',
+        onKeyDown: () => gradeFn(3),
+      },
+      {
+        combo: 'G',
+        global: true,
+        label: 'Grade 4',
+        onKeyDown: () => gradeFn(4),
+      },
+    ],
+    [hasBlockChildren, showBlockChildren, showAnswerFn, gradeFn]
+  );
+  const { handleKeyDown, handleKeyUp } = Blueprint.useHotkeys(hotkeys);
+
   return (
-    <FooterWrapper className="bp3-multistep-dialog-footer rounded-b-md p-0">
+    <FooterWrapper
+      className="bp3-multistep-dialog-footer rounded-b-md p-0"
+      onKeyDown={handleKeyDown}
+      onKeyUp={handleKeyUp}
+    >
       <div className="flex justify-center items-center h-full">
         <div className="bp3-dialog-footer-actions justify-around w-full">
           {isDone || !hasCards ? (
-            <Blueprint.Button
+            <ControlButton
               className="text-base font-medium py-1"
               intent="none"
               onClick={onCloseCallback}
               outlined
             >
               Close
-            </Blueprint.Button>
+            </ControlButton>
           ) : hasBlockChildren && !showBlockChildren ? (
-            <Blueprint.Button
+            <ControlButton
               className="text-base font-medium py-1"
               intent="none"
-              onClick={() => setShowBlockChildren(true)}
+              onClick={() => {
+                activateButtonFn('space-button', showAnswerFn);
+              }}
+              active={activeButtonKey === 'space-button'}
               outlined
             >
               Show Answer{' '}
               <span className="ml-2">
                 <ButtonTags>SPACE</ButtonTags>
               </span>
-            </Blueprint.Button>
+            </ControlButton>
           ) : (
             <>
-              <Blueprint.Button
+              <ControlButton
+                key="forget-button"
                 className="text-base font-medium py-1"
                 intent="danger"
-                onClick={() => onGradeClick({ grade: 0, refUid })}
+                onClick={() => gradeFn(0)}
+                active={activeButtonKey === 'forgot-button'}
                 outlined
               >
                 Forgot{' '}
                 <span className="ml-2">
                   <ButtonTags>F</ButtonTags>
                 </span>
-              </Blueprint.Button>
-              <Blueprint.Button
+              </ControlButton>
+              <ControlButton
                 className="text-base font-medium py-1"
                 intent="warning"
-                onClick={() => onGradeClick({ grade: 3, refUid })}
+                onClick={() => gradeFn(3)}
+                active={activeButtonKey === 'hard-button'}
                 outlined
               >
                 Hard{' '}
                 <span className="ml-2">
                   <ButtonTags>H</ButtonTags>
                 </span>
-              </Blueprint.Button>
-              <Blueprint.Button
+              </ControlButton>
+              <ControlButton
                 className="text-base font-medium py-1"
                 intent="primary"
-                onClick={() => onGradeClick({ grade: 4, refUid })}
+                onClick={() => gradeFn(4)}
+                active={activeButtonKey === 'good-button'}
                 outlined
               >
                 Good{' '}
                 <span className="ml-2">
                   <ButtonTags>G</ButtonTags>
                 </span>
-              </Blueprint.Button>
-              <Blueprint.Button
+              </ControlButton>
+              <ControlButton
                 className="text-base font-medium py-1"
                 intent="success"
-                onClick={() => onGradeClick({ grade: 5, refUid })}
+                onClick={() => gradeFn(5)}
+                active={activeButtonKey === 'perfect-button'}
                 outlined
               >
                 Perfect{' '}
                 <span className="ml-2">
                   <ButtonTags>SPACE</ButtonTags>
                 </span>
-              </Blueprint.Button>
+              </ControlButton>
             </>
           )}
         </div>
