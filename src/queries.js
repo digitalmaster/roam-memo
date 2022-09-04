@@ -291,6 +291,8 @@ const getEmojiFromGrade = (grade) => {
       return '🔵';
     case 3:
       return '🟠';
+    case 2:
+      return '🟠';
     case 0:
       return '🔴';
     default:

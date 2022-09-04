@@ -371,7 +371,7 @@ const Footer = ({
         case 0:
           key = 'forgot-button';
           break;
-        case 3:
+        case 2:
           key = 'hard-button';
           break;
         case 4:
@@ -412,8 +412,8 @@ const Footer = ({
       {
         combo: 'H',
         global: true,
-        label: 'Grade 3',
-        onKeyDown: () => gradeFn(3),
+        label: 'Grade 2',
+        onKeyDown: () => gradeFn(2),
       },
       {
         combo: 'G',
@@ -493,8 +493,8 @@ const Footer = ({
               <ControlButton
                 className="text-base font-medium py-1"
                 intent="warning"
-                onClick={() => gradeFn(3)}
-                tooltipText={`Review ${intervalEstimates[3]?.nextDueDateFromNow}`}
+                onClick={() => gradeFn(2)}
+                tooltipText={`Review ${intervalEstimates[2]?.nextDueDateFromNow}`}
                 active={activeButtonKey === 'hard-button'}
                 outlined
               >
