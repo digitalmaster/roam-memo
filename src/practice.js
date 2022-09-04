@@ -6,7 +6,15 @@ const supermemo = (item, grade) => {
   let nextRepetition;
   let nextEfactor;
 
-  if (grade >= 3) {
+  if (grade === 0) {
+    // If we completely forgot we should review again ASAP.
+    nextInterval = 0;
+    nextRepetition = 0;
+  } else if (grade < 3) {
+    nextInterval = 1;
+    nextRepetition = 0;
+  } else {
+    // grade >= 3
     if (item.repetition === 0) {
       nextInterval = 1;
       nextRepetition = 1;
@@ -17,9 +25,6 @@ const supermemo = (item, grade) => {
       nextInterval = Math.round(item.interval * item.efactor);
       nextRepetition = item.repetition + 1;
     }
-  } else {
-    nextInterval = 1;
-    nextRepetition = 0;
   }
 
   nextEfactor = item.efactor + (0.1 - (5 - grade) * (0.08 + (5 - grade) * 0.02));
