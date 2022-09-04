@@ -7,6 +7,8 @@ import * as domUtils from '~/utils/dom';
 import * as asyncUtils from '~/utils/async';
 import * as dateUtils from '~/utils/date';
 import mediaQueries from '~/utils/mediaQueries';
+import { Tooltip } from '@blueprintjs/core';
+import { getPracticeResultData } from '~/practice';
 
 const PracticeOverlay = ({
   isOpen,
@@ -100,6 +102,7 @@ const PracticeOverlay = ({
         isDone={isDone}
         hasCards={hasCards}
         onCloseCallback={onCloseCallback}
+        currentCardData={currentCardData}
       />
     </Dialog>
   );
@@ -238,7 +241,7 @@ const StatusBadge = ({ status, nextDueDate }) => {
       );
 
     case 'pastDue': {
-      const timeAgo = dateUtils.fromNow(nextDueDate);
+      const timeAgo = dateUtils.customFromNow(nextDueDate);
       return (
         <Blueprint.Tag intent="warning" title={`Due ${timeAgo}`} minimal>
           Past Due
@@ -316,9 +319,27 @@ const ButtonTags = styled.span`
   border-radius: 2px;
 `;
 
-const ControlButton = styled(Blueprint.Button)`
+const ControlButtonWrapper = styled(Blueprint.Button)`
   background: ${(props) => (props.active ? 'inherit' : 'white !important')};
 `;
+
+const CustomTooltipWrapper = ({ className, ...restProps }) => {
+  return <Tooltip popoverClassName={className} {...restProps} />;
+};
+
+const CustomTooltip = styled(CustomTooltipWrapper)`
+  &.bp3-tooltip .bp3-popover-content {
+    font-size: 12px;
+    padding: 2px 5px;
+  }
+`;
+const ControlButton = ({ tooltipText, ...props }) => {
+  return (
+    <CustomTooltip content={tooltipText} placement="top">
+      <ControlButtonWrapper {...props} />
+    </CustomTooltip>
+  );
+};
 
 const Footer = ({
   hasBlockChildren,
@@ -329,6 +350,7 @@ const Footer = ({
   isDone,
   hasCards,
   onCloseCallback,
+  currentCardData,
 }) => {
   // So we can flash the activated button when using keyboard shortcuts before transitioning
   const [activeButtonKey, setActiveButtonKey] = React.useState(null);
@@ -404,6 +426,22 @@ const Footer = ({
   );
   const { handleKeyDown, handleKeyUp } = Blueprint.useHotkeys(hotkeys);
 
+  const [intervalEstimates, setIntervalEstimates] = React.useState({});
+  React.useEffect(() => {
+    if (!currentCardData) return;
+
+    const grades = [0, 1, 2, 3, 4, 5];
+    const { interval, repetitions, eFactor } = currentCardData;
+    const estimates = {};
+
+    for (const grade of grades) {
+      const practiceResultData = getPracticeResultData({ grade, interval, repetitions, eFactor });
+      estimates[grade] = practiceResultData;
+    }
+
+    setIntervalEstimates(estimates);
+  }, [currentCardData]);
+
   return (
     <FooterWrapper
       className="bp3-multistep-dialog-footer rounded-b-md p-0"
@@ -442,6 +480,7 @@ const Footer = ({
                 key="forget-button"
                 className="text-base font-medium py-1"
                 intent="danger"
+                tooltipText={`Review ${intervalEstimates[0]?.nextDueDateFromNow}`}
                 onClick={() => gradeFn(0)}
                 active={activeButtonKey === 'forgot-button'}
                 outlined
@@ -455,6 +494,7 @@ const Footer = ({
                 className="text-base font-medium py-1"
                 intent="warning"
                 onClick={() => gradeFn(3)}
+                tooltipText={`Review ${intervalEstimates[3]?.nextDueDateFromNow}`}
                 active={activeButtonKey === 'hard-button'}
                 outlined
               >
@@ -467,6 +507,7 @@ const Footer = ({
                 className="text-base font-medium py-1"
                 intent="primary"
                 onClick={() => gradeFn(4)}
+                tooltipText={`Review ${intervalEstimates[4]?.nextDueDateFromNow}`}
                 active={activeButtonKey === 'good-button'}
                 outlined
               >
@@ -479,6 +520,7 @@ const Footer = ({
                 className="text-base font-medium py-1"
                 intent="success"
                 onClick={() => gradeFn(5)}
+                tooltipText={`Review ${intervalEstimates[5]?.nextDueDateFromNow}`}
                 active={activeButtonKey === 'perfect-button'}
                 outlined
               >

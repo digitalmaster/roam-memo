@@ -2,6 +2,9 @@ import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 dayjs.extend(relativeTime);
 
+import calendar from 'dayjs/plugin/calendar';
+dayjs.extend(calendar);
+
 export const addDays = (date, days) => {
   var result = new Date(date);
   result.setDate(result.getDate() + days);
@@ -24,4 +27,22 @@ export const daysBetween = (d1, d2) => {
   return diffDays;
 };
 
-export const fromNow = (date) => dayjs(date).fromNow();
+export const fromNow = (date) => {
+  return dayjs(date).fromNow();
+};
+
+export const customFromNow = (date) => {
+  const daysDiff = daysBetween(new Date(), date);
+  if (daysDiff > -7 && daysDiff < 7) {
+    return dayjs(date).calendar(null, {
+      sameDay: '[Today]',
+      nextDay: '[Tomorrow]',
+      nextWeek: 'dddd', // Tuesday
+      lastDay: '[Yesterday]',
+      lastWeek: '[Last] dddd', // Last Tuesday
+      // sameElse: '', // we switch to .fromNow() at this range
+    });
+  } else {
+    return fromNow(date);
+  }
+};
