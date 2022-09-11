@@ -296,7 +296,6 @@ const Header = ({
 
 const FooterWrapper = styled.div`
   background-color: #f6f9fd;
-  height: 50px;
   min-height: 50px;
   border-top: 1px solid rgba(16, 22, 26, 0.1);
 
@@ -441,96 +440,100 @@ const Footer = ({
 
   return (
     <FooterWrapper
-      className="bp3-multistep-dialog-footer rounded-b-md p-0"
+      className="bp3-multistep-dialog-footer flex items-center justify-center rounded-b-md p-0"
       onKeyDown={handleKeyDown}
       onKeyUp={handleKeyUp}
     >
-      <div className="flex justify-center items-center h-full">
-        <div className="bp3-dialog-footer-actions justify-around w-full">
-          {isDone || !hasCards ? (
+      <FooterActionsWrapper className="bp3-dialog-footer-actions flex-wrap gap-4 justify-evenly w-full mx-3  my-3">
+        {isDone || !hasCards ? (
+          <ControlButton
+            className="text-base font-medium py-1"
+            intent="none"
+            onClick={onCloseCallback}
+            outlined
+          >
+            Close
+          </ControlButton>
+        ) : hasBlockChildren && !showBlockChildren ? (
+          <ControlButton
+            className="text-base font-medium py-1"
+            intent="none"
+            onClick={() => {
+              activateButtonFn('space-button', showAnswerFn);
+            }}
+            active={activeButtonKey === 'space-button'}
+            outlined
+          >
+            Show Answer{' '}
+            <span className="ml-2">
+              <ButtonTags>SPACE</ButtonTags>
+            </span>
+          </ControlButton>
+        ) : (
+          <>
             <ControlButton
+              key="forget-button"
               className="text-base font-medium py-1"
-              intent="none"
-              onClick={onCloseCallback}
+              intent="danger"
+              tooltipText={`Review ${intervalEstimates[0]?.nextDueDateFromNow}`}
+              onClick={() => gradeFn(0)}
+              active={activeButtonKey === 'forgot-button'}
               outlined
             >
-              Close
+              Forgot{' '}
+              <span className="ml-2">
+                <ButtonTags>F</ButtonTags>
+              </span>
             </ControlButton>
-          ) : hasBlockChildren && !showBlockChildren ? (
             <ControlButton
               className="text-base font-medium py-1"
-              intent="none"
-              onClick={() => {
-                activateButtonFn('space-button', showAnswerFn);
-              }}
-              active={activeButtonKey === 'space-button'}
+              intent="warning"
+              onClick={() => gradeFn(2)}
+              tooltipText={`Review ${intervalEstimates[2]?.nextDueDateFromNow}`}
+              active={activeButtonKey === 'hard-button'}
               outlined
             >
-              Show Answer{' '}
+              Hard{' '}
+              <span className="ml-2">
+                <ButtonTags>H</ButtonTags>
+              </span>
+            </ControlButton>
+            <ControlButton
+              className="text-base font-medium py-1"
+              intent="primary"
+              onClick={() => gradeFn(4)}
+              tooltipText={`Review ${intervalEstimates[4]?.nextDueDateFromNow}`}
+              active={activeButtonKey === 'good-button'}
+              outlined
+            >
+              Good{' '}
+              <span className="ml-2">
+                <ButtonTags>G</ButtonTags>
+              </span>
+            </ControlButton>
+            <ControlButton
+              className="text-base font-medium py-1"
+              intent="success"
+              onClick={() => gradeFn(5)}
+              tooltipText={`Review ${intervalEstimates[5]?.nextDueDateFromNow}`}
+              active={activeButtonKey === 'perfect-button'}
+              outlined
+            >
+              Perfect{' '}
               <span className="ml-2">
                 <ButtonTags>SPACE</ButtonTags>
               </span>
             </ControlButton>
-          ) : (
-            <>
-              <ControlButton
-                key="forget-button"
-                className="text-base font-medium py-1"
-                intent="danger"
-                tooltipText={`Review ${intervalEstimates[0]?.nextDueDateFromNow}`}
-                onClick={() => gradeFn(0)}
-                active={activeButtonKey === 'forgot-button'}
-                outlined
-              >
-                Forgot{' '}
-                <span className="ml-2">
-                  <ButtonTags>F</ButtonTags>
-                </span>
-              </ControlButton>
-              <ControlButton
-                className="text-base font-medium py-1"
-                intent="warning"
-                onClick={() => gradeFn(2)}
-                tooltipText={`Review ${intervalEstimates[2]?.nextDueDateFromNow}`}
-                active={activeButtonKey === 'hard-button'}
-                outlined
-              >
-                Hard{' '}
-                <span className="ml-2">
-                  <ButtonTags>H</ButtonTags>
-                </span>
-              </ControlButton>
-              <ControlButton
-                className="text-base font-medium py-1"
-                intent="primary"
-                onClick={() => gradeFn(4)}
-                tooltipText={`Review ${intervalEstimates[4]?.nextDueDateFromNow}`}
-                active={activeButtonKey === 'good-button'}
-                outlined
-              >
-                Good{' '}
-                <span className="ml-2">
-                  <ButtonTags>G</ButtonTags>
-                </span>
-              </ControlButton>
-              <ControlButton
-                className="text-base font-medium py-1"
-                intent="success"
-                onClick={() => gradeFn(5)}
-                tooltipText={`Review ${intervalEstimates[5]?.nextDueDateFromNow}`}
-                active={activeButtonKey === 'perfect-button'}
-                outlined
-              >
-                Perfect{' '}
-                <span className="ml-2">
-                  <ButtonTags>SPACE</ButtonTags>
-                </span>
-              </ControlButton>
-            </>
-          )}
-        </div>
-      </div>
+          </>
+        )}
+      </FooterActionsWrapper>
     </FooterWrapper>
   );
 };
+
+const FooterActionsWrapper = styled.div`
+  &.bp3-dialog-footer-actions .bp3-button {
+    margin-left: 0;
+  }
+`;
 export default PracticeOverlay;
