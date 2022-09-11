@@ -253,6 +253,10 @@ const StatusBadge = ({ status, nextDueDate }) => {
   }
 };
 
+const BoxIcon = styled(Blueprint.Icon)`
+  margin-right: 5px !important;
+`;
+
 const Header = ({
   tagsList,
   selectedTag,
@@ -268,8 +272,7 @@ const Header = ({
   return (
     <HeaderWrapper className={className} tabIndex={0}>
       <div className="flex items-center">
-        <Blueprint.Icon icon="box" size={14} />
-        <DialogHeading className="mr-1">Review: </DialogHeading>
+        <BoxIcon icon="box" size={14} />
         <div tabIndex={-1}>
           <TagSelector tagsList={tagsList} selectedTag={selectedTag} onTagChange={onTagChange} />
         </div>
@@ -290,12 +293,6 @@ const Header = ({
     </HeaderWrapper>
   );
 };
-
-const DialogHeading = styled.h4`
-  font-size: 15px !important;
-  font-weight: 500;
-  color: #5c7080;
-`;
 
 const FooterWrapper = styled.div`
   background-color: #f6f9fd;
