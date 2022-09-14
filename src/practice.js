@@ -1,7 +1,7 @@
 import { savePracticeData } from '~/queries';
 import * as dateUtils from '~/utils/date';
 
-const supermemo = (item, grade) => {
+export const supermemo = (item, grade) => {
   let nextInterval;
   let nextRepetition;
   let nextEfactor;
@@ -22,7 +22,7 @@ const supermemo = (item, grade) => {
       nextInterval = 6;
       nextRepetition = 2;
     } else {
-      nextInterval = Math.round(item.interval * item.efactor);
+      nextInterval = Math.round(item.interval * item.efactor * (grade / 5));
       nextRepetition = item.repetition + 1;
     }
   }
