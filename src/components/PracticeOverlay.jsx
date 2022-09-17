@@ -74,7 +74,7 @@ const PracticeOverlay = ({
       canEscapeKeyClose={false}
     >
       <Header
-        className="bp3-dialog-header"
+        className="bp3-dialog-header outline-none focus:outline-none focus-visible:outline-none"
         tagsList={tagsList}
         selectedTag={selectedTag}
         currentIndex={currentIndex}
