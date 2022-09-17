@@ -13,7 +13,7 @@ const App = () => {
 
   const { selectedTag, setSelectedTag, tagsList } = useTags({ tagsListString });
 
-  const { practiceCardsUids, practiceCardsData, displayCardCount, fetchPracticeData } =
+  const { practiceCardsUids, practiceCardsData, displayCardCounts, fetchPracticeData } =
     usePracticeCardsData({
       selectedTag,
       pluginPageTitle,
@@ -42,7 +42,10 @@ const App = () => {
 
   return (
     <Blueprint.HotkeysProvider>
-      <SidePandelWidget onClickCallback={handlePracticeClick} displayCardCount={displayCardCount} />
+      <SidePandelWidget
+        onClickCallback={handlePracticeClick}
+        displayCardCounts={displayCardCounts}
+      />
       {showPracticeOverlay && (
         <PracticeOverlay
           isOpen={true}

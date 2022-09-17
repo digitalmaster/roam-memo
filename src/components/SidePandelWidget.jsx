@@ -5,7 +5,7 @@ const Wrapper = styled.span`
   display: flex;
 `;
 
-const SidePandelWidget = ({ onClickCallback, displayCardCount }) => {
+const SidePandelWidget = ({ onClickCallback, displayCardCounts }) => {
   return (
     <Wrapper className="w-full justify-between" onClick={onClickCallback}>
       <div>
@@ -15,9 +15,16 @@ const SidePandelWidget = ({ onClickCallback, displayCardCount }) => {
         </div>
       </div>
       <div className="ml-2">
-        <Blueprint.Tag active minimal intent="primary">
-          {displayCardCount}
-        </Blueprint.Tag>
+        {displayCardCounts.due > 0 && (
+          <Blueprint.Tag active minimal intent="primary" className="text-center">
+            {displayCardCounts.due}
+          </Blueprint.Tag>
+        )}
+        {displayCardCounts.new > 0 && (
+          <Blueprint.Tag active minimal intent="success" className="text-center ml-2">
+            {displayCardCounts.new}
+          </Blueprint.Tag>
+        )}
       </div>
     </Wrapper>
   );
