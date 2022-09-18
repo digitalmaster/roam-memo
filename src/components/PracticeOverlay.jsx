@@ -69,6 +69,13 @@ const PracticeOverlay = ({
     [currentIndex, handleGradeClick, isDone]
   );
 
+  const onSkipClick = React.useCallback(() => {
+    if (isDone) return;
+
+    setShowBlockChildren(false);
+    setCurrentIndex(currentIndex + 1);
+  }, [currentIndex, isDone]);
+
   const lottieAnimationOption = {
     loop: false,
     autoplay: true,
@@ -111,6 +118,7 @@ const PracticeOverlay = ({
       <Footer
         refUid={currentCardRefUid}
         onGradeClick={onGradeClick}
+        onSkipClick={onSkipClick}
         hasBlockChildren={hasBlockChildren}
         setShowBlockChildren={setShowBlockChildren}
         showBlockChildren={showBlockChildren}
@@ -353,6 +361,7 @@ const Footer = ({
   showBlockChildren,
   refUid,
   onGradeClick,
+  onSkipClick,
   isDone,
   hasCards,
   onCloseCallback,
@@ -394,6 +403,13 @@ const Footer = ({
     },
     [onGradeClick, refUid]
   );
+  const skipFn = React.useMemo(
+    () => () => {
+      let key = 'skip-button';
+      activateButtonFn(key, () => onSkipClick());
+    },
+    [onSkipClick]
+  );
 
   const hotkeys = React.useMemo(
     () => [
@@ -408,6 +424,12 @@ const Footer = ({
             gradeFn(5);
           }
         },
+      },
+      {
+        combo: 'S',
+        global: true,
+        label: 'Skip',
+        onKeyDown: skipFn,
       },
       {
         combo: 'F',
@@ -428,7 +450,7 @@ const Footer = ({
         onKeyDown: () => gradeFn(4),
       },
     ],
-    [hasBlockChildren, showBlockChildren, showAnswerFn, gradeFn]
+    [skipFn, hasBlockChildren, showBlockChildren, showAnswerFn, gradeFn]
   );
   const { handleKeyDown, handleKeyUp } = Blueprint.useHotkeys(hotkeys);
 
@@ -481,6 +503,19 @@ const Footer = ({
           </ControlButton>
         ) : (
           <>
+            <ControlButton
+              key="forget-button"
+              className="text-base font-medium py-1"
+              tooltipText={`Skip for now`}
+              onClick={() => skipFn()}
+              active={activeButtonKey === 'skip-button'}
+              outlined
+            >
+              Skip{' '}
+              <span className="ml-2">
+                <ButtonTags>S</ButtonTags>
+              </span>
+            </ControlButton>
             <ControlButton
               key="forget-button"
               className="text-base font-medium py-1"
