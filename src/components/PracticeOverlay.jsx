@@ -9,6 +9,8 @@ import * as dateUtils from '~/utils/date';
 import mediaQueries from '~/utils/mediaQueries';
 import { Tooltip } from '@blueprintjs/core';
 import { getPracticeResultData } from '~/practice';
+import Lottie from 'react-lottie';
+import doneAnimationData from '~/lotties/done.json';
 
 const PracticeOverlay = ({
   isOpen,
@@ -66,6 +68,15 @@ const PracticeOverlay = ({
     [currentIndex, handleGradeClick, isDone]
   );
 
+  const lottieAnimationOption = {
+    loop: false,
+    autoplay: true,
+    animationData: doneAnimationData,
+    rendererSettings: {
+      preserveAspectRatio: 'xMidYMid slice',
+    },
+  };
+
   return (
     <Dialog
       isOpen={isOpen}
@@ -86,11 +97,14 @@ const PracticeOverlay = ({
         nextDueDate={nextDueDate}
       />
 
-      <DialogBody className="bp3-dialog-body overflow-y-scroll m-0 pt-6 pb-8 pl-4">
+      <DialogBody className="bp3-dialog-body overflow-y-scroll m-0 pt-6 pb-8 px-4">
         {currentCardRefUid ? (
           <CardBlock refUid={currentCardRefUid} showBlockChildren={showBlockChildren} />
         ) : (
-          <div>No cards left to review!</div>
+          <div className="flex items-center flex-col">
+            <Lottie options={lottieAnimationOption} width="auto" />
+            <div>No cards left to review!</div>
+          </div>
         )}
       </DialogBody>
       <Footer
@@ -136,8 +150,10 @@ const CardBlock = ({ refUid, showBlockChildren }) => {
 };
 
 const ContentWrapper = styled.div`
+  // To align bullet on the left + ref count on the right correctly
   position: relative;
   left: -14px;
+  width: calc(100% + 19px);
 
   & .rm-block-children {
     display: ${(props) => (props.showBlockChildren ? 'flex' : 'none')};
@@ -164,6 +180,7 @@ const Dialog = styled(Blueprint.Dialog)`
 `;
 
 const DialogBody = styled.div`
+  overflow-x: hidden; // because of tweaks we do in ContentWrapper container overflows
   min-height: 200px;
 `;
 
