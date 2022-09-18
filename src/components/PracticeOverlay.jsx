@@ -7,10 +7,11 @@ import * as domUtils from '~/utils/dom';
 import * as asyncUtils from '~/utils/async';
 import * as dateUtils from '~/utils/date';
 import mediaQueries from '~/utils/mediaQueries';
-import { Tooltip } from '@blueprintjs/core';
+
 import { getPracticeResultData } from '~/practice';
 import Lottie from 'react-lottie';
 import doneAnimationData from '~/lotties/done.json';
+import Tooltip from '~/components/Tooltip.jsx';
 
 const PracticeOverlay = ({
   isOpen,
@@ -338,21 +339,11 @@ const ControlButtonWrapper = styled(Blueprint.Button)`
   background: ${(props) => (props.active ? 'inherit' : 'white !important')};
 `;
 
-const CustomTooltipWrapper = ({ className, ...restProps }) => {
-  return <Tooltip popoverClassName={className} {...restProps} />;
-};
-
-const CustomTooltip = styled(CustomTooltipWrapper)`
-  &.bp3-tooltip .bp3-popover-content {
-    font-size: 12px;
-    padding: 2px 5px;
-  }
-`;
 const ControlButton = ({ tooltipText, ...props }) => {
   return (
-    <CustomTooltip content={tooltipText} placement="top">
+    <Tooltip content={tooltipText} placement="top">
       <ControlButtonWrapper {...props} />
-    </CustomTooltip>
+    </Tooltip>
   );
 };
 
