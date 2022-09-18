@@ -1,6 +1,6 @@
 {
   "name": "roam-memo",
-  "version": "6",
+  "version": "7",
   "description": "Roam Spaced Repetition Plugin",
   "author": "Jose Browne <josebrowne@gmail.com> (http://josebrowne.com/)",
   "scripts": {
@@ -9,7 +9,7 @@
     "format": "prettier --write \"./**/*.{js,jsx,json}\"",
     "lint": "eslint '**/*.{js,jsx}' --max-warnings 0",
     "test": "jest --verbose",
-    "version": "auto-changelog -p && git add CHANGELOG.md"
+    "version": "auto-changelog --package --commit-limit false && git add CHANGELOG.md"
   },
   "jest": {
     "testEnvironment": "jsdom",
