@@ -149,6 +149,8 @@ const ContentWrapper = styled.div`
 `;
 
 const Dialog = styled(Blueprint.Dialog)`
+  display: grid;
+  grid-template-rows: 50px 1fr auto;
   max-height: 80vh;
   width: 90vw;
 
