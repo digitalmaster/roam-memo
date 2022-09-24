@@ -6,6 +6,14 @@ const Wrapper = styled.span`
   display: flex;
 `;
 
+const Tag = styled(Blueprint.Tag)`
+  &.bp3-tag {
+    padding: 1px 3px;
+    min-height: auto;
+    min-width: auto;
+  }
+`;
+
 const SidePandelWidget = ({ onClickCallback, displayCardCounts }) => {
   return (
     <Wrapper className="w-full justify-between" onClick={onClickCallback}>
@@ -18,16 +26,16 @@ const SidePandelWidget = ({ onClickCallback, displayCardCounts }) => {
       <div className="ml-2">
         {displayCardCounts.due > 0 && (
           <Tooltip content="Due" placement="top">
-            <Blueprint.Tag active minimal intent="primary" className="text-center">
+            <Tag active minimal intent="primary" className="text-center">
               {displayCardCounts.due}
-            </Blueprint.Tag>
+            </Tag>
           </Tooltip>
         )}
         {displayCardCounts.new > 0 && (
           <Tooltip content="New" placement="top">
-            <Blueprint.Tag active minimal intent="success" className="text-center ml-2">
+            <Tag active minimal intent="success" className="text-center ml-2">
               {displayCardCounts.new}
-            </Blueprint.Tag>
+            </Tag>
           </Tooltip>
         )}
       </div>
