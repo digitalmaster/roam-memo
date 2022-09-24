@@ -12,6 +12,7 @@ import { getPracticeResultData } from '~/practice';
 import Lottie from 'react-lottie';
 import doneAnimationData from '~/lotties/done.json';
 import Tooltip from '~/components/Tooltip.jsx';
+import { Icon } from '@blueprintjs/core';
 
 const PracticeOverlay = ({
   isOpen,
@@ -24,6 +25,7 @@ const PracticeOverlay = ({
   handleMemoTagChange,
 }) => {
   const [currentIndex, setCurrentIndex] = React.useState(0);
+  const [showBreadcrumbs, setShowBreadcrumbs] = React.useState(false);
   const totalCardsCount = practiceCardUids.length;
   const hasCards = totalCardsCount > 0;
   const isDone = currentIndex > practiceCardUids.length - 1;
@@ -45,7 +47,6 @@ const PracticeOverlay = ({
 
   const [showBlockChildren, setShowBlockChildren] = React.useState(false);
   const { data: blockInfo } = useBlockInfo({ refUid: currentCardRefUid });
-
   const hasBlockChildren = blockInfo.children && blockInfo.children.length;
 
   const onTagChange = async (tag) => {
@@ -103,11 +104,18 @@ const PracticeOverlay = ({
         status={status}
         isDone={isDone}
         nextDueDate={nextDueDate}
+        showBreadcrumbs={showBreadcrumbs}
+        setShowBreadcrumbs={setShowBreadcrumbs}
       />
 
       <DialogBody className="bp3-dialog-body overflow-y-scroll m-0 pt-6 pb-8 px-4">
         {currentCardRefUid ? (
-          <CardBlock refUid={currentCardRefUid} showBlockChildren={showBlockChildren} />
+          <CardBlock
+            refUid={currentCardRefUid}
+            showBlockChildren={showBlockChildren}
+            breadcrumbs={blockInfo.breadcrumbs}
+            showBreadcrumbs={showBreadcrumbs}
+          />
         ) : (
           <div className="flex items-center flex-col">
             <Lottie options={lottieAnimationOption} width="auto" />
@@ -131,7 +139,34 @@ const PracticeOverlay = ({
   );
 };
 
-const CardBlock = ({ refUid, showBlockChildren }) => {
+const BreadCrumbWrapper = styled.div`
+  opacity: 0.7;
+  margin-left: 8px !important;
+  margin-top: -4px !important;
+
+  &.rm-zoom-item {
+    cursor: auto !important;
+  }
+`;
+
+const Breadcrumbs = ({ breadcrumbs }) => {
+  const items = breadcrumbs.map((breadcrumb, index) => ({
+    current: index === breadcrumbs.length - 1,
+    text: breadcrumb.title || breadcrumb.string, // root pages have title but no string
+  }));
+  return (
+    <BreadCrumbWrapper className="rm-zoom zoom-path-view">
+      {items.map((item, i) => (
+        <div key={i} className="rm-zoom-item">
+          <span className="rm-zoom-item-content">{item.text}</span>{' '}
+          {i !== items.length - 1 && <Icon icon="chevron-right" />}
+        </div>
+      ))}
+    </BreadCrumbWrapper>
+  );
+};
+
+const CardBlock = ({ refUid, showBlockChildren, breadcrumbs, showBreadcrumbs }) => {
   const ref = React.useRef();
 
   React.useEffect(() => {
@@ -155,7 +190,12 @@ const CardBlock = ({ refUid, showBlockChildren }) => {
     asyncFn();
   }, [ref, refUid]);
 
-  return <ContentWrapper ref={ref} showBlockChildren={showBlockChildren} />;
+  return (
+    <div>
+      {breadcrumbs && showBreadcrumbs && <Breadcrumbs breadcrumbs={breadcrumbs} />}
+      <ContentWrapper ref={ref} showBlockChildren={showBlockChildren}></ContentWrapper>
+    </div>
+  );
 };
 
 const ContentWrapper = styled.div`
@@ -296,6 +336,8 @@ const Header = ({
   status,
   isDone,
   nextDueDate,
+  showBreadcrumbs,
+  setShowBreadcrumbs,
 }) => {
   return (
     <HeaderWrapper className={className} tabIndex={0}>
@@ -306,6 +348,14 @@ const Header = ({
         </div>
       </div>
       <div className="flex items-center justify-end">
+        <div onClick={() => setShowBreadcrumbs(!showBreadcrumbs)} className="px-1 cursor-pointer">
+          <Tooltip content={`${showBreadcrumbs ? 'Hide' : 'Show'} Breadcrumbs`} placement="left">
+            <Icon
+              icon={showBreadcrumbs ? 'eye-open' : 'eye-off'}
+              className={showBreadcrumbs ? 'opacity-100' : 'opacity-60'}
+            />
+          </Tooltip>
+        </div>
         <StatusBadge status={status} nextDueDate={nextDueDate} />
         <span className="text-sm mx-2 font-medium">
           <span>{totalCardsCount === 0 ? 0 : isDone ? currentIndex : currentIndex + 1}</span>

@@ -122,8 +122,25 @@ export const getPracticeCardData = async ({ selectedTag, pluginPageTitle }) => {
   };
 };
 
-export const fetchBlockInfo = async (refUid) => {
+const getParentChainInfo = async ({ refUid }) => {
   const q = `[
+    :find (pull ?parentIds [
+      :node/title
+      :block/string
+      :block/uid])
+    :in $ ?refId
+    :where
+      [?block :block/uid ?refId]
+      [?block :block/parents ?parentIds]
+    ]`;
+
+  const dataResults = await window.roamAlphaAPI.q(q, refUid);
+
+  return dataResults.map((r) => r[0]);
+};
+
+export const fetchBlockInfo = async (refUid) => {
+  const blockInfoQuery = `[
     :find (pull ?block [
       :block/string
       :block/children
@@ -132,12 +149,13 @@ export const fetchBlockInfo = async (refUid) => {
     :where
       [?block :block/uid ?refId]
     ]`;
-
-  const dataResults = (await window.roamAlphaAPI.q(q, refUid))[0][0];
+  const blockInfo = (await window.roamAlphaAPI.q(blockInfoQuery, refUid))[0][0];
+  const parentChainInfo = await getParentChainInfo({ refUid });
 
   return {
-    string: dataResults.string,
-    children: dataResults.children?.map((child) => child.string),
+    string: blockInfo.string,
+    children: blockInfo.children?.map((child) => child.string),
+    breadcrumbs: parentChainInfo,
   };
 };
 
