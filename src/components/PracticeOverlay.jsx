@@ -25,7 +25,6 @@ const PracticeOverlay = ({
   handleMemoTagChange,
 }) => {
   const [currentIndex, setCurrentIndex] = React.useState(0);
-  const [showBreadcrumbs, setShowBreadcrumbs] = React.useState(false);
   const totalCardsCount = practiceCardUids.length;
   const hasCards = totalCardsCount > 0;
   const isDone = currentIndex > practiceCardUids.length - 1;
@@ -85,6 +84,20 @@ const PracticeOverlay = ({
       preserveAspectRatio: 'xMidYMid slice',
     },
   };
+
+  const [showBreadcrumbs, setShowBreadcrumbs] = React.useState(false);
+  const hotkeys = React.useMemo(
+    () => [
+      {
+        combo: 'B',
+        global: true,
+        label: 'Refresh data',
+        onKeyDown: () => setShowBreadcrumbs(!showBreadcrumbs),
+      },
+    ],
+    [showBreadcrumbs]
+  );
+  Blueprint.useHotkeys(hotkeys);
 
   return (
     <Dialog
@@ -325,6 +338,19 @@ const BoxIcon = styled(Blueprint.Icon)`
   margin-right: 5px !important;
 `;
 
+const BreadcrumbTooltipContent = ({ showBreadcrumbs }) => {
+  return (
+    <div className="flex align-center">
+      {`${showBreadcrumbs ? 'Hide' : 'Show'} Breadcrumbs`}
+      <span>
+        <ButtonTags kind="light" className="mx-2">
+          B
+        </ButtonTags>
+      </span>
+    </div>
+  );
+};
+
 const Header = ({
   tagsList,
   selectedTag,
@@ -349,7 +375,10 @@ const Header = ({
       </div>
       <div className="flex items-center justify-end">
         <div onClick={() => setShowBreadcrumbs(!showBreadcrumbs)} className="px-1 cursor-pointer">
-          <Tooltip content={`${showBreadcrumbs ? 'Hide' : 'Show'} Breadcrumbs`} placement="left">
+          <Tooltip
+            content={<BreadcrumbTooltipContent showBreadcrumbs={showBreadcrumbs} />}
+            placement="left"
+          >
             <Icon
               icon={showBreadcrumbs ? 'eye-open' : 'eye-off'}
               className={showBreadcrumbs ? 'opacity-100' : 'opacity-60'}
@@ -385,12 +414,15 @@ const FooterWrapper = styled.div`
 `;
 
 const ButtonTags = styled.span`
-  background-color: rgba(138, 155, 168, 0.1);
+  background-color: ${({ kind }) =>
+    kind === 'light' ? 'rgba(138, 155, 168, 0.2)' : 'rgba(138, 155, 168, 0.1)'};
   color: #abbbc9;
   text-transform: uppercase;
   font-size: 9px;
   padding: 1px 2px;
   border-radius: 2px;
+  position: relative;
+  top: -0.5px;
 `;
 
 const ControlButtonWrapper = styled(Blueprint.Button)`
