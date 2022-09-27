@@ -115,6 +115,11 @@ export const getPracticeCardData = async ({ selectedTag, pluginPageTitle }) => {
     }
   });
 
+  // Currently list seems to be sorted from newest to oldest so refersing so
+  // oldest new (this double flip hurts to say out loud but it's true) cards are
+  // first
+  newCardsUids.reverse();
+
   return {
     cardsData,
     newCardsUids,
@@ -160,12 +165,12 @@ export const fetchBlockInfo = async (refUid) => {
 };
 
 /**
- *  Shout out to David Bieber for these helpful functions
- *  Blog: https://davidbieber.com/snippets/2021-02-12-javascript-functions-for-inserting-blocks-in-roam/
+ *  Shout out to David Bieber for these helpful functions Blog:
+ *  https://davidbieber.com/snippets/2021-02-12-javascript-functions-for-inserting-blocks-in-roam/
  */
 const getPage = (page) => {
-  // returns the uid of a specific page in your graph.
-  // _page_: the title of the page.
+  // returns the uid of a specific page in your graph. _page_: the title of the
+  // page.
   let results = window.roamAlphaAPI.q(
     `
     [:find ?uid
@@ -182,16 +187,15 @@ const getPage = (page) => {
 };
 
 const getOrCreatePage = async (page) => {
-  // returns the uid of a specific page in your graph, creating it first if it does not already exist.
-  // _page_: the title of the page.
+  // returns the uid of a specific page in your graph, creating it first if it
+  // does not already exist. _page_: the title of the page.
   await roamAlphaAPI.createPage({ page: { title: page } });
   return getPage(page);
 };
 
 const getBlockOnPage = (page, block) => {
-  // returns the uid of a specific block on a specific page.
-  // _page_: the title of the page.
-  // _block_: the text of the block.
+  // returns the uid of a specific block on a specific page. _page_: the title
+  // of the page. _block_: the text of the block.
   let results = window.roamAlphaAPI.q(
     `
     [:find ?block_uid
@@ -212,9 +216,9 @@ const getBlockOnPage = (page, block) => {
 };
 
 const getChildBlock = (parent_uid, block) => {
-  // returns the uid of a specific child block underneath a specific parent block.
-  // _parent_uid_: the uid of the parent block.
-  // _block_: the text of the child block.
+  // returns the uid of a specific child block underneath a specific parent
+  // block. _parent_uid_: the uid of the parent block. _block_: the text of the
+  // child block.
   let results = window.roamAlphaAPI.q(
     `
     [:find ?block_uid
@@ -255,10 +259,11 @@ const getChildrenBlocks = (parent_uid) => {
 };
 
 const createChildBlock = async (parent_uid, block, order, blockProps = {}) => {
-  // returns the uid of a specific child block underneath a specific parent block, creating it first if it's not already there.
-  // _parent_uid_: the uid of the parent block.
-  // _block_: the text of the child block.
-  // _order_: (optional) controls where to create the block, 0 for inserting at the top, -1 for inserting at the bottom.
+  // returns the uid of a specific child block underneath a specific parent
+  // block, creating it first if it's not already there. _parent_uid_: the uid
+  // of the parent block. _block_: the text of the child block. _order_:
+  // (optional) controls where to create the block, 0 for inserting at the top,
+  // -1 for inserting at the bottom.
   if (!order) {
     order = 0;
   }
@@ -273,29 +278,29 @@ const createChildBlock = async (parent_uid, block, order, blockProps = {}) => {
 };
 
 const createBlockOnPage = async (page, block, order, blockProps) => {
-  // creates a new top-level block on a specific page, returning the new block's uid.
-  // _page_: the title of the page.
-  // _block_: the text of the block.
-  // _order_: (optional) controls where to create the block, 0 for top of page, -1 for bottom of page.
+  // creates a new top-level block on a specific page, returning the new block's
+  // uid. _page_: the title of the page. _block_: the text of the block.
+  // _order_: (optional) controls where to create the block, 0 for top of page,
+  // -1 for bottom of page.
   let page_uid = getPage(page);
   return createChildBlock(page_uid, block, order, blockProps);
 };
 
 const getOrCreateBlockOnPage = async (page, block, order, blockProps) => {
-  // returns the uid of a specific block on a specific page, creating it first as a top-level block if it's not already there.
-  // _page_: the title of the page.
-  // _block_: the text of the block.
-  // _order_: (optional) controls where to create the block, 0 for top of page, -1 for bottom of page.
+  // returns the uid of a specific block on a specific page, creating it first
+  // as a top-level block if it's not already there. _page_: the title of the
+  // page. _block_: the text of the block. _order_: (optional) controls where to
+  // create the block, 0 for top of page, -1 for bottom of page.
   let block_uid = getBlockOnPage(page, block);
   if (block_uid) return block_uid;
   return createBlockOnPage(page, block, order, blockProps);
 };
 
 const getOrCreateChildBlock = async (parent_uid, block, order, blockProps) => {
-  // creates a new child block underneath a specific parent block, returning the new block's uid.
-  // _parent_uid_: the uid of the parent block.
-  // _block_: the text of the new block.
-  // _order_: (optional) controls where to create the block, 0 for inserting at the top, -1 for inserting at the bottom.
+  // creates a new child block underneath a specific parent block, returning the
+  // new block's uid. _parent_uid_: the uid of the parent block. _block_: the
+  // text of the new block. _order_: (optional) controls where to create the
+  // block, 0 for inserting at the top, -1 for inserting at the bottom.
   let block_uid = getChildBlock(parent_uid, block);
   if (block_uid) return block_uid;
   return createChildBlock(parent_uid, block, order, blockProps);
