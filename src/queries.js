@@ -186,11 +186,13 @@ const getPage = (page) => {
   }
 };
 
-const getOrCreatePage = async (page) => {
-  // returns the uid of a specific page in your graph, creating it first if it
-  // does not already exist. _page_: the title of the page.
-  await roamAlphaAPI.createPage({ page: { title: page } });
-  return getPage(page);
+const getOrCreatePage = async (pageTitle) => {
+  const page = getPage(pageTitle);
+  if (page) return page;
+  const uid = window.roamAlphaAPI.util.generateUID();
+  await roamAlphaAPI.data.page.create({ page: { title: pageTitle, uid } });
+
+  return getPage(pageTitle);
 };
 
 const getBlockOnPage = (page, block) => {
