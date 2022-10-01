@@ -12,15 +12,15 @@ Just install through Roam Depot, then go to settings and configure the page tags
 
 - Multi Tag Support (aka decks)
 - Clean UI
+- Toggle Breadcrumbs Hints
 - Sidepanel Widget
 - Review Interval Previews
 - Keyboard shortcuts
+- Skip control
 
 ## Coming Soon
 
-- Breadcrumbs
 - Daily Limit Controls
-- Skip control
 - History Explorer
 
 ## Bug Reports and Feature Requests
