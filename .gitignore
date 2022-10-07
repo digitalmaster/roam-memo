@@ -1,6 +1,7 @@
 # Build output
 /extension.js
 /extension.js.map
+/extension.js.LICENSE.txt
 
 # Logs
 logs

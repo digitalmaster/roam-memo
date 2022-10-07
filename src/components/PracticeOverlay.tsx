@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as Blueprint from '@blueprintjs/core';
 import * as BlueprintSelect from '@blueprintjs/select';
 import styled from '@emotion/styled';
-import useBlockInfo from '~/hooks/useBlockInfo.jsx';
+import useBlockInfo from '~/hooks/useBlockInfo';
 import * as domUtils from '~/utils/dom';
 import * as asyncUtils from '~/utils/async';
 import * as dateUtils from '~/utils/date';
@@ -11,8 +11,9 @@ import mediaQueries from '~/utils/mediaQueries';
 import { getPracticeResultData } from '~/practice';
 import Lottie from 'react-lottie';
 import doneAnimationData from '~/lotties/done.json';
-import Tooltip from '~/components/Tooltip.jsx';
+import Tooltip from '~/components/Tooltip';
 import { Icon } from '@blueprintjs/core';
+import { Breadcrumbs as BreadcrumbsType } from '~/queries';
 
 const PracticeOverlay = ({
   isOpen,
@@ -55,7 +56,10 @@ const PracticeOverlay = ({
 
     // To prevent 'space' key event from triggering dropdown
     await asyncUtils.sleep(200);
-    document?.activeElement.blur();
+
+    if (document.activeElement instanceof HTMLElement) {
+      document?.activeElement.blur();
+    }
   };
 
   const onGradeClick = React.useCallback(
@@ -100,6 +104,7 @@ const PracticeOverlay = ({
   Blueprint.useHotkeys(hotkeys);
 
   return (
+    // @ts-ignore
     <Dialog
       isOpen={isOpen}
       onClose={onCloseCallback}
@@ -179,11 +184,22 @@ const Breadcrumbs = ({ breadcrumbs }) => {
   );
 };
 
-const CardBlock = ({ refUid, showBlockChildren, breadcrumbs, showBreadcrumbs }) => {
-  const ref = React.useRef();
+const CardBlock = ({
+  refUid,
+  showBlockChildren,
+  breadcrumbs,
+  showBreadcrumbs,
+}: {
+  refUid: string;
+  showBlockChildren: boolean;
+  breadcrumbs: BreadcrumbsType[];
+  showBreadcrumbs: boolean;
+}) => {
+  const ref = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     const asyncFn = async () => {
+      if (!ref.current) return;
       await window.roamAlphaAPI.ui.components.unmountNode({ el: ref.current });
       await window.roamAlphaAPI.ui.components.renderBlock({ uid: refUid, el: ref.current });
 
@@ -194,6 +210,7 @@ const CardBlock = ({ refUid, showBlockChildren, breadcrumbs, showBreadcrumbs }) 
         // Currently no Roam API to toggle block collapse, so had to find this hacky
         // way to do it by simulating click
         const expandControlBtn = ref.current.querySelector('.block-expand .rm-caret');
+
         await asyncUtils.sleep(100);
         domUtils.simulateMouseClick(expandControlBtn);
         await asyncUtils.sleep(100);
@@ -210,8 +227,9 @@ const CardBlock = ({ refUid, showBlockChildren, breadcrumbs, showBreadcrumbs }) 
     </div>
   );
 };
-
-const ContentWrapper = styled.div`
+const ContentWrapper = styled.div<{
+  showBlockChildren: boolean;
+}>`
   // To align bullet on the left + ref count on the right correctly
   position: relative;
   left: -14px;
@@ -267,6 +285,7 @@ const HeaderWrapper = styled.div`
 
 const TagSelector = ({ tagsList, selectedTag, onTagChange }) => {
   return (
+    // @ts-ignore
     <BlueprintSelect.Select
       items={tagsList}
       activeItem={selectedTag}
@@ -286,7 +305,7 @@ const TagSelector = ({ tagsList, selectedTag, onTagChange }) => {
   );
 };
 
-const TagSelectorItemWrapper = styled.div`
+const TagSelectorItemWrapper = styled.div<{ active: boolean }>`
   padding: 4px 6px;
   background-color: ${({ active }) => (active ? '#e8edf4' : 'white')};
   user-select: none;
@@ -375,6 +394,7 @@ const Header = ({
       </div>
       <div className="flex items-center justify-end">
         <div onClick={() => setShowBreadcrumbs(!showBreadcrumbs)} className="px-1 cursor-pointer">
+          {/* @ts-ignore */}
           <Tooltip
             content={<BreadcrumbTooltipContent showBreadcrumbs={showBreadcrumbs} />}
             placement="left"
@@ -413,7 +433,7 @@ const FooterWrapper = styled.div`
   }
 `;
 
-const ButtonTags = styled.span`
+const ButtonTags = styled.span<{ kind?: 'light' }>`
   background-color: ${({ kind }) =>
     kind === 'light' ? 'rgba(138, 155, 168, 0.2)' : 'rgba(138, 155, 168, 0.1)'};
   color: #abbbc9;
@@ -431,6 +451,7 @@ const ControlButtonWrapper = styled(Blueprint.Button)`
 
 const ControlButton = ({ tooltipText, ...props }) => {
   return (
+    // @ts-ignore
     <Tooltip content={tooltipText} placement="top">
       <ControlButtonWrapper {...props} />
     </Tooltip>
@@ -560,6 +581,7 @@ const Footer = ({
     >
       <FooterActionsWrapper className="bp3-dialog-footer-actions flex-wrap gap-4 justify-evenly w-full mx-3  my-3">
         {isDone || !hasCards ? (
+          // @ts-ignore
           <ControlButton
             className="text-base font-medium py-1"
             intent="none"
@@ -569,6 +591,7 @@ const Footer = ({
             Close
           </ControlButton>
         ) : hasBlockChildren && !showBlockChildren ? (
+          // @ts-ignore
           <ControlButton
             className="text-base font-medium py-1"
             intent="none"

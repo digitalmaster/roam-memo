@@ -238,6 +238,7 @@ describe.skip('getPluginPageData', () => {
       },
     ],
   ];
+
   it('Standard mapped response', () => {
     windowSpy.mockImplementation(() => ({
       roamAlphaAPI: {
@@ -245,6 +246,8 @@ describe.skip('getPluginPageData', () => {
       },
     }));
 
-    expect(queries.getPluginPageData('roam/memo', 'data')).resolves.toBe({});
+    expect(
+      queries.getPluginPageData({ pluginPageTitle: 'roam/memo', dataBlockName: 'data' })
+    ).resolves.toBe({});
   });
 });

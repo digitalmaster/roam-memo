@@ -1,9 +1,10 @@
+import React from 'react';
 import ReactDOM from 'react-dom';
-import App from './app.jsx';
+import App from './app';
 
 console.log('Memo: Initializing...');
 
-const container_id = 'roam-memo-wrapper';
+const container_id: string = 'roam-memo-wrapper';
 
 const createAndRenderContainer = () => {
   // @TODO: This is where I want it personally, but maybe make this a configurable setting?

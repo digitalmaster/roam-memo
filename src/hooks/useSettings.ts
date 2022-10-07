@@ -1,5 +1,5 @@
 import React from 'react';
-import settingsPanelConfig from '~/settingsPanelConfig.js';
+import settingsPanelConfig from '~/settingsPanelConfig';
 
 const defaultSettings = {
   tagsListString: 'memo',

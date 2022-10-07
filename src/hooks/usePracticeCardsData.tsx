@@ -1,5 +1,5 @@
 import * as React from 'react';
-import * as queries from '~/queries.js';
+import * as queries from '~/queries';
 
 const usePracticeCardsData = ({ selectedTag, pluginPageTitle }) => {
   const [practiceCardsUids, setPracticeCardsUids] = React.useState([]);

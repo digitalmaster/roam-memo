@@ -7,13 +7,16 @@
     "dev": "webpack --watch --mode development",
     "build": "webpack build --mode production",
     "format": "prettier --write \"./**/*.{js,jsx,json}\"",
-    "lint": "eslint '**/*.{js,jsx}' --max-warnings 0",
+    "lint": "eslint '**/*.{ts,tsx,js,jsx}' --max-warnings 0",
+    "typecheck": "tsc",
     "test": "jest --verbose",
-    "version": "auto-changelog --package --commit-limit false && git add CHANGELOG.md"
+    "changelog": "auto-changelog --package --commit-limit false && git add CHANGELOG.md"
   },
   "jest": {
     "testEnvironment": "jsdom",
     "moduleFileExtensions": [
+      "ts",
+      "tsx",
       "js",
       "jsx"
     ],
@@ -27,10 +30,14 @@
   "devDependencies": {
     "@babel/core": "^7.18.10",
     "@babel/eslint-parser": "^7.18.9",
+    "@babel/plugin-proposal-class-properties": "^7.18.6",
+    "@babel/plugin-proposal-object-rest-spread": "^7.18.9",
     "@babel/preset-env": "^7.18.10",
     "@babel/preset-react": "^7.18.6",
+    "@babel/preset-typescript": "^7.18.6",
     "@emotion/babel-plugin": "^11.10.0",
     "@types/jest": "^28.1.7",
+    "@types/react": "^18.0.21",
     "auto-changelog": "^2.4.0",
     "babel-jest": "^28.1.3",
     "babel-loader": "^8.2.5",
@@ -40,6 +47,8 @@
     "jest": "^28.1.3",
     "jest-environment-jsdom": "^28.1.3",
     "prettier": "2.7.1",
+    "tsconfig-paths-webpack-plugin": "^4.0.0",
+    "typescript": "^4.8.4",
     "webpack": "^5.73.0",
     "webpack-cli": "^4.10.0"
   },

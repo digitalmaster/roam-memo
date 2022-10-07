@@ -144,7 +144,15 @@ const getParentChainInfo = async ({ refUid }) => {
   return dataResults.map((r) => r[0]);
 };
 
-export const fetchBlockInfo = async (refUid) => {
+export interface BlockInfo {
+  string: string;
+  children: any[];
+  breadcrumbs: Breadcrumbs[];
+}
+export interface Breadcrumbs {
+  [index: number]: { uid: string; title: string };
+}
+export const fetchBlockInfo: (refUid: any) => Promise<BlockInfo> = async (refUid) => {
   const blockInfoQuery = `[
     :find (pull ?block [
       :block/string
@@ -190,7 +198,7 @@ const getOrCreatePage = async (pageTitle) => {
   const page = getPage(pageTitle);
   if (page) return page;
   const uid = window.roamAlphaAPI.util.generateUID();
-  await roamAlphaAPI.data.page.create({ page: { title: pageTitle, uid } });
+  await window.roamAlphaAPI.data.page.create({ page: { title: pageTitle, uid } });
 
   return getPage(pageTitle);
 };

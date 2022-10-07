@@ -1,6 +1,6 @@
 import styled from '@emotion/styled';
 import * as Blueprint from '@blueprintjs/core';
-import Tooltip from '~/components/Tooltip.jsx';
+import Tooltip from '~/components/Tooltip';
 
 const Wrapper = styled.span`
   display: flex;
@@ -25,6 +25,7 @@ const SidePandelWidget = ({ onClickCallback, displayCardCounts }) => {
       </div>
       <div className="ml-2">
         {displayCardCounts.due > 0 && (
+          // @ts-ignore
           <Tooltip content="Due" placement="top">
             <Tag active minimal intent="primary" className="text-center">
               {displayCardCounts.due}
@@ -32,6 +33,7 @@ const SidePandelWidget = ({ onClickCallback, displayCardCounts }) => {
           </Tooltip>
         )}
         {displayCardCounts.new > 0 && (
+          // @ts-ignore
           <Tooltip content="New" placement="top">
             <Tag active minimal intent="success" className="text-center ml-2">
               {displayCardCounts.new}

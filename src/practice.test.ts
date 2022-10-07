@@ -66,7 +66,7 @@ describe('supermemo: simulate practice', () => {
     const initInput = { efactor: 3.0000000000000004, interval: 131, repetition: 5 };
     const gradeResultsArr = new Array(6)
 
-      .fill()
+      .fill(undefined)
       .map((_, i) => ({ grade: i, ...practice.supermemo(initInput, i) }));
 
     const [result0, result1, result2, result3, result4, result5] = gradeResultsArr;

@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "~/*": ["./src/*"]
+    },
+    "noEmit": true,
+    "module": "es6",
+    "target": "es5",
+    "jsx": "react-jsx",
+    "skipLibCheck": true,
+    "allowJs": true,
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true
+  },
+  "include": ["./src"],
+  "exclude": ["./node_modules/*"]
+}

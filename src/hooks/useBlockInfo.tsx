@@ -1,17 +1,19 @@
 import * as React from 'react';
-import { fetchBlockInfo } from '~/queries';
+import { BlockInfo, fetchBlockInfo } from '~/queries';
 
 const useBlockInfo = ({ refUid }) => {
-  const [blockInfo, setBlockInfo] = React.useState({});
+  const [blockInfo, setBlockInfo] = React.useState<BlockInfo>({} as BlockInfo);
+
   React.useEffect(() => {
     if (!refUid) return;
 
     const fetch = async () => {
       const blockInfo = await fetchBlockInfo(refUid);
+
       setBlockInfo(blockInfo);
     };
 
-    fetch(refUid);
+    fetch();
   }, [refUid]);
 
   return {

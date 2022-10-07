@@ -9,7 +9,7 @@ const useCollapseReferenceList = ({ pluginPageTitle }) => {
     const fn = async () => {
       await asyncUtils.sleep(100);
       const elmList = [
-        ...document.querySelectorAll('.rm-ref-page-view .rm-ref-page-view-title'),
+        ...Array.from(document.querySelectorAll('.rm-ref-page-view .rm-ref-page-view-title')),
       ].filter((elm) => elm.textContent === pluginPageTitle);
 
       for (const elm of elmList) {
@@ -20,7 +20,7 @@ const useCollapseReferenceList = ({ pluginPageTitle }) => {
 
     return fn;
   }, [pluginPageTitle]);
-  const [currentRoute, setCurrentRoute] = React.useState();
+  const [currentRoute, setCurrentRoute] = React.useState('');
 
   React.useEffect(() => {
     collapseDataReferenceBlock(); // trigger on page load
