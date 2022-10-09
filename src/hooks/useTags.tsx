@@ -1,8 +1,8 @@
 import * as React from 'react';
 
-const useTags = ({ tagsListString }) => {
-  const [tagsList, setTagsList] = React.useState([]);
-  const [selectedTag, setSelectedTag] = React.useState();
+const useTags = ({ tagsListString }: { tagsListString: string }) => {
+  const [tagsList, setTagsList] = React.useState<string[]>([]);
+  const [selectedTag, setSelectedTag] = React.useState<string | undefined>();
 
   React.useEffect(() => {
     const tagsList = tagsListString.split(',').map((tag) => tag.trim());

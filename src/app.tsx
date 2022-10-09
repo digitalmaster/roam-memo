@@ -7,6 +7,7 @@ import usePracticeCardsData from '~/hooks/usePracticeCardsData';
 import useTags from '~/hooks/useTags';
 import useSettings from '~/hooks/useSettings';
 import useCollapseReferenceList from '~/hooks/useCollapseReferenceList';
+import useOnBlockInteract from '~/hooks/useOnBlockInteract';
 
 const App = () => {
   const [showPracticeOverlay, setShowPracticeOverlay] = React.useState(false);
@@ -42,6 +43,25 @@ const App = () => {
   };
 
   useCollapseReferenceList({ pluginPageTitle });
+
+  // Keep counters in sync as you add/remove tags from blocks
+  const [tagsOnEnter, setTagsOnEnter] = React.useState([]);
+  const onBlockEnterHandler = (elm: HTMLTextAreaElement) => {
+    const tags = tagsList.filter((tag) => elm.value.includes(tag));
+    setTagsOnEnter(tags);
+  };
+  const onBlockLeaveHandler = (elm: HTMLTextAreaElement) => {
+    const tags = tagsList.filter((tag) => elm.value.includes(tag));
+
+    if (tagsOnEnter.length !== tags.length) {
+      fetchPracticeData();
+    }
+  };
+
+  useOnBlockInteract({
+    onEnterCallback: onBlockEnterHandler,
+    onLeaveCallback: onBlockLeaveHandler,
+  });
 
   return (
     <Blueprint.HotkeysProvider>
