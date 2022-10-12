@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as Blueprint from '@blueprintjs/core';
-import PracticeOverlay from '~/components/PracticeOverlay';
+import PracticeOverlay from '~/components/overlay/PracticeOverlay';
 import SidePandelWidget from '~/components/SidePandelWidget';
 import practice from '~/practice';
 import usePracticeCardsData from '~/hooks/usePracticeCardsData';
