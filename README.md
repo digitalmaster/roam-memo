@@ -11,6 +11,8 @@ Just install through Roam Depot, then go to settings and configure the page tags
 ## Features
 
 - Multi Tag Support (aka decks)
+- Text Masking (or cloze deletion)
+  > To hide part of text just highlight it ^^hide me^^
 - Clean UI
 - Toggle Breadcrumbs Hints
 - Sidepanel Widget
@@ -20,6 +22,7 @@ Just install through Roam Depot, then go to settings and configure the page tags
 
 ## Coming Soon
 
+- Old RoamSr Migration Tool
 - Daily Limit Controls
 - History Explorer
 

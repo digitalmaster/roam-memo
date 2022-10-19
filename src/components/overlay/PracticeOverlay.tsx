@@ -43,12 +43,21 @@ const PracticeOverlay = ({
     ? 'pastDue'
     : null;
 
-  const [showBlockChildren, setShowBlockChildren] = React.useState(false);
   const { data: blockInfo } = useBlockInfo({ refUid: currentCardRefUid });
-  const hasBlockChildren = blockInfo.children && blockInfo.children.length;
+  const hasBlockChildren = blockInfo.children && !!blockInfo.children.length;
+  const [showAnswers, setShowAnswers] = React.useState(!hasBlockChildren);
+  const [hasCloze, setHasCloze] = React.useState(true);
+
+  React.useEffect(() => {
+    if (hasBlockChildren || hasCloze) {
+      setShowAnswers(false);
+    } else {
+      setShowAnswers(true);
+    }
+  }, [hasBlockChildren, hasCloze]);
 
   const onTagChange = async (tag) => {
-    setShowBlockChildren(false);
+    setShowAnswers(false);
     setCurrentIndex(0);
     handleMemoTagChange(tag);
 
@@ -65,7 +74,7 @@ const PracticeOverlay = ({
       if (isDone) return;
 
       handleGradeClick(props);
-      setShowBlockChildren(false);
+      setShowAnswers(false);
       setCurrentIndex(currentIndex + 1);
     },
     [currentIndex, handleGradeClick, isDone]
@@ -74,7 +83,7 @@ const PracticeOverlay = ({
   const onSkipClick = React.useCallback(() => {
     if (isDone) return;
 
-    setShowBlockChildren(false);
+    setShowAnswers(false);
     setCurrentIndex(currentIndex + 1);
   }, [currentIndex, isDone]);
 
@@ -128,7 +137,8 @@ const PracticeOverlay = ({
         {currentCardRefUid ? (
           <CardBlock
             refUid={currentCardRefUid}
-            showBlockChildren={showBlockChildren}
+            showAnswers={showAnswers}
+            setHasCloze={setHasCloze}
             breadcrumbs={blockInfo.breadcrumbs}
             showBreadcrumbs={showBreadcrumbs}
           />
@@ -144,8 +154,8 @@ const PracticeOverlay = ({
         onGradeClick={onGradeClick}
         onSkipClick={onSkipClick}
         hasBlockChildren={hasBlockChildren}
-        setShowBlockChildren={setShowBlockChildren}
-        showBlockChildren={showBlockChildren}
+        setShowAnswers={setShowAnswers}
+        showAnswers={showAnswers}
         isDone={isDone}
         hasCards={hasCards}
         onCloseCallback={onCloseCallback}
@@ -371,8 +381,8 @@ const ControlButton = ({ tooltipText, ...props }) => {
 
 const Footer = ({
   hasBlockChildren,
-  setShowBlockChildren,
-  showBlockChildren,
+  setShowAnswers,
+  showAnswers,
   refUid,
   onGradeClick,
   onSkipClick,
@@ -391,8 +401,8 @@ const Footer = ({
   };
 
   const showAnswerFn = React.useMemo(() => {
-    return () => setShowBlockChildren(true);
-  }, [setShowBlockChildren]);
+    return () => setShowAnswers(true);
+  }, [setShowAnswers]);
   const gradeFn = React.useMemo(
     () => (grade) => {
       let key;
@@ -432,7 +442,7 @@ const Footer = ({
         global: true,
         label: 'Show Block Children',
         onKeyDown: () => {
-          if (hasBlockChildren && !showBlockChildren) {
+          if (!showAnswers) {
             activateButtonFn('space-button', showAnswerFn);
           } else {
             gradeFn(5);
@@ -464,7 +474,7 @@ const Footer = ({
         onKeyDown: () => gradeFn(4),
       },
     ],
-    [skipFn, hasBlockChildren, showBlockChildren, showAnswerFn, gradeFn]
+    [skipFn, hasBlockChildren, showAnswers, showAnswerFn, gradeFn]
   );
   const { handleKeyDown, handleKeyUp } = Blueprint.useHotkeys(hotkeys);
 
@@ -501,7 +511,7 @@ const Footer = ({
           >
             Close
           </ControlButton>
-        ) : hasBlockChildren && !showBlockChildren ? (
+        ) : !showAnswers ? (
           // @ts-ignore
           <ControlButton
             className="text-base font-medium py-1"
