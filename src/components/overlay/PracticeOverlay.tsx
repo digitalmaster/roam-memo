@@ -27,6 +27,7 @@ const PracticeOverlay = ({
   const totalCardsCount = practiceCardUids.length;
   const hasCards = totalCardsCount > 0;
   const isDone = currentIndex > practiceCardUids.length - 1;
+  const isFirst = currentIndex === 0;
 
   const currentCardRefUid = practiceCardUids[currentIndex];
   const currentCardData = practiceCardsData[currentCardRefUid];
@@ -87,6 +88,13 @@ const PracticeOverlay = ({
     setCurrentIndex(currentIndex + 1);
   }, [currentIndex, isDone]);
 
+  const onPrevClick = React.useCallback(() => {
+    if (isFirst) return;
+
+    setShowAnswers(false);
+    setCurrentIndex(currentIndex - 1);
+  }, [currentIndex, isFirst]);
+
   const lottieAnimationOption = {
     loop: false,
     autoplay: true,
@@ -102,7 +110,7 @@ const PracticeOverlay = ({
       {
         combo: 'B',
         global: true,
-        label: 'Refresh data',
+        label: 'Show BreadCrumbs',
         onKeyDown: () => setShowBreadcrumbs(!showBreadcrumbs),
       },
     ],
@@ -153,6 +161,7 @@ const PracticeOverlay = ({
         refUid={currentCardRefUid}
         onGradeClick={onGradeClick}
         onSkipClick={onSkipClick}
+        onPrevClick={onPrevClick}
         hasBlockChildren={hasBlockChildren}
         setShowAnswers={setShowAnswers}
         showAnswers={showAnswers}
@@ -386,6 +395,7 @@ const Footer = ({
   refUid,
   onGradeClick,
   onSkipClick,
+  onPrevClick,
   isDone,
   hasCards,
   onCloseCallback,
@@ -454,6 +464,18 @@ const Footer = ({
         global: true,
         label: 'Skip',
         onKeyDown: skipFn,
+      },
+      {
+        combo: 'right',
+        global: true,
+        label: 'Skip',
+        onKeyDown: skipFn,
+      },
+      {
+        combo: 'left',
+        global: true,
+        label: 'Previous',
+        onKeyDown: onPrevClick,
       },
       {
         combo: 'F',
