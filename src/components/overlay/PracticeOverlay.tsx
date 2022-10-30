@@ -46,7 +46,8 @@ const PracticeOverlay = ({
 
   const { data: blockInfo } = useBlockInfo({ refUid: currentCardRefUid });
   const hasBlockChildren = blockInfo.children && !!blockInfo.children.length;
-  const [showAnswers, setShowAnswers] = React.useState(!hasBlockChildren);
+  const [showAnswers, setShowAnswers] = React.useState(false);
+
   const [hasCloze, setHasCloze] = React.useState(true);
 
   React.useEffect(() => {

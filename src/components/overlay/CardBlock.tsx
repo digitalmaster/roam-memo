@@ -19,22 +19,18 @@ const CardBlock = ({
   breadcrumbs: BreadcrumbsType[];
   showBreadcrumbs: boolean;
 }) => {
-  const ref = React.useRef<HTMLDivElement>(null);
-  const [renderedBlockElm, setRenderedBlockElm] = React.useState<HTMLElement>();
-  useCloze({ renderedBlockElm, onClozeCallback: setHasCloze });
+  const ref = React.useRef<HTMLDivElement | null>(null);
+  const [renderedBlockElm, setRenderedBlockElm] = React.useState(null);
+  useCloze({ renderedBlockElm: renderedBlockElm, hasClozeCallback: setHasCloze });
 
   React.useEffect(() => {
     const asyncFn = async () => {
-      if (!ref.current) return;
       await window.roamAlphaAPI.ui.components.unmountNode({ el: ref.current });
       await window.roamAlphaAPI.ui.components.renderBlock({ uid: refUid, el: ref.current });
 
-      // Wait for component to mount and render
-      await asyncUtils.sleep(100);
-      setRenderedBlockElm(ref.current);
-
       // Ensure block is not collapsed (so we can reveal children programatically)
       const roamBlockElm = ref.current.querySelector('.rm-block');
+      setRenderedBlockElm(roamBlockElm);
       const isCollapsed = roamBlockElm.classList.contains('rm-block--closed');
       if (isCollapsed) {
         // Currently no Roam API to toggle block collapse, so had to find this hacky
@@ -79,6 +75,8 @@ const ContentWrapper = styled.div<{
     color: ${(props) => (props.showAnswers ? 'inherit' : 'transparent')};
     overflow: hidden;
     border-radius: 2px;
+    padding: 0;
+    margin: 0;
   }
 `;
 

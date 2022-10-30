@@ -12,7 +12,7 @@ Just install through Roam Depot, then go to settings and configure the page tags
 
 - Multi Tag Support (aka decks)
 - Text Masking (or cloze deletion)
-  > To hide part of text just highlight it ^^hide me^^
+  > To mask a part of text just highlight it `^^hide me^^` or wrap it in single brackets `{hide me too}`
 - Clean UI
 - Toggle Breadcrumbs Hints
 - Sidepanel Widget
