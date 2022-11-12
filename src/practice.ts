@@ -71,12 +71,12 @@ interface Practice {
   eFactor: number;
   grade: number;
   refUid: string;
-  pluginPageTitle: string;
+  dataPageTitle: string;
   dateCreated: null | Date;
 }
 
 const practice = async (
-  { interval, repetitions, eFactor, grade, refUid, pluginPageTitle, dateCreated = null }: Practice,
+  { interval, repetitions, eFactor, grade, refUid, dataPageTitle, dateCreated = null }: Practice,
   isDryRun = false
 ) => {
   // Just don't want to store nextDueDateFromNow
@@ -92,7 +92,7 @@ const practice = async (
   if (!isDryRun) {
     await savePracticeData({
       refUid: refUid,
-      pluginPageTitle,
+      dataPageTitle,
       grade,
       dateCreated,
       ...practiceResultData,

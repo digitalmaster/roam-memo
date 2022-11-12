@@ -4,13 +4,13 @@ import * as domUtils from '~/utils/dom';
 
 // Collapse memo data block ref by default (to keep things less noisy)
 // @TODO: Maybe make this configurable
-const useCollapseReferenceList = ({ pluginPageTitle }) => {
+const useCollapseReferenceList = ({ dataPageTitle }) => {
   const collapseDataReferenceBlock = React.useMemo(() => {
     const fn = async () => {
       await asyncUtils.sleep(100);
       const elmList = [
         ...Array.from(document.querySelectorAll('.rm-ref-page-view .rm-ref-page-view-title')),
-      ].filter((elm) => elm.textContent === pluginPageTitle);
+      ].filter((elm) => elm.textContent === dataPageTitle);
 
       for (const elm of elmList) {
         const collapseControlBtn = elm?.parentNode.querySelector('.rm-caret-open');
@@ -19,7 +19,7 @@ const useCollapseReferenceList = ({ pluginPageTitle }) => {
     };
 
     return fn;
-  }, [pluginPageTitle]);
+  }, [dataPageTitle]);
   const [currentRoute, setCurrentRoute] = React.useState('');
 
   React.useEffect(() => {
@@ -33,7 +33,7 @@ const useCollapseReferenceList = ({ pluginPageTitle }) => {
     return () => {
       window.removeEventListener('popstate', onRouteChange);
     };
-  }, [pluginPageTitle, collapseDataReferenceBlock]);
+  }, [dataPageTitle, collapseDataReferenceBlock]);
 
   React.useEffect(() => {
     const observer = new MutationObserver(() => {

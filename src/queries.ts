@@ -42,7 +42,7 @@ const mapPluginPageData = (queryResultsData) =>
       return acc;
     }, {}) || {};
 
-export const getPluginPageData = async ({ pluginPageTitle }) => {
+export const getPluginPageData = async ({ dataPageTitle }) => {
   const q = `[
     :find (pull ?pluginPageChildren [
       :block/string
@@ -57,7 +57,7 @@ export const getPluginPageData = async ({ pluginPageTitle }) => {
     ]`;
 
   const dataBlockName = 'data';
-  const queryResultsData = await window.roamAlphaAPI.q(q, pluginPageTitle, dataBlockName);
+  const queryResultsData = await window.roamAlphaAPI.q(q, dataPageTitle, dataBlockName);
 
   if (!queryResultsData.length) return {};
 
@@ -81,7 +81,7 @@ export const getDueCardUids = (data) => {
   return results;
 };
 
-export const generateNewCardProps = ({ dateCreated } = {}) => ({
+export const generateNewCardProps = ({ dateCreated = undefined } = {}) => ({
   dateCreated: dateCreated || new Date(),
   eFactor: 2.5,
   interval: 0,
@@ -89,8 +89,8 @@ export const generateNewCardProps = ({ dateCreated } = {}) => ({
   isNew: true,
 });
 
-export const getPracticeCardData = async ({ selectedTag, pluginPageTitle }) => {
-  const pluginPageData = await getPluginPageData({ pluginPageTitle });
+export const getPracticeCardData = async ({ selectedTag, dataPageTitle }) => {
+  const pluginPageData = await getPluginPageData({ dataPageTitle });
 
   const selectedTagReferencesIds = await getPageReferenceIds(selectedTag);
   const cardsData = { ...pluginPageData };
@@ -333,9 +333,9 @@ const getEmojiFromGrade = (grade) => {
   }
 };
 
-export const savePracticeData = async ({ refUid, pluginPageTitle, dateCreated, ...data }) => {
-  await getOrCreatePage(pluginPageTitle);
-  const dataBlockUid = await getOrCreateBlockOnPage(pluginPageTitle, 'data', -1, {
+export const savePracticeData = async ({ refUid, dataPageTitle, dateCreated, ...data }) => {
+  await getOrCreatePage(dataPageTitle);
+  const dataBlockUid = await getOrCreateBlockOnPage(dataPageTitle, 'data', -1, {
     open: false,
     heading: 3,
   });
