@@ -1,9 +1,8 @@
 import * as asyncUtils from '~/utils/async';
-import { importRoamSrOldData } from '~/utils/migration';
-import RoamSrImportData from '~/components/RoamSRImport';
+import RoamSrImportPanel from '~/components/RoamSrImportPanel';
 import { defaultSettings } from './hooks/useSettings';
 
-const settingsPanelConfig = ({ setSettings }) => {
+const settingsPanelConfig = ({ settings, setSettings }) => {
   const syncFn = async ({ key, value }: { key: string; value: any }) => {
     window.roamMemo.extensionAPI.settings.set(key, value);
     setSettings((currentSettings) => {
@@ -17,9 +16,9 @@ const settingsPanelConfig = ({ setSettings }) => {
     settings: [
       {
         id: 'tagsListString',
-        name: 'Tag Pages',
+        name: 'Tag Pages (aka Decks)',
         description:
-          'Separate multiple with commas. First one is the default page. Example: "memo, sr, 🐘, french words, fun facts"',
+          'Separate multiple decks with commas. Example: "memo, sr, 🐘, french exam, fun facts"',
         action: {
           type: 'input',
           placeholder: defaultSettings.tagsListString,
@@ -35,7 +34,7 @@ const settingsPanelConfig = ({ setSettings }) => {
         description: 'Import Roam Sr Old data',
         action: {
           type: 'reactComponent',
-          component: RoamSrImportData,
+          component: () => <RoamSrImportPanel dataPageTitle={settings.dataPageTitle} />,
         },
       },
       {

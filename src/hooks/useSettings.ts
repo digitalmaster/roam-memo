@@ -11,7 +11,6 @@ export const defaultSettings = {
 // context to access it anywhere)
 const useSettings = () => {
   const [settings, setSettings] = React.useState(defaultSettings);
-  console.log('DEBUG:: ~ file: useSettings.ts ~ line 15 ~ settings', settings);
 
   React.useEffect(() => {
     if (!settings.tagsListString.trim()) {
@@ -24,13 +23,23 @@ const useSettings = () => {
 
   React.useEffect(() => {
     // Init config panel
-    window.roamMemo.extensionAPI.settings.panel.create(settingsPanelConfig({ setSettings }));
+    window.roamMemo.extensionAPI.settings.panel.create(
+      settingsPanelConfig({ settings, setSettings })
+    );
   }, [setSettings, settings.dataPageTitle]);
 
   React.useEffect(() => {
     const allSettings = window.roamMemo.extensionAPI.settings.getAll() || {};
 
-    setSettings((currentSettings) => ({ ...currentSettings, ...allSettings }));
+    // Filterout out any settings that are falsey
+    const filteredSettings = Object.keys(allSettings).reduce((acc, key) => {
+      if (allSettings[key]) {
+        acc[key] = allSettings[key];
+      }
+      return acc;
+    }, {});
+
+    setSettings((currentSettings) => ({ ...currentSettings, ...filteredSettings }));
   }, [setSettings]);
 
   return settings;
