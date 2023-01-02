@@ -4,6 +4,7 @@
   "description": "Roam Spaced Repetition Plugin",
   "author": "Jose Browne <josebrowne@gmail.com> (http://josebrowne.com/)",
   "scripts": {
+    "start": "npm run dev",
     "dev": "webpack --watch --mode development",
     "build": "webpack build --mode production",
     "format": "prettier --write \"./**/*.{js,jsx,json}\"",

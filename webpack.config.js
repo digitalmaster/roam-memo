@@ -24,6 +24,7 @@ module.exports = {
   experiments: {
     outputModule: true,
   },
+  devtool: 'inline-source-map',
   module: {
     rules: [
       {

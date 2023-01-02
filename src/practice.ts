@@ -65,7 +65,7 @@ export const generatePracticeData = ({
   };
 };
 
-interface Practice {
+export interface PracticeProps {
   interval: number;
   repetitions: number;
   eFactor: number;
@@ -75,10 +75,16 @@ interface Practice {
   dateCreated: null | Date;
 }
 
-const practice = async (
-  { interval, repetitions, eFactor, grade, refUid, dataPageTitle, dateCreated = null }: Practice,
-  isDryRun = false
-) => {
+const practice = async (practiceProps: PracticeProps, isDryRun = false) => {
+  const {
+    interval,
+    repetitions,
+    eFactor,
+    grade,
+    refUid,
+    dataPageTitle,
+    dateCreated = null,
+  } = practiceProps;
   // Just don't want to store nextDueDateFromNow
   // eslint-disable-next-line no-unused-vars
   const { nextDueDateFromNow, ...practiceResultData } = generatePracticeData({
@@ -88,7 +94,6 @@ const practice = async (
     eFactor,
     baseDate: dateCreated,
   });
-
   if (!isDryRun) {
     await savePracticeData({
       refUid: refUid,

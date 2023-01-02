@@ -1,6 +1,8 @@
 import { getStringBetween, parseConfigString, parseRoamDateString } from '~/utils/string';
 import * as stringUtils from '~/utils/string';
 import * as dateUtils from '~/utils/date';
+import { Records } from '~/models/session';
+import practice from '~/practice';
 
 const getPageReferenceIds = async (pageTitle) => {
   const q = `[
@@ -194,7 +196,7 @@ const getPage = (page) => {
   }
 };
 
-const getOrCreatePage = async (pageTitle) => {
+export const getOrCreatePage = async (pageTitle) => {
   const page = getPage(pageTitle);
   if (page) return page;
   const uid = window.roamAlphaAPI.util.generateUID();
@@ -367,6 +369,130 @@ export const savePracticeData = async ({ refUid, dataPageTitle, dateCreated, ...
     await createChildBlock(newDataBlockId, `${key}:: ${value}`, -1);
   }
 };
+interface BulkSavePracticeDataOptions {
+  records: Records;
+  selectedUids: string[];
+  dataPageTitle: string;
+}
+export const bulkSavePracticeData = async ({
+  records,
+  selectedUids,
+  dataPageTitle,
+}: BulkSavePracticeDataOptions) => {
+  if (dataPageTitle === 'roam/memo') {
+    alert('NOPE! Protecting your graph data. Cannot save data to memo page');
+    return;
+  }
+  await getOrCreatePage(dataPageTitle);
+  const dataBlockUid = await getOrCreateBlockOnPage(dataPageTitle, 'data', -1, {
+    open: false,
+    heading: 3,
+  });
+
+  const payload = {
+    graphName: 'jcb',
+    data: {
+      action: 'batch-actions',
+      actions: [],
+    },
+  };
+
+  // Create practice entries
+  for (const refUid of selectedUids) {
+    const entryUid = window.roamAlphaAPI.util.generateUID();
+    payload.data.actions.push({
+      action: 'create-block',
+      location: {
+        'parent-uid': dataBlockUid,
+        order: 0,
+      },
+      block: {
+        string: `((${refUid}))`,
+        uid: entryUid,
+        open: false,
+      },
+    });
+
+    // Add sessions
+    const sessions = records[refUid];
+    for (const session of sessions) {
+      // Add Session Heading
+      const dateCreatedRoamDateString = stringUtils.dateToRoamDateString(session.dateCreated);
+      const emoji = getEmojiFromGrade(session.grade);
+      const sessionHeadingUid = window.roamAlphaAPI.util.generateUID();
+      payload.data.actions.push({
+        action: 'create-block',
+        location: {
+          'parent-uid': entryUid,
+          order: 0,
+        },
+        block: {
+          string: `[[${dateCreatedRoamDateString}]] ${emoji}`,
+          uid: sessionHeadingUid,
+          open: false,
+        },
+      });
+
+      // Add Session Data
+      for (const key of Object.keys(session)) {
+        let value = session[key];
+        if (key === 'dateCreated') continue; // no need to store this
+        if (key === 'nextDueDate') {
+          const nextDueDate = dateUtils.addDays(new Date(), session.interval);
+          value = `[[${stringUtils.dateToRoamDateString(nextDueDate)}]]`;
+        }
+        payload.data.actions.push({
+          action: 'create-block',
+          location: {
+            'parent-uid': sessionHeadingUid,
+            order: -1,
+          },
+          block: {
+            string: `${key}:: ${value}`,
+            open: false,
+          },
+        });
+      }
+    }
+  }
+  const baseUrl = 'https://roam-memo-server.onrender.com';
+  // const baseUrl = 'http://localhost:3000';
+  try {
+    await fetch(`${baseUrl}/save-roam-sr-data`, {
+      method: 'POST',
+
+      body: JSON.stringify(payload),
+      headers: {
+        Authorization: 'Bearer roam-graph-token-37eIjS-9W0KGm5w2onx3zAD0MvWoY',
+        'Content-Type': 'application/json',
+      },
+    });
+  } catch (error) {
+    console.error('Error Bulk Saving', error);
+  }
+
+  // const dateCreatedRoamDateString = stringUtils.dateToRoamDateString(dateCreated || new Date());
+  // const emoji = getEmojiFromGrade(data.grade);
+  // const newDataBlockId = await createChildBlock(
+  //   cardDataBlockUid,
+  //   `[[${dateCreatedRoamDateString}]] ${emoji}`,
+  //   0,
+  //   {
+  //     open: false,
+  //   }
+  // );
+
+  // // Insert new block info
+  // const nextDueDate = dateUtils.addDays(new Date(), data.interval);
+  // for (const key of Object.keys(data)) {
+  //   let value = data[key];
+  //   if (key === 'nextDueDate') {
+  //     value = `[[${stringUtils.dateToRoamDateString(nextDueDate)}]]`;
+  //   }
+
+  //   await createChildBlock(newDataBlockId, `${key}:: ${value}`, -1);
+  // }
+};
 
 const oldRoamSrGradeMap = {
   ['r/1']: {
@@ -453,4 +579,46 @@ export const getOldRoamSrPracticeData = async () => {
   return sortOldRoamSrPracticeData(
     mapOldRoamSrPracticeData(reviewPageReferenceData, reviewTagPageName)
   );
+};
+
+export const generateRecordsFromRoamSrData = async (oldReviewRecords, dataPageTitle) => {
+  const results = {};
+  for (const [_, resultsArr] of Object.entries(oldReviewRecords)) {
+    //@ts-ignore
+    for (const result of resultsArr) {
+      const { refUid, dateCreated, grade } = result;
+
+      let practiceInputData = {
+        refUid,
+        grade,
+        dataPageTitle,
+        dateCreated,
+        eFactor: undefined,
+        repetitions: undefined,
+        interval: undefined,
+      };
+
+      if (results[refUid]) {
+        const lastPracticeResult = results[refUid][results[refUid].length - 1];
+        const { eFactor, repetitions, interval } = lastPracticeResult;
+        practiceInputData = { ...practiceInputData, eFactor, repetitions, interval };
+      } else {
+        const newCardData = generateNewCardProps({ dateCreated });
+        practiceInputData = { ...practiceInputData, ...newCardData };
+      }
+
+      const practiceResult = {
+        ...(await practice(practiceInputData, true)),
+        grade,
+        dateCreated,
+      };
+      if (results[refUid]) {
+        results[refUid].push(practiceResult);
+      } else {
+        results[refUid] = [practiceResult];
+      }
+    }
+  }
+
+  return results;
 };
