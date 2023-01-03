@@ -5,6 +5,7 @@ export interface Session {
   nextDueDate: Date;
   grade: number;
   dateCreated: Date;
+  isRoamSrOldPracticeRecord?: boolean;
 }
 
 export interface Records {

@@ -85,7 +85,7 @@ const practice = async (practiceProps: PracticeProps, isDryRun = false) => {
     dataPageTitle,
     dateCreated = null,
   } = practiceProps;
-  // Just don't want to store nextDueDateFromNow
+  // Just destructuring nextDueDateFromNow here because I don't want to store it
   // eslint-disable-next-line no-unused-vars
   const { nextDueDateFromNow, ...practiceResultData } = generatePracticeData({
     grade,
