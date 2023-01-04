@@ -31,7 +31,7 @@ const settingsPanelConfig = ({ settings, setSettings }) => {
       {
         id: 'import-roam-sr-data',
         name: 'Import Roam/Sr Data',
-        description: 'Import Roam Sr Old data',
+        description: 'A tool to import your Roam/Sr data into Memo',
         action: {
           type: 'reactComponent',
           component: () => <RoamSrImportPanel dataPageTitle={settings.dataPageTitle} />,

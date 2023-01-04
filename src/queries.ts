@@ -332,7 +332,7 @@ const createBlockOnPage = async (page, block, order, blockProps) => {
   return createChildBlock(page_uid, block, order, blockProps);
 };
 
-const getOrCreateBlockOnPage = async (page, block, order, blockProps) => {
+export const getOrCreateBlockOnPage = async (page, block, order, blockProps) => {
   // returns the uid of a specific block on a specific page, creating it first
   // as a top-level block if it's not already there. _page_: the title of the
   // page. _block_: the text of the block. _order_: (optional) controls where to
@@ -404,11 +404,13 @@ export const savePracticeData = async ({ refUid, dataPageTitle, dateCreated, ...
   }
 };
 interface BulkSavePracticeDataOptions {
+  token: string;
   records: Records;
   selectedUids: string[];
   dataPageTitle: string;
 }
 export const bulkSavePracticeData = async ({
+  token,
   records,
   selectedUids,
   dataPageTitle,
@@ -509,7 +511,7 @@ export const bulkSavePracticeData = async ({
 
       body: JSON.stringify(payload),
       headers: {
-        Authorization: 'Bearer roam-graph-token-37eIjS-9W0KGm5w2onx3zAD0MvWoY',
+        Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
     });

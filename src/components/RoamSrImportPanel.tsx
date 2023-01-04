@@ -134,13 +134,123 @@ const Header = styled.div`
   border-bottom: 1px solid ${BorderColor};
 `;
 
-const Panel = ({ dataPageTitle }) => {
+const FormLabel = styled.div`
+  margin-top: 0 !important;
+  margin-bottom: 5px;
+`;
+
+const TokenPage = ({ token, setToken, setShowImportPage, dataPageTitle }) => {
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [validationMessage, setValidationMessage] = React.useState('');
+  const testApiToken = async () => {
+    setIsLoading(true);
+    const dataPageUid = await queries.getOrCreatePage(dataPageTitle);
+    const testBlockUid = window.roamAlphaAPI.util.generateUID();
+    const payload = {
+      graphName: 'jcb',
+      data: {
+        action: 'batch-actions',
+        actions: [
+          {
+            action: 'create-block',
+            location: {
+              'parent-uid': dataPageUid,
+              order: 'last',
+            },
+            block: {
+              uid: testBlockUid,
+              string: 'test',
+            },
+          },
+          {
+            action: 'delete-block',
+            block: {
+              uid: testBlockUid,
+            },
+          },
+        ],
+      },
+    };
+    const baseUrl = 'https://roam-memo-server.onrender.com';
+    // const baseUrl = 'http://localhost:3000';
+    try {
+      const response = await fetch(`${baseUrl}/save-roam-sr-data`, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (response.status !== 200) {
+        throw new Error(
+          'API validation failed. Please check your token and make sure you have edit access to this graph'
+        );
+      }
+      setShowImportPage(true);
+    } catch (e) {
+      setValidationMessage(e.message);
+    }
+    setIsLoading(false);
+  };
+
+  return (
+    <div className="flex px-4 py-4 justify-between">
+      <div className="flex items-center">
+        {/*@ts-ignore*/}
+        <Blueprint.FormGroup
+          label="Roam Graph API Token"
+          labelFor="text-input"
+          labelInfo="(required)"
+        >
+          <FormLabel className="bp3-form-helper-text">
+            In order to import your practice data, you need to generate a Roam Graph API Token.{' '}
+            <a
+              href="https://roamresearch.com/#/app/developer-documentation/page/bmYYKQ4vf"
+              target="_blank"
+            >
+              Click here
+            </a>{' '}
+            to learn how to generate one.
+          </FormLabel>
+          <Blueprint.InputGroup
+            id="text-input"
+            placeholder="roam-graph-token-XXXXX-XXXXXXXXXXXX"
+            value={token}
+            onChange={(event) => {
+              setToken(event.target.value);
+            }}
+            className="mb-3"
+          />
+          <div className="flex justify-center flex-col">
+            <div className="text-center">
+              <Blueprint.Button
+                icon="geosearch"
+                intent="primary"
+                loading={isLoading}
+                disabled={!token || isLoading}
+                onClick={testApiToken}
+              >
+                Fetch Preview Data
+              </Blueprint.Button>
+            </div>
+            {validationMessage && (
+              <div className="mt-3 text-center text-sm text-red-400">{validationMessage}</div>
+            )}
+          </div>
+        </Blueprint.FormGroup>
+      </div>
+    </div>
+  );
+};
+
+const ImportPage = ({ dataPageTitle, token }) => {
   const [isLoading, setIsLoading] = React.useState(true);
   const [refetchTrigger, setRefetchTrigger] = React.useState(0);
   const [isImporting, setIsImporting] = React.useState(false);
   const [records, setRecords] = React.useState<Records>({});
 
-  const [selectedUids, setSelectedUids] = React.useState([]);
+  const [selectedUids, setSelectedUids] = React.useState<string[]>([]);
   const [existingPracticeData, setExistingPracticeData] = React.useState([]);
   const totalCardsFound = Object.keys(records).length;
   const totalRecords = Object.values(records).reduce((acc, curr) => acc + curr.length, 0);
@@ -177,10 +287,55 @@ const Panel = ({ dataPageTitle }) => {
 
   const executeImport = async () => {
     setIsImporting(true);
-    await queries.bulkSavePracticeData({ records, selectedUids, dataPageTitle });
+    await queries.bulkSavePracticeData({ token, records, selectedUids, dataPageTitle });
     setIsImporting(false);
     setRefetchTrigger((n) => n + 1);
   };
+
+  return isLoading ? (
+    <div>loading...</div>
+  ) : (
+    <div className="flex flex-col">
+      <Header className="flex px-4 py-4 justify-between">
+        <div>
+          <h4 className="bp3-heading mb-1">Import Roam Sr. Data</h4>
+          <div className="bp3-text-small bp3-text-muted">
+            <>
+              Found <strong>{totalCardsFound}</strong> cards with a total of{' '}
+              <strong>{totalRecords}</strong> sessions.
+            </>
+          </div>
+        </div>
+        <div>
+          <Blueprint.Button
+            onClick={executeImport}
+            disabled={isImporting || !selectedUids.length}
+            intent="primary"
+          >
+            Import {selectedUids.length === totalCardsFound ? 'All' : `(${selectedUids.length})`}
+          </Blueprint.Button>
+        </div>
+      </Header>
+      <ResultsWrapper>
+        {Object.keys(records).map((uuid, i, list) => (
+          <Block
+            uuid={uuid}
+            sessions={records[uuid]}
+            isLast={i === list.length - 1}
+            isFirst={i === 0}
+            selectedUids={selectedUids}
+            setSelectedUids={setSelectedUids}
+            existingPracticeData={existingPracticeData}
+          />
+        ))}
+      </ResultsWrapper>
+    </div>
+  );
+};
+
+const Panel = ({ dataPageTitle }) => {
+  const [token, setToken] = React.useState<null | string>(null);
+  const [showImportPage, setShowImportPage] = React.useState(false);
 
   return (
     // @ts-ignore
@@ -190,57 +345,27 @@ const Panel = ({ dataPageTitle }) => {
       canEscapeKeyClose={false}
       isOpen
     >
-      {isLoading ? (
-        <div>loading...</div>
+      {token && showImportPage ? (
+        <ImportPage dataPageTitle={dataPageTitle} token={token} />
       ) : (
-        <div className="flex flex-col">
-          <Header className="flex px-4 py-4 justify-between">
-            <div>
-              <h4 className="bp3-heading mb-1">Import Roam Sr. Data</h4>
-              <div className="bp3-text-small bp3-text-muted">
-                <>
-                  Found <strong>{totalCardsFound}</strong> cards with a total of{' '}
-                  <strong>{totalRecords}</strong> sessions.
-                </>
-              </div>
-            </div>
-            <div>
-              <Blueprint.Button
-                onClick={executeImport}
-                disabled={isImporting || !selectedUids.length}
-                intent="primary"
-              >
-                Import{' '}
-                {selectedUids.length === totalCardsFound ? 'All' : `(${selectedUids.length})`}
-              </Blueprint.Button>
-            </div>
-          </Header>
-          <ResultsWrapper>
-            {Object.keys(records).map((uuid, i, list) => (
-              <Block
-                uuid={uuid}
-                sessions={records[uuid]}
-                isLast={i === list.length - 1}
-                isFirst={i === 0}
-                selectedUids={selectedUids}
-                setSelectedUids={setSelectedUids}
-                existingPracticeData={existingPracticeData}
-              />
-            ))}
-          </ResultsWrapper>
-        </div>
+        <TokenPage
+          token={token}
+          setToken={setToken}
+          setShowImportPage={setShowImportPage}
+          dataPageTitle={dataPageTitle}
+        />
       )}
     </Dialog>
   );
 };
 
 const RoamSrImportPanel = ({ dataPageTitle }) => {
-  const [showPanel, setShowPanel] = React.useState(false);
+  const [launchPanel, setLaunchPanel] = React.useState(false);
 
   return (
     <div>
-      <Blueprint.Button onClick={() => setShowPanel(true)}>Preview</Blueprint.Button>
-      {showPanel && <Panel dataPageTitle={dataPageTitle} />}
+      <Blueprint.Button onClick={() => setLaunchPanel(true)}>Launch</Blueprint.Button>
+      {launchPanel && <Panel dataPageTitle={dataPageTitle} />}
     </div>
   );
 };
