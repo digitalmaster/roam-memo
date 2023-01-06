@@ -220,6 +220,11 @@ const TokenPage = ({ token, setToken, setShowImportPage, dataPageTitle }) => {
             onChange={(event) => {
               setToken(event.target.value);
             }}
+            onKeyUp={(event) => {
+              if (event.key === 'Enter') {
+                testApiToken();
+              }
+            }}
             className="mb-3"
           />
           <div className="flex justify-center flex-col">
@@ -251,6 +256,7 @@ const ImportPage = ({ dataPageTitle, token }) => {
   const [records, setRecords] = React.useState<Records>({});
 
   const [selectedUids, setSelectedUids] = React.useState<string[]>([]);
+  const [alreadyImportedIds, setAlreadyImportedIds] = React.useState<string[]>([]);
   const [existingPracticeData, setExistingPracticeData] = React.useState([]);
   const totalCardsFound = Object.keys(records).length;
   const totalRecords = Object.values(records).reduce((acc, curr) => acc + curr.length, 0);
@@ -271,13 +277,15 @@ const ImportPage = ({ dataPageTitle, token }) => {
 
       // Fetch Old Review data
       const oldReviewData = await queries.getOldRoamSrPracticeData();
+      setAlreadyImportedIds(
+        Object.keys(existingPracticeData).filter((uid) => uid in oldReviewData)
+      );
 
       const records = await queries.generateRecordsFromRoamSrData(
         oldReviewData,
         existingPracticeData,
         dataPageTitle
       );
-
       setRecords(records);
       setSelectedUids(Object.keys(records).filter((uid) => !(uid in existingPracticeData)));
 
@@ -302,7 +310,12 @@ const ImportPage = ({ dataPageTitle, token }) => {
           <div className="bp3-text-small bp3-text-muted">
             <>
               Found <strong>{totalCardsFound}</strong> cards with a total of{' '}
-              <strong>{totalRecords}</strong> sessions.
+              <strong>{totalRecords}</strong> sessions.{' '}
+              <span className="text-green-600">
+                {alreadyImportedIds.length &&
+                  `Already imported ${alreadyImportedIds.length} cards.`}
+              </span>
+              .
             </>
           </div>
         </div>
