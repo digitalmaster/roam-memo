@@ -421,10 +421,11 @@ export const bulkSavePracticeData = async ({
   selectedUids,
   dataPageTitle,
 }: BulkSavePracticeDataOptions) => {
-  if (dataPageTitle === 'roam/memo') {
-    alert('NOPE! Protecting your graph data. Cannot save data to memo page');
-    return;
-  }
+  // Uncomment during development to prevent accidental data loss
+  // if (dataPageTitle === 'roam/memo') {
+  //   alert('NOPE! Protecting your graph data. Cannot save data to memo page during dev');
+  //   return;
+  // }
   await getOrCreatePage(dataPageTitle);
   const dataBlockUid = await getOrCreateBlockOnPage(dataPageTitle, 'data', -1, {
     open: false,

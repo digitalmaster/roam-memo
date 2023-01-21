@@ -312,6 +312,7 @@ const ImportProgressOverlay = ({
   const [toImportCount] = React.useState(selectedCount);
   const [startingImportCount] = React.useState(importedUids.length);
   const currentImportedCount = importedUids.length - startingImportCount;
+  const finishedImporting = currentImportedCount === toImportCount;
 
   return (
     <div className="absolute inset-0 flex flex-col bg-white z-10">
@@ -324,14 +325,14 @@ const ImportProgressOverlay = ({
           </h4>
         )}
         <Blueprint.ProgressBar
-          intent={hasImported ? 'success' : 'primary'}
-          animate={hasImported ? false : true}
-          stripes={hasImported ? false : true}
+          intent={finishedImporting ? 'success' : 'primary'}
+          animate={finishedImporting ? false : true}
+          stripes={finishedImporting ? false : true}
           value={currentImportedCount / toImportCount}
           className="mb-3"
         />
 
-        {hasImported ? (
+        {finishedImporting ? (
           <Blueprint.Button
             onClick={() => {
               setLaunchPanel(false);

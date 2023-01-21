@@ -6,32 +6,66 @@ Memorize anything with this simple spaced repetition plugin for Roam. Similar to
 
 ## What is "Spaced Repetition"
 
-It's like studying with flashcards but much more efficiently. One way study flashcards is to djust review every card in order from front to back over and over. This works but it's highly inefficient because there are obviously some cards that you remember better than others. So spaced repetition is a technique of deciding "when" you should review a card next.
+Spaced repetition is a technique for studying where you review flashcards based on how well you remember them. Instead of reviewing every card in order, you review cards that were harder to remember more often, and cards that were easier to remember less often. This helps you review the cards that you need to work on more, and avoid wasting time reviewing cards that you already know well.
 
-You decide when to review again based on how hard/easy a card was to remember. The algorithm calculates the amount of time (or "space") you can have before you need to review it again (ideally right before you forget). So if you imagine a deck of flash cards you're reviewing.. Cards that were easy to remember you move further back in the deck. Cards that were harder you move somewhere in the middle. Cards you forgot you move back 1 or two cards so you'll review them again soon.
-
-This Memo plugin let's you tag blocks that you never want to forget #[[🐘 Review]] and over time you'll review it and progressively move it from short ➞ long term memory.
+This plugin allows you to tag important information with a special tag, and over time it will help you move the information from short term memory to long term memory.
 
 ## Installation
 
 Just install through Roam Depot, then go to settings and configure the page tags you want to use for reviews (default is `#memo`) and that's it. Enjoy.
 
+## Usage
+
+To use the Memo plugin for studying flashcards:
+
+1. Create a new page and add the #memo tag to it.
+2. Open the plugin from the side panel.
+3. Begin reviewing the flashcards.
+
+> If the block nested blocks they will be treated as answers and initially hidden. Click the "Show Answer" button to reveal them.
+
 ## Features
 
-- Multi Tag Support (aka decks)
-- Text Masking (or cloze deletion)
-  > To mask a part of text just highlight it `^^hide me^^` or wrap it in single brackets `{hide me too}`
-- Keyboard shortcuts
-- Toggle Breadcrumbs Hints
-- Sidepanel Widget
-- Next Interval Previews
-- Skip controls
+### Multi Tag Support (aka decks)
 
-## Coming Soon
+To create separate decs just got to our plugin settings page, find the "Tag Pages" field and add a comma separated list of all the pages you want to use as decks. For example, if you want to create a deck for "Spanish" and another for "French" you would add `Spanish, French` to the field.
 
-- Old RoamSr Migration Tool
-- Daily Limit Controls
-- History Explorer
+### Text Masking
+
+Text Masking or Cloze Deletion is a technique where you hide or mask a part of the text to test your understanding or to make it harder to memorize. To mask a part of text, you can use two different methods:
+
+- Highlighting the text and adding ^^ on both sides of the text you want to mask. Example: ^^hide me^^
+- Wrapping the text with single brackets { }. Example: {hide me too}.
+
+### Keyboard Shortcuts
+
+These are the keyboard shortcuts.
+
+- To show answer press `space`.
+- To skip a card press `s` or `→`.
+- To go back press `←`.
+- To show breadcrumbs press `b`.
+- Grading:
+  - If you forgot it press `f`.
+  - If it was hard press `h`.
+  - If it was good press `g`.
+  - If it was perfect press `p`.
+
+### RoamSr Migration Tool
+
+To migrate your data from the old RoamSr plugin follow these steps:
+
+> Note: To be extra safe, I recommend you make a backup of your #roam/memo page before migrating.
+
+1. Generate an API key with write access by following these instructions [here](https://roamresearch.com/#/app/developer-documentation/page/bmYYKQ4vf).
+2. Go to the settings page of the plugin and click on the "Launch" button under the "Migrate Roam/Sr Data" section.
+3. Enter API key and press "Fetch Preview Data"
+4. Review the data. All your old roam/sr data should be displayed in the table. New records should be merged with old ones.
+5. If everything looks good, press "Import"
+
+> If you have a lot of data, it might take a while to sync. So go grab coffee.
+
+If you see any errors, please create an issue [here](https://github.com/digitalmaster/roam-memo/issues);
 
 ## Bug Reports and Feature Requests
 
