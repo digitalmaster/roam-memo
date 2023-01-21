@@ -18,5 +18,3 @@
   "include": ["./src"],
   "exclude": ["./node_modules/*"]
 }
-
-// ts config with source maps
