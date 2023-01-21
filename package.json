@@ -1,6 +1,6 @@
 {
   "name": "roam-memo",
-  "version": "9",
+  "version": "10",
   "description": "Roam Spaced Repetition Plugin",
   "author": "Jose Browne <josebrowne@gmail.com> (http://josebrowne.com/)",
   "scripts": {
