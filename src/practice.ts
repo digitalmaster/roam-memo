@@ -38,7 +38,13 @@ export const supermemo = (item, grade) => {
   };
 };
 
-export const getPracticeResultData = ({ grade, interval, repetitions, eFactor }) => {
+export const generatePracticeData = ({
+  grade,
+  interval,
+  repetitions,
+  eFactor,
+  baseDate = new Date(),
+}) => {
   const supermemoInput = {
     interval,
     repetition: repetitions,
@@ -48,7 +54,7 @@ export const getPracticeResultData = ({ grade, interval, repetitions, eFactor })
   // call supermemo API
   const supermemoResults = supermemo(supermemoInput, grade);
 
-  const nextDueDate = dateUtils.addDays(new Date(), supermemoResults.interval);
+  const nextDueDate = dateUtils.addDays(baseDate, supermemoResults.interval);
 
   return {
     repetitions: supermemoResults.repetition,
@@ -59,22 +65,46 @@ export const getPracticeResultData = ({ grade, interval, repetitions, eFactor })
   };
 };
 
-const practice = async ({ interval, repetitions, eFactor, grade, refUid, pluginPageTitle }) => {
-  // Just don't want to store nextDueDateFromNow
+export interface PracticeProps {
+  interval: number;
+  repetitions: number;
+  eFactor: number;
+  grade: number;
+  refUid: string;
+  dataPageTitle: string;
+  dateCreated: null | Date;
+}
+
+const practice = async (practiceProps: PracticeProps, isDryRun = false) => {
+  const {
+    interval,
+    repetitions,
+    eFactor,
+    grade,
+    refUid,
+    dataPageTitle,
+    dateCreated = null,
+  } = practiceProps;
+  // Just destructuring nextDueDateFromNow here because I don't want to store it
   // eslint-disable-next-line no-unused-vars
-  const { nextDueDateFromNow, ...practiceResultData } = getPracticeResultData({
+  const { nextDueDateFromNow, ...practiceResultData } = generatePracticeData({
     grade,
     interval,
     repetitions,
     eFactor,
+    baseDate: dateCreated,
   });
+  if (!isDryRun) {
+    await savePracticeData({
+      refUid: refUid,
+      dataPageTitle,
+      grade,
+      dateCreated,
+      ...practiceResultData,
+    });
+  }
 
-  await savePracticeData({
-    refUid: refUid,
-    pluginPageTitle,
-    grade,
-    ...practiceResultData,
-  });
+  return practiceResultData;
 };
 
 export default practice;

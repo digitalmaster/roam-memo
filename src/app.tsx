@@ -11,21 +11,22 @@ import useOnBlockInteract from '~/hooks/useOnBlockInteract';
 
 const App = () => {
   const [showPracticeOverlay, setShowPracticeOverlay] = React.useState(false);
-  const { tagsListString, pluginPageTitle } = useSettings();
+  const { tagsListString, dataPageTitle } = useSettings();
 
   const { selectedTag, setSelectedTag, tagsList } = useTags({ tagsListString });
 
   const { practiceCardsUids, practiceCardsData, displayCardCounts, fetchPracticeData } =
     usePracticeCardsData({
       selectedTag,
-      pluginPageTitle,
+      dataPageTitle,
     });
 
   const handleGradeClick = async ({ grade, refUid }) => {
     if (!refUid) return;
 
     const cardData = practiceCardsData[refUid];
-    await practice({ ...cardData, grade, refUid, pluginPageTitle });
+
+    await practice({ ...cardData, grade, refUid, dataPageTitle });
   };
 
   const handlePracticeClick = () => {
@@ -42,7 +43,7 @@ const App = () => {
     setSelectedTag(tag);
   };
 
-  useCollapseReferenceList({ pluginPageTitle });
+  useCollapseReferenceList({ dataPageTitle });
 
   // Keep counters in sync as you add/remove tags from blocks
   const [tagsOnEnter, setTagsOnEnter] = React.useState([]);

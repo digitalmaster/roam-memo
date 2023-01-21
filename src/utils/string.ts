@@ -7,4 +7,6 @@ export const parseRoamDateString = (roamDateString) =>
 export const dateToRoamDateString = (jsDateObject) =>
   window.roamAlphaAPI.util.dateToPageTitle(jsDateObject);
 
+export const toDateString = (jsDateObject) => jsDateObject.toLocaleDateString('en-US');
+
 export const parseConfigString = (configString) => configString.split('::').map((s) => s.trim());

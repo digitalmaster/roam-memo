@@ -1,9 +1,9 @@
 import React from 'react';
 import settingsPanelConfig from '~/settingsPanelConfig';
 
-const defaultSettings = {
+export const defaultSettings = {
   tagsListString: 'memo',
-  pluginPageTitle: 'roam/memo',
+  dataPageTitle: 'roam/memo',
 };
 
 // @TODO: Refactor/Hoist this so we can call useSettings in multiple places
@@ -23,13 +23,23 @@ const useSettings = () => {
 
   React.useEffect(() => {
     // Init config panel
-    window.roamMemo.extensionAPI.settings.panel.create(settingsPanelConfig({ setSettings }));
-  }, [setSettings]);
+    window.roamMemo.extensionAPI.settings.panel.create(
+      settingsPanelConfig({ settings, setSettings })
+    );
+  }, [setSettings, settings.dataPageTitle]);
 
   React.useEffect(() => {
     const allSettings = window.roamMemo.extensionAPI.settings.getAll() || {};
 
-    setSettings((currentSettings) => ({ ...currentSettings, ...allSettings }));
+    // Filterout out any settings that are falsey
+    const filteredSettings = Object.keys(allSettings).reduce((acc, key) => {
+      if (allSettings[key]) {
+        acc[key] = allSettings[key];
+      }
+      return acc;
+    }, {});
+
+    setSettings((currentSettings) => ({ ...currentSettings, ...filteredSettings }));
   }, [setSettings]);
 
   return settings;
