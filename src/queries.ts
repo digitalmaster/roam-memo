@@ -37,6 +37,8 @@ const mapPluginPageDataLatest = (queryResultsData) =>
 
         if (key === 'nextDueDate') {
           acc[uid][key] = parseRoamDateString(getStringBetween(value, '[[', ']]'));
+        } else if (value === 'true' || value === 'false') {
+          acc[uid][key] = value === 'true';
         } else {
           acc[uid][key] = Number(value);
         }
@@ -60,11 +62,15 @@ const mapPluginPageData = (queryResultsData) =>
           dateCreated: parseRoamDateString(getStringBetween(child.string, '[[', ']]')),
         };
 
+        if (!child.children) return acc;
+
         for (const field of child.children) {
           const [key, value] = parseConfigString(field.string);
 
           if (key === 'nextDueDate') {
             record[key] = parseRoamDateString(getStringBetween(value, '[[', ']]'));
+          } else if (value === 'true' || value === 'false') {
+            record[key] = value === 'true';
           } else {
             record[key] = Number(value);
           }
@@ -629,7 +635,7 @@ export const generateRecordsFromRoamSrData = async (
 ) => {
   const mergedRecords = getMergedOldAndExistingRecords(oldReviewRecords, existingPracticeData);
 
-  const results = {};
+  const results: Records = {};
   for (const [_, resultsArr] of Object.entries(mergedRecords)) {
     //@ts-ignore
     for (const result of resultsArr) {

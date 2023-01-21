@@ -54,12 +54,15 @@ const Block = ({
   isFirst,
   selectedUids,
   setSelectedUids,
-  existingPracticeData,
+  importedUids,
+  blockInfo,
 }) => {
-  const [blockInfo, setBlockInfo] = React.useState(null);
   const [isSelected, setIsSelected] = React.useState(false);
   const [isExpanded, setIsExpanded] = React.useState(isFirst ? true : false);
-  const isAlreadyImported = uuid in existingPracticeData;
+  const [isDisabled, setIsDisabled] = React.useState(false);
+  const [hasBeenImported, setHasBeenImported] = React.useState(false);
+
+  // Set selected
   React.useEffect(() => {
     if (selectedUids.includes(uuid)) {
       setIsSelected(true);
@@ -68,16 +71,18 @@ const Block = ({
     }
   }, [selectedUids]);
 
+  // Set disabled if already imported
   React.useEffect(() => {
-    (async () => {
-      const blockInfo = await queries.fetchBlockInfo(uuid);
-      setBlockInfo(blockInfo);
-    })();
-  }, []);
+    if (importedUids.includes(uuid)) {
+      setHasBeenImported(true);
+      setIsDisabled(true);
+    } else {
+      setHasBeenImported(false);
+      setIsDisabled(false);
+    }
+  }, [importedUids]);
 
   const handleCheckboxChange = (e) => {
-    if (isAlreadyImported) return;
-
     setSelectedUids((currentUids) => {
       if (e.target.checked) {
         return [...currentUids, uuid];
@@ -91,19 +96,25 @@ const Block = ({
 
   return (
     <>
-      <div
-        className={`flex flex-col px-4 py-4 ${isAlreadyImported ? 'opacity-50 select-none' : ''}`}
-      >
+      <div className={`flex flex-col px-4 py-4 ${isDisabled ? 'opacity-60' : ''}`}>
         <div className="flex items-center">
-          <Blueprint.Checkbox checked={isSelected} onChange={handleCheckboxChange} />
+          <Blueprint.Checkbox
+            checked={isSelected}
+            disabled={isDisabled}
+            onChange={handleCheckboxChange}
+            className="cursor-not-allowed"
+          />
           <div
             className="truncate w-full cursor-pointer"
             onClick={() => setIsExpanded((bool) => !bool)}
           >
-            <div>{blockInfo?.string}</div>
+            <div className="truncate w-full cursor-pointer text-gray-600">{blockInfo?.string}</div>
             <div className="bp3-text-small bp3-text-muted">
-              Found {sessions.length - newSessions.length} Practice Sessions{' '}
-              {newSessions.length > 0 && `(merged with ${newSessions.length} new sessions)`}
+              {hasBeenImported ? 'Imported' : 'Found'} {sessions.length - newSessions.length}{' '}
+              Practice Sessions{' '}
+              <span className="text-green-600">
+                {newSessions.length > 0 && `(merged with ${newSessions.length} new sessions)`}
+              </span>
             </div>
           </div>
           <div className={`px-5 cursor-pointer`} onClick={() => setIsExpanded((bool) => !bool)}>
@@ -130,9 +141,48 @@ const Dialog = styled(Blueprint.Dialog)`
   max-width: 700px;
 `;
 
-const Header = styled.div`
+const HeaderElm = styled.div`
   border-bottom: 1px solid ${BorderColor};
 `;
+
+const Header = ({
+  totalCardsFound,
+  totalRecords,
+  executeImport,
+  isImporting,
+  selectedUids,
+  setLaunchPanel,
+  importedUids,
+}) => (
+  <HeaderElm className="flex px-4 py-4 justify-between">
+    <div>
+      <h4 className="bp3-heading mb-1">Import Roam Sr. Data</h4>
+      <div className="bp3-text-small bp3-text-muted">
+        <>
+          Found <strong>{totalCardsFound}</strong> cards with a total of{' '}
+          <strong>{totalRecords}</strong> sessions.
+        </>
+      </div>
+      {importedUids.length > 0 && (
+        <div className="bp3-text-small bp3-text-muted">
+          <>
+            <strong>{importedUids.length}</strong> cards have already been imported.
+          </>
+        </div>
+      )}
+    </div>
+    <div className="flex justify-end items-center">
+      <Blueprint.Button
+        onClick={executeImport}
+        disabled={isImporting || !selectedUids.length}
+        intent="primary"
+      >
+        Import {selectedUids.length === totalCardsFound ? 'All' : `(${selectedUids.length})`}
+      </Blueprint.Button>
+      <Blueprint.Button icon="cross" onClick={() => setLaunchPanel(false)} className="ml-2" />
+    </div>
+  </HeaderElm>
+);
 
 const FormLabel = styled.div`
   margin-top: 0 !important;
@@ -203,7 +253,7 @@ const TokenPage = ({ token, setToken, setShowImportPage, dataPageTitle }) => {
           labelFor="text-input"
           labelInfo="(required)"
         >
-          <FormLabel className="bp3-form-helper-text">
+          <FormLabel className="bp3-form-helper-text" style={{ marginBottom: 10 }}>
             In order to import your practice data, you need to generate a Roam Graph API Token.{' '}
             <a
               href="https://roamresearch.com/#/app/developer-documentation/page/bmYYKQ4vf"
@@ -214,6 +264,7 @@ const TokenPage = ({ token, setToken, setShowImportPage, dataPageTitle }) => {
             to learn how to generate one.
           </FormLabel>
           <Blueprint.InputGroup
+            autoFocus
             id="text-input"
             placeholder="roam-graph-token-XXXXX-XXXXXXXXXXXX"
             value={token}
@@ -249,15 +300,68 @@ const TokenPage = ({ token, setToken, setShowImportPage, dataPageTitle }) => {
   );
 };
 
-const ImportPage = ({ dataPageTitle, token }) => {
+const ImportProgressOverlay = ({
+  isImporting,
+  setLaunchPanel,
+  hasImported,
+  selectedUids,
+  importedUids,
+}) => {
+  if (!isImporting && !hasImported) return null;
+  const selectedCount = selectedUids.length;
+  const [toImportCount] = React.useState(selectedCount);
+  const [startingImportCount] = React.useState(importedUids.length);
+  const currentImportedCount = importedUids.length - startingImportCount;
+
+  return (
+    <div className="absolute inset-0 flex flex-col bg-white z-10">
+      <div className="py-5 px-5 flex h-full flex-col justify-center items-center">
+        {hasImported ? (
+          <h4 className="bp3-heading mb-3">Import Complete</h4>
+        ) : (
+          <h4 className="bp3-heading mb-3">
+            Importing Sessions {currentImportedCount}/{toImportCount}
+          </h4>
+        )}
+        <Blueprint.ProgressBar
+          intent={hasImported ? 'success' : 'primary'}
+          animate={hasImported ? false : true}
+          stripes={hasImported ? false : true}
+          value={currentImportedCount / toImportCount}
+          className="mb-3"
+        />
+
+        {hasImported ? (
+          <Blueprint.Button
+            onClick={() => {
+              setLaunchPanel(false);
+            }}
+          >
+            Close
+          </Blueprint.Button>
+        ) : (
+          <FormLabel className="bp3-form-helper-text mb-5">
+            This may take a while to sync especially if you have a lot of practice data. Go grab
+            coffee.
+          </FormLabel>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const ImportPage = ({ dataPageTitle, token, setLaunchPanel }) => {
   const [isLoading, setIsLoading] = React.useState(true);
   const [refetchTrigger, setRefetchTrigger] = React.useState(0);
+  const [hasImported, setHasImported] = React.useState(false);
   const [isImporting, setIsImporting] = React.useState(false);
   const [records, setRecords] = React.useState<Records>({});
 
   const [selectedUids, setSelectedUids] = React.useState<string[]>([]);
-  const [alreadyImportedIds, setAlreadyImportedIds] = React.useState<string[]>([]);
-  const [existingPracticeData, setExistingPracticeData] = React.useState([]);
+  const [importedUids, setImportedUids] = React.useState<string[]>([]);
+
+  const [blockInfoMap, setBlockInfoMap] = React.useState({});
+
   const totalCardsFound = Object.keys(records).length;
   const totalRecords = Object.values(records).reduce((acc, curr) => acc + curr.length, 0);
 
@@ -265,7 +369,6 @@ const ImportPage = ({ dataPageTitle, token }) => {
   React.useEffect(() => {
     (async () => {
       setIsLoading(true);
-      console.log('refetching');
       await asyncUtils.sleep(300); // fixes modal load delay jank
 
       // Fetch existing practice data (used to mark blocks that already exist)
@@ -273,81 +376,105 @@ const ImportPage = ({ dataPageTitle, token }) => {
         dataPageTitle: dataPageTitle,
         limitToLatest: false,
       });
-      setExistingPracticeData(existingPracticeData);
 
       // Fetch Old Review data
       const oldReviewData = await queries.getOldRoamSrPracticeData();
-      setAlreadyImportedIds(
-        Object.keys(existingPracticeData).filter((uid) => uid in oldReviewData)
-      );
 
       const records = await queries.generateRecordsFromRoamSrData(
         oldReviewData,
         existingPracticeData,
         dataPageTitle
       );
-      setRecords(records);
-      setSelectedUids(Object.keys(records).filter((uid) => !(uid in existingPracticeData)));
 
+      // Generate list of ids that have already been imported
+      const idsAlreadyImported: string[] = [];
+      for (const uid of Object.keys(existingPracticeData)) {
+        if (!(uid in oldReviewData)) continue;
+        const records = existingPracticeData[uid];
+        const alreadyImported = records.some((record) => {
+          return record.isRoamSrOldPracticeRecord;
+        });
+
+        if (alreadyImported) {
+          idsAlreadyImported.push(uid);
+        }
+      }
+
+      // Fetch block info
+      for (const uid of Object.keys(records)) {
+        if (uid in blockInfoMap) continue;
+        const blockInfo = await queries.fetchBlockInfo(uid);
+        setBlockInfoMap((currentMap) => ({ ...currentMap, [uid]: blockInfo }));
+      }
+
+      setImportedUids(idsAlreadyImported);
+      setRecords(records);
+      setSelectedUids(Object.keys(records).filter((uid) => !idsAlreadyImported.includes(uid)));
       setIsLoading(false);
     })();
   }, [refetchTrigger]);
 
+  // Refetch while importing
+  React.useEffect(() => {
+    if (!isImporting) return;
+    const interval = setInterval(async () => {
+      setRefetchTrigger((n) => n + 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isImporting]);
+
   const executeImport = async () => {
     setIsImporting(true);
     await queries.bulkSavePracticeData({ token, records, selectedUids, dataPageTitle });
+    setHasImported(true);
     setIsImporting(false);
     setRefetchTrigger((n) => n + 1);
   };
 
-  return isLoading ? (
-    <div>loading...</div>
+  return isLoading && !isImporting && !hasImported ? (
+    <div className="flex justify-center items-center my-10">
+      <Blueprint.Spinner className="mr-3" />
+      <div>Loading...</div>
+    </div>
   ) : (
-    <div className="flex flex-col">
-      <Header className="flex px-4 py-4 justify-between">
-        <div>
-          <h4 className="bp3-heading mb-1">Import Roam Sr. Data</h4>
-          <div className="bp3-text-small bp3-text-muted">
-            <>
-              Found <strong>{totalCardsFound}</strong> cards with a total of{' '}
-              <strong>{totalRecords}</strong> sessions.{' '}
-              <span className="text-green-600">
-                {alreadyImportedIds.length &&
-                  `Already imported ${alreadyImportedIds.length} cards.`}
-              </span>
-              .
-            </>
-          </div>
-        </div>
-        <div>
-          <Blueprint.Button
-            onClick={executeImport}
-            disabled={isImporting || !selectedUids.length}
-            intent="primary"
-          >
-            Import {selectedUids.length === totalCardsFound ? 'All' : `(${selectedUids.length})`}
-          </Blueprint.Button>
-        </div>
-      </Header>
+    <div className="flex flex-col relative">
+      <ImportProgressOverlay
+        isImporting={isImporting}
+        hasImported={hasImported}
+        setLaunchPanel={setLaunchPanel}
+        selectedUids={selectedUids}
+        importedUids={importedUids}
+      />
+      <Header
+        totalCardsFound={totalCardsFound}
+        totalRecords={totalRecords}
+        executeImport={executeImport}
+        isImporting={isImporting}
+        selectedUids={selectedUids}
+        setLaunchPanel={setLaunchPanel}
+        importedUids={importedUids}
+      />
       <ResultsWrapper>
-        {Object.keys(records).map((uuid, i, list) => (
-          <Block
-            uuid={uuid}
-            sessions={records[uuid]}
-            isLast={i === list.length - 1}
-            isFirst={i === 0}
-            selectedUids={selectedUids}
-            setSelectedUids={setSelectedUids}
-            existingPracticeData={existingPracticeData}
-          />
-        ))}
+        {Object.keys(records)
+          .sort((uid) => (!importedUids.includes(uid) ? -1 : 1))
+          .map((uuid, i, list) => (
+            <Block
+              uuid={uuid}
+              sessions={records[uuid]}
+              isLast={i === list.length - 1}
+              isFirst={i === 0}
+              selectedUids={selectedUids}
+              setSelectedUids={setSelectedUids}
+              importedUids={importedUids}
+              blockInfo={blockInfoMap[uuid]}
+            />
+          ))}
       </ResultsWrapper>
     </div>
   );
 };
 
-const Panel = ({ dataPageTitle }) => {
-  const [token, setToken] = React.useState<null | string>(null);
+const Panel = ({ dataPageTitle, setLaunchPanel, token, setToken }) => {
   const [showImportPage, setShowImportPage] = React.useState(false);
 
   return (
@@ -359,7 +486,7 @@ const Panel = ({ dataPageTitle }) => {
       isOpen
     >
       {token && showImportPage ? (
-        <ImportPage dataPageTitle={dataPageTitle} token={token} />
+        <ImportPage dataPageTitle={dataPageTitle} token={token} setLaunchPanel={setLaunchPanel} />
       ) : (
         <TokenPage
           token={token}
@@ -374,11 +501,19 @@ const Panel = ({ dataPageTitle }) => {
 
 const RoamSrImportPanel = ({ dataPageTitle }) => {
   const [launchPanel, setLaunchPanel] = React.useState(false);
+  const [token, setToken] = React.useState<null | string>(null);
 
   return (
     <div>
       <Blueprint.Button onClick={() => setLaunchPanel(true)}>Launch</Blueprint.Button>
-      {launchPanel && <Panel dataPageTitle={dataPageTitle} />}
+      {launchPanel && (
+        <Panel
+          dataPageTitle={dataPageTitle}
+          setLaunchPanel={setLaunchPanel}
+          token={token}
+          setToken={setToken}
+        />
+      )}
     </div>
   );
 };
