@@ -45,7 +45,7 @@ const PracticeOverlay = ({
     : null;
 
   const { data: blockInfo } = useBlockInfo({ refUid: currentCardRefUid });
-  const hasBlockChildren = blockInfo.children && !!blockInfo.children.length;
+  const hasBlockChildren = !!blockInfo.children && !!blockInfo.children.length;
   const [showAnswers, setShowAnswers] = React.useState(false);
 
   const [hasCloze, setHasCloze] = React.useState(true);
@@ -56,7 +56,7 @@ const PracticeOverlay = ({
     } else {
       setShowAnswers(true);
     }
-  }, [hasBlockChildren, hasCloze]);
+  }, [hasBlockChildren, hasCloze, currentIndex]);
 
   const onTagChange = async (tag) => {
     setShowAnswers(false);
@@ -74,7 +74,6 @@ const PracticeOverlay = ({
   const onGradeClick = React.useCallback(
     (props) => {
       if (isDone) return;
-
       handleGradeClick(props);
       setShowAnswers(false);
       setCurrentIndex(currentIndex + 1);
