@@ -8,6 +8,7 @@ import useTags from '~/hooks/useTags';
 import useSettings from '~/hooks/useSettings';
 import useCollapseReferenceList from '~/hooks/useCollapseReferenceList';
 import useOnBlockInteract from '~/hooks/useOnBlockInteract';
+import useCommandPaletteAction from './hooks/useCommandPaletteAction';
 
 const App = () => {
   const [showPracticeOverlay, setShowPracticeOverlay] = React.useState(false);
@@ -29,7 +30,7 @@ const App = () => {
     await practice({ ...cardData, grade, refUid, dataPageTitle });
   };
 
-  const handlePracticeClick = () => {
+  const onShowPracticeOverlay = () => {
     fetchPracticeData();
     setShowPracticeOverlay(true);
   };
@@ -64,11 +65,13 @@ const App = () => {
     onLeaveCallback: onBlockLeaveHandler,
   });
 
+  useCommandPaletteAction({ onShowPracticeOverlay });
+
   return (
     <Blueprint.HotkeysProvider>
       <>
         <SidePandelWidget
-          onClickCallback={handlePracticeClick}
+          onClickCallback={onShowPracticeOverlay}
           displayCardCounts={displayCardCounts}
         />
         {showPracticeOverlay && (

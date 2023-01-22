@@ -51,6 +51,10 @@ These are the keyboard shortcuts.
   - If it was good press `g`.
   - If it was perfect press `p`.
 
+### Command Palette Action
+
+You can start a review session from the command palette (`CMD + P`) by typing "Memo: Start Review Session".
+
 ### RoamSr Migration Tool
 
 To migrate your data from the old RoamSr plugin follow these steps:
