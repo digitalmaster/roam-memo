@@ -39,17 +39,16 @@ Text Masking or Cloze Deletion is a technique where you hide or mask a part of t
 
 ### Keyboard Shortcuts
 
-These are the keyboard shortcuts.
-
-- To show answer press `space`.
-- To skip a card press `s` or `→`.
-- To go back press `←`.
-- To show breadcrumbs press `b`.
-- Grading:
-  - If you forgot it press `f`.
-  - If it was hard press `h`.
-  - If it was good press `g`.
-  - If it was perfect press `p`.
+| Action                | Shortcut   |
+| --------------------- | ---------- |
+| Show answer           | `space`    |
+| Skip a card           | `s` or `→` |
+| Go back               | `←`        |
+| Show breadcrumbs      | `b`        |
+| Grade: perfect        | `space`    |
+| Grade: forgot it      | `f`        |
+| Grade: If it was hard | `h`        |
+| Grade: If it was good | `g`        |
 
 ### Command Palette Action
 
