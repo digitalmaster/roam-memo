@@ -357,6 +357,7 @@ const ImportPage = ({ dataPageTitle, token, setLaunchPanel }) => {
   const [hasImported, setHasImported] = React.useState(false);
   const [isImporting, setIsImporting] = React.useState(false);
   const [records, setRecords] = React.useState<Records>({});
+  const hasRecords = Object.keys(records).length > 0;
 
   const [selectedUids, setSelectedUids] = React.useState<string[]>([]);
   const [importedUids, setImportedUids] = React.useState<string[]>([]);
@@ -456,20 +457,26 @@ const ImportPage = ({ dataPageTitle, token, setLaunchPanel }) => {
         importedUids={importedUids}
       />
       <ResultsWrapper>
-        {Object.keys(records)
-          .sort((uid) => (!importedUids.includes(uid) ? -1 : 1))
-          .map((uuid, i, list) => (
-            <Block
-              uuid={uuid}
-              sessions={records[uuid]}
-              isLast={i === list.length - 1}
-              isFirst={i === 0}
-              selectedUids={selectedUids}
-              setSelectedUids={setSelectedUids}
-              importedUids={importedUids}
-              blockInfo={blockInfoMap[uuid]}
-            />
-          ))}
+        {hasRecords ? (
+          Object.keys(records)
+            .sort((uid) => (!importedUids.includes(uid) ? -1 : 1))
+            .map((uuid, i, list) => (
+              <Block
+                uuid={uuid}
+                sessions={records[uuid]}
+                isLast={i === list.length - 1}
+                isFirst={i === 0}
+                selectedUids={selectedUids}
+                setSelectedUids={setSelectedUids}
+                importedUids={importedUids}
+                blockInfo={blockInfoMap[uuid]}
+              />
+            ))
+        ) : (
+          <div className="flex justify-center items-center my-10">
+            <div>No records found.</div>
+          </div>
+        )}
       </ResultsWrapper>
     </div>
   );
