@@ -1,10 +1,10 @@
 import { getStringBetween, parseConfigString, parseRoamDateString } from '~/utils/string';
 import * as stringUtils from '~/utils/string';
 import * as dateUtils from '~/utils/date';
-import { Records } from '~/models/session';
+import { CompleteRecords, NewRecords, Records } from '~/models/session';
 import practice from '~/practice';
 
-const getPageReferenceIds = async (pageTitle) => {
+const getPageReferenceIds = async (pageTitle): Promise<string[]> => {
   const q = `[
     :find ?refUid
     :in $ ?tag
@@ -19,7 +19,7 @@ const getPageReferenceIds = async (pageTitle) => {
   return results;
 };
 
-const mapPluginPageDataLatest = (queryResultsData) =>
+const mapPluginPageDataLatest = (queryResultsData): Records =>
   queryResultsData
     .map((arr) => arr[0])[0]
     .children?.reduce((acc, cur) => {
@@ -46,7 +46,7 @@ const mapPluginPageDataLatest = (queryResultsData) =>
       return acc;
     }, {}) || {};
 
-const mapPluginPageData = (queryResultsData) =>
+const mapPluginPageData = (queryResultsData): CompleteRecords =>
   queryResultsData
     .map((arr) => arr[0])[0]
     .children?.reduce((acc, cur) => {
@@ -107,7 +107,7 @@ export const getPluginPageData = async ({ dataPageTitle, limitToLatest = true })
 };
 
 export const getDueCardUids = (data) => {
-  const results = [];
+  const results: string[] = [];
   if (!Object.keys(data).length) return results;
 
   const now = new Date();
@@ -132,11 +132,14 @@ export const generateNewCardProps = ({ dateCreated = undefined } = {}) => ({
 });
 
 export const getPracticeCardData = async ({ selectedTag, dataPageTitle }) => {
-  const pluginPageData = await getPluginPageData({ dataPageTitle });
+  const pluginPageData = (await getPluginPageData({
+    dataPageTitle,
+    limitToLatest: true,
+  })) as Records | NewRecords;
 
   const selectedTagReferencesIds = await getPageReferenceIds(selectedTag);
   const cardsData = { ...pluginPageData };
-  const newCardsUids = [];
+  const newCardsUids: string[] = [];
 
   // Filter out due cards that aren't references to the currently selected tag
   // @TODO: we could probably do this at getPluginPageData query for a
@@ -150,7 +153,6 @@ export const getPracticeCardData = async ({ selectedTag, dataPageTitle }) => {
     if (!pluginPageData[referenceId]) {
       // New
       newCardsUids.push(referenceId);
-
       cardsData[referenceId] = {
         ...generateNewCardProps(),
       };
@@ -387,7 +389,8 @@ export const savePracticeData = async ({ refUid, dataPageTitle, dateCreated, ...
     open: false,
   });
 
-  const dateCreatedRoamDateString = stringUtils.dateToRoamDateString(dateCreated || new Date());
+  const referenceDate = dateCreated || new Date();
+  const dateCreatedRoamDateString = stringUtils.dateToRoamDateString(referenceDate);
   const emoji = getEmojiFromGrade(data.grade);
   const newDataBlockId = await createChildBlock(
     cardDataBlockUid,
@@ -399,7 +402,7 @@ export const savePracticeData = async ({ refUid, dataPageTitle, dateCreated, ...
   );
 
   // Insert new block info
-  const nextDueDate = dateUtils.addDays(new Date(), data.interval);
+  const nextDueDate = dateUtils.addDays(referenceDate, data.interval);
   for (const key of Object.keys(data)) {
     let value = data[key];
     if (key === 'nextDueDate') {
@@ -411,7 +414,7 @@ export const savePracticeData = async ({ refUid, dataPageTitle, dateCreated, ...
 };
 interface BulkSavePracticeDataOptions {
   token: string;
-  records: Records;
+  records: CompleteRecords;
   selectedUids: string[];
   dataPageTitle: string;
 }
@@ -493,8 +496,7 @@ export const bulkSavePracticeData = async ({
         let value = session[key];
         if (key === 'dateCreated') continue; // no need to store this
         if (key === 'nextDueDate') {
-          const nextDueDate = dateUtils.addDays(new Date(), session.interval);
-          value = `[[${stringUtils.dateToRoamDateString(nextDueDate)}]]`;
+          value = `[[${stringUtils.dateToRoamDateString(value)}]]`;
         }
         payload.data.actions.push({
           action: 'create-block',
@@ -636,7 +638,7 @@ export const generateRecordsFromRoamSrData = async (
 ) => {
   const mergedRecords = getMergedOldAndExistingRecords(oldReviewRecords, existingPracticeData);
 
-  const results: Records = {};
+  const results: CompleteRecords = {};
   for (const [_, resultsArr] of Object.entries(mergedRecords)) {
     //@ts-ignore
     for (const result of resultsArr) {

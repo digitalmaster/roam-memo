@@ -509,7 +509,13 @@ const Footer = ({
     const estimates = {};
 
     for (const grade of grades) {
-      const practiceResultData = generatePracticeData({ grade, interval, repetitions, eFactor });
+      const practiceResultData = generatePracticeData({
+        grade,
+        interval,
+        repetitions,
+        eFactor,
+        dateCreated: new Date(),
+      });
       estimates[grade] = practiceResultData;
     }
 

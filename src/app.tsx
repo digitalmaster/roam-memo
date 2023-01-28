@@ -26,8 +26,7 @@ const App = () => {
     if (!refUid) return;
 
     const cardData = practiceCardsData[refUid];
-
-    await practice({ ...cardData, grade, refUid, dataPageTitle });
+    await practice({ ...cardData, grade, refUid, dataPageTitle, dateCreated: new Date() });
   };
 
   const onShowPracticeOverlay = () => {

@@ -4,7 +4,7 @@ import * as queries from '~/queries';
 import * as asyncUtils from '~/utils/async';
 import styled from '@emotion/styled';
 import * as stringUtils from '~/utils/string';
-import { Records } from '~/models/session';
+import { CompleteRecords, Records } from '~/models/session';
 
 const BorderColor = '#e5e7eb';
 
@@ -356,7 +356,7 @@ const ImportPage = ({ dataPageTitle, token, setLaunchPanel }) => {
   const [refetchTrigger, setRefetchTrigger] = React.useState(0);
   const [hasImported, setHasImported] = React.useState(false);
   const [isImporting, setIsImporting] = React.useState(false);
-  const [records, setRecords] = React.useState<Records>({});
+  const [records, setRecords] = React.useState<CompleteRecords>({});
   const hasRecords = Object.keys(records).length > 0;
 
   const [selectedUids, setSelectedUids] = React.useState<string[]>([]);
@@ -374,10 +374,10 @@ const ImportPage = ({ dataPageTitle, token, setLaunchPanel }) => {
       await asyncUtils.sleep(300); // fixes modal load delay jank
 
       // Fetch existing practice data (used to mark blocks that already exist)
-      const existingPracticeData = await queries.getPluginPageData({
+      const existingPracticeData = (await queries.getPluginPageData({
         dataPageTitle: dataPageTitle,
         limitToLatest: false,
-      });
+      })) as CompleteRecords;
 
       // Fetch Old Review data
       const oldReviewData = await queries.getOldRoamSrPracticeData();

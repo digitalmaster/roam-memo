@@ -38,13 +38,7 @@ export const supermemo = (item, grade) => {
   };
 };
 
-export const generatePracticeData = ({
-  grade,
-  interval,
-  repetitions,
-  eFactor,
-  baseDate = new Date(),
-}) => {
+export const generatePracticeData = ({ grade, interval, repetitions, eFactor, dateCreated }) => {
   const supermemoInput = {
     interval,
     repetition: repetitions,
@@ -54,7 +48,7 @@ export const generatePracticeData = ({
   // call supermemo API
   const supermemoResults = supermemo(supermemoInput, grade);
 
-  const nextDueDate = dateUtils.addDays(baseDate, supermemoResults.interval);
+  const nextDueDate = dateUtils.addDays(dateCreated, supermemoResults.interval);
 
   return {
     repetitions: supermemoResults.repetition,
@@ -92,7 +86,7 @@ const practice = async (practiceProps: PracticeProps, isDryRun = false) => {
     interval,
     repetitions,
     eFactor,
-    baseDate: dateCreated,
+    dateCreated,
   });
   if (!isDryRun) {
     await savePracticeData({

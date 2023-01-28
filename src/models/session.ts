@@ -8,6 +8,18 @@ export interface Session {
   isRoamSrOldPracticeRecord?: boolean;
 }
 
+interface NewSession extends Omit<Session, 'nextDueDate' | 'grade'> {
+  isNew: true;
+}
+
 export interface Records {
+  [key: string]: Session;
+}
+
+export interface NewRecords {
+  [key: string]: NewSession;
+}
+
+export interface CompleteRecords {
   [key: string]: Session[];
 }
