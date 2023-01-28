@@ -623,7 +623,19 @@ const getMergedOldAndExistingRecords = (oldReviewRecords, existingPracticeData) 
   for (const refUid in existingPracticeData) {
     if (refUid in oldReviewRecords) {
       // This means we have old data for a card we've already started training
-      mergedPracticeData[refUid] = [...mergedPracticeData[refUid], ...existingPracticeData[refUid]];
+
+      // If old record belongs to a card we've already imported, it means we've
+      // already merged before and we can keep the existing data (instead of
+      // duplicating it)
+      if (existingPracticeData[refUid].some((r) => r.isRoamSrOldPracticeRecord)) {
+        mergedPracticeData[refUid] = [...existingPracticeData[refUid]];
+      } else {
+        mergedPracticeData[refUid] = [
+          ...mergedPracticeData[refUid],
+          ...existingPracticeData[refUid],
+        ];
+      }
+
       mergedPracticeData[refUid].sort((a, b) => a.dateCreated - b.dateCreated);
     }
   }
@@ -637,7 +649,6 @@ export const generateRecordsFromRoamSrData = async (
   dataPageTitle
 ) => {
   const mergedRecords = getMergedOldAndExistingRecords(oldReviewRecords, existingPracticeData);
-
   const results: CompleteRecords = {};
   for (const [_, resultsArr] of Object.entries(mergedRecords)) {
     //@ts-ignore

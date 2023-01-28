@@ -59,8 +59,6 @@ const Block = ({
 }) => {
   const [isSelected, setIsSelected] = React.useState(false);
   const [isExpanded, setIsExpanded] = React.useState(isFirst ? true : false);
-  const [isDisabled, setIsDisabled] = React.useState(false);
-  const [hasBeenImported, setHasBeenImported] = React.useState(false);
 
   // Set selected
   React.useEffect(() => {
@@ -70,17 +68,6 @@ const Block = ({
       setIsSelected(false);
     }
   }, [selectedUids]);
-
-  // Set disabled if already imported
-  React.useEffect(() => {
-    if (importedUids.includes(uuid)) {
-      setHasBeenImported(true);
-      setIsDisabled(true);
-    } else {
-      setHasBeenImported(false);
-      setIsDisabled(false);
-    }
-  }, [importedUids]);
 
   const handleCheckboxChange = (e) => {
     setSelectedUids((currentUids) => {
@@ -96,11 +83,10 @@ const Block = ({
 
   return (
     <>
-      <div className={`flex flex-col px-4 py-4 ${isDisabled ? 'opacity-60' : ''}`}>
+      <div className={`flex flex-col px-4 py-4`}>
         <div className="flex items-center">
           <Blueprint.Checkbox
             checked={isSelected}
-            disabled={isDisabled}
             onChange={handleCheckboxChange}
             className="cursor-not-allowed"
           />
@@ -110,8 +96,7 @@ const Block = ({
           >
             <div className="truncate w-full cursor-pointer text-gray-600">{blockInfo?.string}</div>
             <div className="bp3-text-small bp3-text-muted">
-              {hasBeenImported ? 'Imported' : 'Found'} {sessions.length - newSessions.length}{' '}
-              Practice Sessions{' '}
+              Found {sessions.length - newSessions.length} Practice Sessions{' '}
               <span className="text-green-600">
                 {newSessions.length > 0 && `(merged with ${newSessions.length} new sessions)`}
               </span>
@@ -153,6 +138,8 @@ const Header = ({
   selectedUids,
   setLaunchPanel,
   importedUids,
+  onSelectAllClick,
+  onDeselectAllClick,
 }) => (
   <HeaderElm className="flex px-4 py-4 justify-between">
     <div>
@@ -171,15 +158,26 @@ const Header = ({
         </div>
       )}
     </div>
-    <div className="flex justify-end items-center">
-      <Blueprint.Button
-        onClick={executeImport}
-        disabled={isImporting || !selectedUids.length}
-        intent="primary"
-      >
-        Import {selectedUids.length === totalCardsFound ? 'All' : `(${selectedUids.length})`}
-      </Blueprint.Button>
-      <Blueprint.Button icon="cross" onClick={() => setLaunchPanel(false)} className="ml-2" />
+    <div>
+      <div className="flex justify-end items-center">
+        <Blueprint.Button
+          onClick={executeImport}
+          disabled={isImporting || !selectedUids.length}
+          intent="primary"
+        >
+          Import {selectedUids.length === totalCardsFound ? 'All' : `(${selectedUids.length})`}
+        </Blueprint.Button>
+        <Blueprint.Button icon="cross" onClick={() => setLaunchPanel(false)} className="ml-2" />
+      </div>
+      <div className="bp3-text-small bp3-text-muted pt-2">
+        <Blueprint.Button onClick={onSelectAllClick} className="ml-2" small minimal>
+          <span className="bp3-text-small bp3-text-muted">Select All</span>
+        </Blueprint.Button>{' '}
+        /{' '}
+        <Blueprint.Button onClick={onDeselectAllClick} small minimal>
+          <span className="bp3-text-small bp3-text-muted">Deselect All</span>
+        </Blueprint.Button>
+      </div>
     </div>
   </HeaderElm>
 );
@@ -455,6 +453,8 @@ const ImportPage = ({ dataPageTitle, token, setLaunchPanel }) => {
         selectedUids={selectedUids}
         setLaunchPanel={setLaunchPanel}
         importedUids={importedUids}
+        onSelectAllClick={() => setSelectedUids(Object.keys(records))}
+        onDeselectAllClick={() => setSelectedUids([])}
       />
       <ResultsWrapper>
         {hasRecords ? (
