@@ -416,10 +416,11 @@ const ImportPage = ({ dataPageTitle, token, setLaunchPanel }) => {
 
   // Refetch while importing
   React.useEffect(() => {
-    if (!isImporting) return;
+    // Keep refretching while import panel is open just in case the API early returns we still want progress to keep updating.
+    if (!isImporting && !hasImported) return;
     const interval = setInterval(async () => {
       setRefetchTrigger((n) => n + 1);
-    }, 1000);
+    }, 3000);
     return () => clearInterval(interval);
   }, [isImporting]);
 
