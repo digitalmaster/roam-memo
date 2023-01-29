@@ -30,6 +30,8 @@ To use the Memo plugin for studying flashcards:
 
 To create separate decs just got to our plugin settings page, find the "Tag Pages" field and add a comma separated list of all the pages you want to use as decks. For example, if you want to create a deck for "Spanish" and another for "French" you would add `Spanish, French` to the field.
 
+> To use tags that have commas in them just wrap them in quotes. For example, "Page, with Comma".
+
 ### Text Masking
 
 Text Masking or Cloze Deletion is a technique where you hide or mask a part of the text to test your understanding or to make it harder to memorize. To mask a part of text, you can use two different methods:
