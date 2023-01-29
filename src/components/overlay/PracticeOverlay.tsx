@@ -47,7 +47,6 @@ const PracticeOverlay = ({
   const { data: blockInfo } = useBlockInfo({ refUid: currentCardRefUid });
   const hasBlockChildren = !!blockInfo.children && !!blockInfo.children.length;
   const [showAnswers, setShowAnswers] = React.useState(false);
-
   const [hasCloze, setHasCloze] = React.useState(true);
 
   React.useEffect(() => {
@@ -56,10 +55,9 @@ const PracticeOverlay = ({
     } else {
       setShowAnswers(true);
     }
-  }, [hasBlockChildren, hasCloze, currentIndex]);
+  }, [hasBlockChildren, hasCloze, currentIndex, tagsList]);
 
   const onTagChange = async (tag) => {
-    setShowAnswers(false);
     setCurrentIndex(0);
     handleMemoTagChange(tag);
 
