@@ -1,10 +1,11 @@
 import * as React from 'react';
-import { Records } from '~/models/session';
+import { NewRecords, Records } from '~/models/session';
 import * as queries from '~/queries';
 
 const usePracticeCardsData = ({ selectedTag, dataPageTitle }) => {
   const [practiceCardsUids, setPracticeCardsUids] = React.useState<string[]>([]);
-  const [practiceCardsData, setPracticeCardsData] = React.useState<Records>({});
+  const [practiceCardsData, setPracticeCardsData] = React.useState<Records | NewRecords>({});
+
   const [refetchTrigger, setRefetchTrigger] = React.useState(false);
   const [displayCardCounts, setDisplayCardCounts] = React.useState({ new: 0, due: 0 });
 

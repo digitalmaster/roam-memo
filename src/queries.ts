@@ -1,7 +1,7 @@
 import { getStringBetween, parseConfigString, parseRoamDateString } from '~/utils/string';
 import * as stringUtils from '~/utils/string';
 import * as dateUtils from '~/utils/date';
-import { CompleteRecords, NewRecords, Records } from '~/models/session';
+import { CompleteRecords, NewRecords, Records, NewSession } from '~/models/session';
 import practice from '~/practice';
 
 const getPageReferenceIds = async (pageTitle): Promise<string[]> => {
@@ -123,7 +123,7 @@ export const getDueCardUids = (data) => {
   return results;
 };
 
-export const generateNewCardProps = ({ dateCreated = undefined } = {}) => ({
+export const generateNewCardProps = ({ dateCreated = undefined } = {}): NewSession => ({
   dateCreated: dateCreated || new Date(),
   eFactor: 2.5,
   interval: 0,

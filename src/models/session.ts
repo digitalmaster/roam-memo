@@ -8,7 +8,7 @@ export interface Session {
   isRoamSrOldPracticeRecord?: boolean;
 }
 
-interface NewSession extends Omit<Session, 'nextDueDate' | 'grade'> {
+export interface NewSession extends Omit<Session, 'nextDueDate' | 'grade'> {
   isNew: true;
 }
 
