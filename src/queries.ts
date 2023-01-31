@@ -135,7 +135,7 @@ export const getPracticeCardData = async ({ selectedTag, dataPageTitle }) => {
   const pluginPageData = (await getPluginPageData({
     dataPageTitle,
     limitToLatest: true,
-  })) as Records | NewRecords;
+  })) as Records;
 
   const selectedTagReferencesIds = await getPageReferenceIds(selectedTag);
   const cardsData = { ...pluginPageData };
@@ -147,6 +147,15 @@ export const getPracticeCardData = async ({ selectedTag, dataPageTitle }) => {
   const dueCardsUids = getDueCardUids(cardsData).filter(
     (dueCardUid) => selectedTagReferencesIds.indexOf(dueCardUid) > -1
   );
+
+  // Sort due cards by nextDueDate (due soonest first to increase retention,
+  // accepting that cards that are more past due will likely be forgotten)
+  dueCardsUids.sort((a, b) => {
+    const aCard = cardsData[a];
+    const bCard = cardsData[b];
+
+    return aCard.nextDueDate < bCard.nextDueDate ? 1 : -1;
+  });
 
   // Create new cards for all referenced cards with no data yet
   selectedTagReferencesIds.forEach((referenceId) => {
