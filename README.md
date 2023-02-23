@@ -59,6 +59,9 @@ You can start a review session from the command palette (`CMD + P`) by typing "M
 ### RoamSr Migration Tool
 
 To migrate your data from the old RoamSr plugin follow these steps:
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=-vTHVknIdX4" target="_blank">
+<img src="https://user-images.githubusercontent.com/1279335/220912625-f4cc5ab7-fbf1-4d86-8934-e635ac85ee7b.png" alt="Watch Video Walkthrough" />
+</a>
 
 > Note: To be extra safe, I recommend you make a backup of your #roam/memo page before migrating.
 
