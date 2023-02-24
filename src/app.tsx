@@ -26,7 +26,13 @@ const App = () => {
     if (!refUid) return;
 
     const cardData = practiceCardsData[refUid];
-    await practice({ ...cardData, grade, refUid, dataPageTitle, dateCreated: new Date() });
+
+    try {
+      // Note: Not awaiting this promise due to user report of slow performance on some graphs
+      practice({ ...cardData, grade, refUid, dataPageTitle, dateCreated: new Date() });
+    } catch (error) {
+      console.log('Error Saving Practice Data', error);
+    }
   };
 
   const onShowPracticeOverlay = () => {
