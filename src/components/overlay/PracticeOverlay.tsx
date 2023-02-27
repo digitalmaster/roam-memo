@@ -94,12 +94,16 @@ const PracticeOverlay = ({
   }, [currentIndex, isFirst]);
 
   const lottieAnimationOption = {
-    loop: false,
+    loop: true,
     autoplay: true,
     animationData: doneAnimationData,
     rendererSettings: {
       preserveAspectRatio: 'xMidYMid slice',
     },
+  };
+  const lottieStyle = {
+    height: 200,
+    width: 'auto',
   };
 
   const [showBreadcrumbs, setShowBreadcrumbs] = React.useState(false);
@@ -150,7 +154,7 @@ const PracticeOverlay = ({
           />
         ) : (
           <div className="flex items-center flex-col">
-            <Lottie options={lottieAnimationOption} width="auto" />
+            <Lottie options={lottieAnimationOption} style={lottieStyle} />
             <div>No cards left to review!</div>
           </div>
         )}
