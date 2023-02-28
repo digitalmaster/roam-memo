@@ -342,18 +342,20 @@ const Header = ({
         </div>
       </div>
       <div className="flex items-center justify-end">
-        <div onClick={() => setShowBreadcrumbs(!showBreadcrumbs)} className="px-1 cursor-pointer">
-          {/* @ts-ignore */}
-          <Tooltip
-            content={<BreadcrumbTooltipContent showBreadcrumbs={showBreadcrumbs} />}
-            placement="left"
-          >
-            <Blueprint.Icon
-              icon={showBreadcrumbs ? 'eye-open' : 'eye-off'}
-              className={showBreadcrumbs ? 'opacity-100' : 'opacity-60'}
-            />
-          </Tooltip>
-        </div>
+        {!isDone && (
+          <div onClick={() => setShowBreadcrumbs(!showBreadcrumbs)} className="px-1 cursor-pointer">
+            {/* @ts-ignore */}
+            <Tooltip
+              content={<BreadcrumbTooltipContent showBreadcrumbs={showBreadcrumbs} />}
+              placement="left"
+            >
+              <Blueprint.Icon
+                icon={showBreadcrumbs ? 'eye-open' : 'eye-off'}
+                className={showBreadcrumbs ? 'opacity-100' : 'opacity-60'}
+              />
+            </Tooltip>
+          </div>
+        )}
         <StatusBadge status={status} nextDueDate={nextDueDate} isCramming={isCramming} />
         <span className="text-sm mx-2 font-medium">
           <span>{totalCardsCount === 0 ? 0 : isDone ? currentIndex : currentIndex + 1}</span>
