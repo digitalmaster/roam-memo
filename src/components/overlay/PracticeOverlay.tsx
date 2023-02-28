@@ -22,6 +22,8 @@ const PracticeOverlay = ({
   practiceCardsData,
   handleGradeClick,
   handleMemoTagChange,
+  isCramming,
+  setIsCramming,
 }) => {
   const [currentIndex, setCurrentIndex] = React.useState(0);
   const totalCardsCount = practiceCardUids.length;
@@ -92,6 +94,11 @@ const PracticeOverlay = ({
     setShowAnswers(false);
     setCurrentIndex(currentIndex - 1);
   }, [currentIndex, isFirst]);
+
+  const onToggleCramModeClick = () => {
+    setIsCramming(!isCramming);
+    setCurrentIndex(0);
+  };
 
   const lottieAnimationOption = {
     loop: true,
@@ -171,6 +178,7 @@ const PracticeOverlay = ({
         hasCards={hasCards}
         onCloseCallback={onCloseCallback}
         currentCardData={currentCardData}
+        onToggleCramModeClick={onToggleCramModeClick}
       />
     </Dialog>
   );
@@ -402,6 +410,7 @@ const Footer = ({
   hasCards,
   onCloseCallback,
   currentCardData,
+  onToggleCramModeClick,
 }) => {
   // So we can flash the activated button when using keyboard shortcuts before transitioning
   const [activeButtonKey, setActiveButtonKey] = React.useState(null);
@@ -532,15 +541,18 @@ const Footer = ({
     >
       <FooterActionsWrapper className="bp3-dialog-footer-actions flex-wrap gap-4 justify-evenly w-full mx-3  my-3">
         {isDone || !hasCards ? (
-          // @ts-ignore
-          <ControlButton
-            className="text-base font-medium py-1"
-            intent="none"
-            onClick={onCloseCallback}
-            outlined
-          >
-            Close
-          </ControlButton>
+          <>
+            <Blueprint.Button onClick={onToggleCramModeClick}>Continue Cramming</Blueprint.Button>
+            {/*@ts-ignore*/}
+            <ControlButton
+              className="text-base font-medium py-1"
+              intent="none"
+              onClick={onCloseCallback}
+              outlined
+            >
+              Close
+            </ControlButton>
+          </>
         ) : !showAnswers ? (
           // @ts-ignore
           <ControlButton

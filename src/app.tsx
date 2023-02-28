@@ -12,6 +12,8 @@ import useCommandPaletteAction from './hooks/useCommandPaletteAction';
 
 const App = () => {
   const [showPracticeOverlay, setShowPracticeOverlay] = React.useState(false);
+  const [isCramming, setIsCramming] = React.useState(false);
+
   const { tagsListString, dataPageTitle } = useSettings();
 
   const { selectedTag, setSelectedTag, tagsList } = useTags({ tagsListString });
@@ -89,6 +91,8 @@ const App = () => {
             handleMemoTagChange={handleMemoTagChange}
             tagsList={tagsList}
             selectedTag={selectedTag}
+            isCramming={isCramming}
+            setIsCramming={setIsCramming}
           />
         )}
       </>
