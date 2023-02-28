@@ -59,6 +59,12 @@ const PracticeOverlay = ({
     }
   }, [hasBlockChildren, hasCloze, currentIndex, tagsList]);
 
+  React.useEffect(() => {
+    if (isDone && isCramming) {
+      setIsCramming(false);
+    }
+  }, [isDone]);
+
   const onTagChange = async (tag) => {
     setCurrentIndex(0);
     handleMemoTagChange(tag);
