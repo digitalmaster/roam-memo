@@ -68,6 +68,7 @@ const PracticeOverlay = ({
   const onTagChange = async (tag) => {
     setCurrentIndex(0);
     handleMemoTagChange(tag);
+    setIsCramming(false);
 
     // To prevent 'space' key event from triggering dropdown
     await asyncUtils.sleep(200);
