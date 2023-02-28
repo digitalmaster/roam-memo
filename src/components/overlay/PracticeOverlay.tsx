@@ -95,8 +95,8 @@ const PracticeOverlay = ({
     setCurrentIndex(currentIndex - 1);
   }, [currentIndex, isFirst]);
 
-  const onToggleCramModeClick = () => {
-    setIsCramming(!isCramming);
+  const onStartCrammingClick = () => {
+    setIsCramming(true);
     setCurrentIndex(0);
   };
 
@@ -179,7 +179,7 @@ const PracticeOverlay = ({
         hasCards={hasCards}
         onCloseCallback={onCloseCallback}
         currentCardData={currentCardData}
-        onToggleCramModeClick={onToggleCramModeClick}
+        onStartCrammingClick={onStartCrammingClick}
       />
     </Dialog>
   );
@@ -421,7 +421,7 @@ const Footer = ({
   hasCards,
   onCloseCallback,
   currentCardData,
-  onToggleCramModeClick,
+  onStartCrammingClick,
 }) => {
   // So we can flash the activated button when using keyboard shortcuts before transitioning
   const [activeButtonKey, setActiveButtonKey] = React.useState(null);
@@ -553,7 +553,7 @@ const Footer = ({
       <FooterActionsWrapper className="bp3-dialog-footer-actions flex-wrap gap-4 justify-evenly w-full mx-3  my-3">
         {isDone || !hasCards ? (
           <>
-            <Blueprint.Button onClick={onToggleCramModeClick}>Continue Cramming</Blueprint.Button>
+            <Blueprint.Button onClick={onStartCrammingClick}>Continue Cramming</Blueprint.Button>
             {/*@ts-ignore*/}
             <ControlButton
               className="text-base font-medium py-1"
