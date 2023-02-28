@@ -560,14 +560,16 @@ const Footer = ({
       <FooterActionsWrapper className="bp3-dialog-footer-actions flex-wrap gap-4 justify-evenly w-full mx-3  my-3">
         {isDone || !hasCards ? (
           <>
-            <Blueprint.Button
-              className="text-base font-medium py-1"
-              intent="none"
-              onClick={onStartCrammingClick}
-              outlined
-            >
-              Continue Cramming
-            </Blueprint.Button>
+            <Tooltip content="Review all cards without waiting for scheduling" placement="top">
+              <Blueprint.Button
+                className="text-base font-medium py-1"
+                intent="none"
+                onClick={onStartCrammingClick}
+                outlined
+              >
+                Continue Cramming
+              </Blueprint.Button>
+            </Tooltip>
             <Blueprint.Button
               className="text-base font-medium py-1"
               intent="primary"
