@@ -560,16 +560,22 @@ const Footer = ({
       <FooterActionsWrapper className="bp3-dialog-footer-actions flex-wrap gap-4 justify-evenly w-full mx-3  my-3">
         {isDone || !hasCards ? (
           <>
-            <Blueprint.Button onClick={onStartCrammingClick}>Continue Cramming</Blueprint.Button>
-            {/*@ts-ignore*/}
-            <ControlButton
+            <Blueprint.Button
               className="text-base font-medium py-1"
               intent="none"
+              onClick={onStartCrammingClick}
+              outlined
+            >
+              Continue Cramming
+            </Blueprint.Button>
+            <Blueprint.Button
+              className="text-base font-medium py-1"
+              intent="primary"
               onClick={onCloseCallback}
               outlined
             >
               Close
-            </ControlButton>
+            </Blueprint.Button>
           </>
         ) : !showAnswers ? (
           // @ts-ignore
