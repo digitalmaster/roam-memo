@@ -39,6 +39,10 @@ Text Masking or Cloze Deletion is a technique where you hide or mask a part of t
 - Highlighting the text and adding ^^ on both sides of the text you want to mask. Example: ^^hide me^^
 - Wrapping the text with single brackets { }. Example: {hide me too}.
 
+### Cram Mode
+
+When you're done reviewing all due cards in a deck you can choose to continue in "Cram Mode". This will let you review all the cards in the deck regardless of when they are due. This is useful if you're studying for an exam and can't wait for the cards to become due. Reviewing cards in this mode do not affect spaced reptition scheduling.
+
 ### Keyboard Shortcuts
 
 | Action                | Shortcut   |
