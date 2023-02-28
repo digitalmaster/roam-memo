@@ -32,7 +32,7 @@ const App = () => {
 
     try {
       // Note: Not awaiting this promise due to user report of slow performance on some graphs
-      practice({ ...cardData, grade, refUid, dataPageTitle, dateCreated: new Date() });
+      practice({ ...cardData, grade, refUid, dataPageTitle, dateCreated: new Date(), isCramming });
     } catch (error) {
       console.log('Error Saving Practice Data', error);
     }
