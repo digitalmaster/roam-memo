@@ -41,6 +41,7 @@ const App = () => {
   const onShowPracticeOverlay = () => {
     fetchPracticeData();
     setShowPracticeOverlay(true);
+    setIsCramming(false);
   };
 
   const onClosePracticeOverlayCallback = () => {
