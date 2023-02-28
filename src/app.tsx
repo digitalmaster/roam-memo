@@ -12,6 +12,8 @@ import useCommandPaletteAction from './hooks/useCommandPaletteAction';
 
 const App = () => {
   const [showPracticeOverlay, setShowPracticeOverlay] = React.useState(false);
+  const [isCramming, setIsCramming] = React.useState(false);
+
   const { tagsListString, dataPageTitle } = useSettings();
 
   const { selectedTag, setSelectedTag, tagsList } = useTags({ tagsListString });
@@ -20,6 +22,7 @@ const App = () => {
     usePracticeCardsData({
       selectedTag,
       dataPageTitle,
+      isCramming,
     });
 
   const handleGradeClick = async ({ grade, refUid }) => {
@@ -29,7 +32,7 @@ const App = () => {
 
     try {
       // Note: Not awaiting this promise due to user report of slow performance on some graphs
-      practice({ ...cardData, grade, refUid, dataPageTitle, dateCreated: new Date() });
+      practice({ ...cardData, grade, refUid, dataPageTitle, dateCreated: new Date(), isCramming });
     } catch (error) {
       console.log('Error Saving Practice Data', error);
     }
@@ -38,6 +41,7 @@ const App = () => {
   const onShowPracticeOverlay = () => {
     fetchPracticeData();
     setShowPracticeOverlay(true);
+    setIsCramming(false);
   };
 
   const onClosePracticeOverlayCallback = () => {
@@ -89,6 +93,8 @@ const App = () => {
             handleMemoTagChange={handleMemoTagChange}
             tagsList={tagsList}
             selectedTag={selectedTag}
+            isCramming={isCramming}
+            setIsCramming={setIsCramming}
           />
         )}
       </>

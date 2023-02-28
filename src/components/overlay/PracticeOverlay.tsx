@@ -22,6 +22,8 @@ const PracticeOverlay = ({
   practiceCardsData,
   handleGradeClick,
   handleMemoTagChange,
+  isCramming,
+  setIsCramming,
 }) => {
   const [currentIndex, setCurrentIndex] = React.useState(0);
   const totalCardsCount = practiceCardUids.length;
@@ -57,9 +59,16 @@ const PracticeOverlay = ({
     }
   }, [hasBlockChildren, hasCloze, currentIndex, tagsList]);
 
+  React.useEffect(() => {
+    if (isDone && isCramming) {
+      setIsCramming(false);
+    }
+  }, [isDone]);
+
   const onTagChange = async (tag) => {
     setCurrentIndex(0);
     handleMemoTagChange(tag);
+    setIsCramming(false);
 
     // To prevent 'space' key event from triggering dropdown
     await asyncUtils.sleep(200);
@@ -93,13 +102,22 @@ const PracticeOverlay = ({
     setCurrentIndex(currentIndex - 1);
   }, [currentIndex, isFirst]);
 
+  const onStartCrammingClick = () => {
+    setIsCramming(true);
+    setCurrentIndex(0);
+  };
+
   const lottieAnimationOption = {
-    loop: false,
+    loop: true,
     autoplay: true,
     animationData: doneAnimationData,
     rendererSettings: {
       preserveAspectRatio: 'xMidYMid slice',
     },
+  };
+  const lottieStyle = {
+    height: 200,
+    width: 'auto',
   };
 
   const [showBreadcrumbs, setShowBreadcrumbs] = React.useState(false);
@@ -137,6 +155,7 @@ const PracticeOverlay = ({
         nextDueDate={nextDueDate}
         showBreadcrumbs={showBreadcrumbs}
         setShowBreadcrumbs={setShowBreadcrumbs}
+        isCramming={isCramming}
       />
 
       <DialogBody className="bp3-dialog-body overflow-y-scroll m-0 pt-6 pb-8 px-4">
@@ -150,7 +169,7 @@ const PracticeOverlay = ({
           />
         ) : (
           <div className="flex items-center flex-col">
-            <Lottie options={lottieAnimationOption} width="auto" />
+            <Lottie options={lottieAnimationOption} style={lottieStyle} />
             <div>No cards left to review!</div>
           </div>
         )}
@@ -167,6 +186,7 @@ const PracticeOverlay = ({
         hasCards={hasCards}
         onCloseCallback={onCloseCallback}
         currentCardData={currentCardData}
+        onStartCrammingClick={onStartCrammingClick}
       />
     </Dialog>
   );
@@ -252,7 +272,14 @@ const TagSelectorItem = ({ text, onClick, active, key }) => {
   );
 };
 
-const StatusBadge = ({ status, nextDueDate }) => {
+const StatusBadge = ({ status, nextDueDate, isCramming }) => {
+  if (isCramming) {
+    return (
+      <Tooltip content="Reviews don't affect scheduling" placement="left">
+        <Blueprint.Tag intent="none">Cramming</Blueprint.Tag>
+      </Tooltip>
+    );
+  }
   switch (status) {
     case 'new':
       return (
@@ -311,6 +338,7 @@ const Header = ({
   nextDueDate,
   showBreadcrumbs,
   setShowBreadcrumbs,
+  isCramming,
 }) => {
   return (
     <HeaderWrapper className={className} tabIndex={0}>
@@ -321,19 +349,21 @@ const Header = ({
         </div>
       </div>
       <div className="flex items-center justify-end">
-        <div onClick={() => setShowBreadcrumbs(!showBreadcrumbs)} className="px-1 cursor-pointer">
-          {/* @ts-ignore */}
-          <Tooltip
-            content={<BreadcrumbTooltipContent showBreadcrumbs={showBreadcrumbs} />}
-            placement="left"
-          >
-            <Blueprint.Icon
-              icon={showBreadcrumbs ? 'eye-open' : 'eye-off'}
-              className={showBreadcrumbs ? 'opacity-100' : 'opacity-60'}
-            />
-          </Tooltip>
-        </div>
-        <StatusBadge status={status} nextDueDate={nextDueDate} />
+        {!isDone && (
+          <div onClick={() => setShowBreadcrumbs(!showBreadcrumbs)} className="px-1 cursor-pointer">
+            {/* @ts-ignore */}
+            <Tooltip
+              content={<BreadcrumbTooltipContent showBreadcrumbs={showBreadcrumbs} />}
+              placement="left"
+            >
+              <Blueprint.Icon
+                icon={showBreadcrumbs ? 'eye-open' : 'eye-off'}
+                className={showBreadcrumbs ? 'opacity-100' : 'opacity-60'}
+              />
+            </Tooltip>
+          </div>
+        )}
+        <StatusBadge status={status} nextDueDate={nextDueDate} isCramming={isCramming} />
         <span className="text-sm mx-2 font-medium">
           <span>{totalCardsCount === 0 ? 0 : isDone ? currentIndex : currentIndex + 1}</span>
           <span className="opacity-50 mx-1">/</span>
@@ -398,6 +428,7 @@ const Footer = ({
   hasCards,
   onCloseCallback,
   currentCardData,
+  onStartCrammingClick,
 }) => {
   // So we can flash the activated button when using keyboard shortcuts before transitioning
   const [activeButtonKey, setActiveButtonKey] = React.useState(null);
@@ -528,15 +559,26 @@ const Footer = ({
     >
       <FooterActionsWrapper className="bp3-dialog-footer-actions flex-wrap gap-4 justify-evenly w-full mx-3  my-3">
         {isDone || !hasCards ? (
-          // @ts-ignore
-          <ControlButton
-            className="text-base font-medium py-1"
-            intent="none"
-            onClick={onCloseCallback}
-            outlined
-          >
-            Close
-          </ControlButton>
+          <>
+            <Tooltip content="Review all cards without waiting for scheduling" placement="top">
+              <Blueprint.Button
+                className="text-base font-medium py-1"
+                intent="none"
+                onClick={onStartCrammingClick}
+                outlined
+              >
+                Continue Cramming
+              </Blueprint.Button>
+            </Tooltip>
+            <Blueprint.Button
+              className="text-base font-medium py-1"
+              intent="primary"
+              onClick={onCloseCallback}
+              outlined
+            >
+              Close
+            </Blueprint.Button>
+          </>
         ) : !showAnswers ? (
           // @ts-ignore
           <ControlButton

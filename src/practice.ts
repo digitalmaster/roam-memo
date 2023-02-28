@@ -67,6 +67,7 @@ export interface PracticeProps {
   refUid: string;
   dataPageTitle: string;
   dateCreated: null | Date;
+  isCramming: boolean;
 }
 
 const practice = async (practiceProps: PracticeProps, isDryRun = false) => {
@@ -78,6 +79,7 @@ const practice = async (practiceProps: PracticeProps, isDryRun = false) => {
     refUid,
     dataPageTitle,
     dateCreated = null,
+    isCramming,
   } = practiceProps;
   // Just destructuring nextDueDateFromNow here because I don't want to store it
   // eslint-disable-next-line no-unused-vars
@@ -88,7 +90,7 @@ const practice = async (practiceProps: PracticeProps, isDryRun = false) => {
     eFactor,
     dateCreated,
   });
-  if (!isDryRun) {
+  if (!isDryRun && !isCramming) {
     await savePracticeData({
       refUid: refUid,
       dataPageTitle,

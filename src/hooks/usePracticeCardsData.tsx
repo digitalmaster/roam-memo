@@ -2,7 +2,7 @@ import * as React from 'react';
 import { NewRecords, Records } from '~/models/session';
 import * as queries from '~/queries';
 
-const usePracticeCardsData = ({ selectedTag, dataPageTitle }) => {
+const usePracticeCardsData = ({ selectedTag, dataPageTitle, isCramming }) => {
   const [practiceCardsUids, setPracticeCardsUids] = React.useState<string[]>([]);
   const [practiceCardsData, setPracticeCardsData] = React.useState<Records | NewRecords>({});
 
@@ -11,18 +11,25 @@ const usePracticeCardsData = ({ selectedTag, dataPageTitle }) => {
 
   React.useEffect(() => {
     (async () => {
-      const { cardsData, newCardsUids, dueCardsUids } = await queries.getPracticeCardData({
-        selectedTag,
-        dataPageTitle,
-      });
+      const { cardsData, newCardsUids, dueCardsUids, allSelectedTagCardsUids } =
+        await queries.getPracticeCardData({
+          selectedTag,
+          dataPageTitle,
+        });
 
-      // Always practice due cards first
-      // @TODO: Perhaps make this order configurable?
       setPracticeCardsData(cardsData);
-      setPracticeCardsUids([...dueCardsUids, ...newCardsUids]);
+      if (isCramming) {
+        setPracticeCardsUids(
+          Object.keys(cardsData).filter((uid) => allSelectedTagCardsUids.includes(uid))
+        );
+      } else {
+        // Always practice due cards first
+        // @TODO: Perhaps make this order configurable?
+        setPracticeCardsUids([...dueCardsUids, ...newCardsUids]);
+      }
       setDisplayCardCounts({ new: newCardsUids.length, due: dueCardsUids.length });
     })();
-  }, [selectedTag, dataPageTitle, refetchTrigger]);
+  }, [selectedTag, dataPageTitle, refetchTrigger, isCramming]);
 
   return {
     practiceCardsUids,
