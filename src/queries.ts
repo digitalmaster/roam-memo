@@ -175,6 +175,7 @@ export const getPracticeCardData = async ({ selectedTag, dataPageTitle }) => {
 
   return {
     cardsData,
+    allSelectedTagCardsUids: selectedTagReferencesIds,
     newCardsUids,
     dueCardsUids,
   };

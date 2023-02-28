@@ -22,6 +22,7 @@ const App = () => {
     usePracticeCardsData({
       selectedTag,
       dataPageTitle,
+      isCramming,
     });
 
   const handleGradeClick = async ({ grade, refUid }) => {
