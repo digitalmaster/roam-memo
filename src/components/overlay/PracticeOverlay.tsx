@@ -148,6 +148,7 @@ const PracticeOverlay = ({
         nextDueDate={nextDueDate}
         showBreadcrumbs={showBreadcrumbs}
         setShowBreadcrumbs={setShowBreadcrumbs}
+        isCramming={isCramming}
       />
 
       <DialogBody className="bp3-dialog-body overflow-y-scroll m-0 pt-6 pb-8 px-4">
@@ -264,7 +265,14 @@ const TagSelectorItem = ({ text, onClick, active, key }) => {
   );
 };
 
-const StatusBadge = ({ status, nextDueDate }) => {
+const StatusBadge = ({ status, nextDueDate, isCramming }) => {
+  if (isCramming) {
+    return (
+      <Tooltip content="Reviews don't affect scheduling" placement="left">
+        <Blueprint.Tag intent="none">Cramming</Blueprint.Tag>
+      </Tooltip>
+    );
+  }
   switch (status) {
     case 'new':
       return (
@@ -323,6 +331,7 @@ const Header = ({
   nextDueDate,
   showBreadcrumbs,
   setShowBreadcrumbs,
+  isCramming,
 }) => {
   return (
     <HeaderWrapper className={className} tabIndex={0}>
@@ -345,7 +354,7 @@ const Header = ({
             />
           </Tooltip>
         </div>
-        <StatusBadge status={status} nextDueDate={nextDueDate} />
+        <StatusBadge status={status} nextDueDate={nextDueDate} isCramming={isCramming} />
         <span className="text-sm mx-2 font-medium">
           <span>{totalCardsCount === 0 ? 0 : isDone ? currentIndex : currentIndex + 1}</span>
           <span className="opacity-50 mx-1">/</span>
