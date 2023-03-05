@@ -31,8 +31,17 @@ const App = () => {
     const cardData = practiceCardsData[refUid];
 
     try {
-      // Note: Not awaiting this promise due to user report of slow performance on some graphs
-      practice({ ...cardData, grade, refUid, dataPageTitle, dateCreated: new Date(), isCramming });
+      setTimeout(() => {
+        // Note: Delaying this due to user report of slow UI transitions when data sync happens while UI is transitionsing.
+        practice({
+          ...cardData,
+          grade,
+          refUid,
+          dataPageTitle,
+          dateCreated: new Date(),
+          isCramming,
+        });
+      }, 1000);
     } catch (error) {
       console.log('Error Saving Practice Data', error);
     }
