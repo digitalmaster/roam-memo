@@ -50,6 +50,21 @@ const settingsPanelConfig = ({ settings, setSettings }) => {
           },
         },
       },
+      {
+        id: 'dailyLimit',
+        name: 'Daily Review Limit',
+        description: 'Number of cards to review each day. Set to 0 to disable.',
+        action: {
+          type: 'input',
+          placeholder: defaultSettings.dailyLimit,
+          onChange: (e) => {
+            const value = e.target.value.trim();
+            const isNumber = !isNaN(Number(value));
+
+            processChange({ key: 'dailyLimit', value: isNumber ? Number(value) : 0 });
+          },
+        },
+      },
     ],
   };
 };

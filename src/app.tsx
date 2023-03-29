@@ -14,7 +14,7 @@ const App = () => {
   const [showPracticeOverlay, setShowPracticeOverlay] = React.useState(false);
   const [isCramming, setIsCramming] = React.useState(false);
 
-  const { tagsListString, dataPageTitle } = useSettings();
+  const { tagsListString, dataPageTitle, dailyLimit } = useSettings();
 
   const { selectedTag, setSelectedTag, tagsList } = useTags({ tagsListString });
 
