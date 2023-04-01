@@ -23,6 +23,7 @@ const App = () => {
       selectedTag,
       dataPageTitle,
       isCramming,
+      dailyLimit,
     });
 
   const handleGradeClick = async ({ grade, refUid }) => {

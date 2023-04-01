@@ -53,7 +53,7 @@ const settingsPanelConfig = ({ settings, setSettings }) => {
       {
         id: 'dailyLimit',
         name: 'Daily Review Limit',
-        description: 'Number of cards to review each day. Set to 0 to disable.',
+        description: 'Number of cards to review each day. 0 means no limit.',
         action: {
           type: 'input',
           placeholder: defaultSettings.dailyLimit,

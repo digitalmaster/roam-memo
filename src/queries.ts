@@ -1,7 +1,7 @@
 import { getStringBetween, parseConfigString, parseRoamDateString } from '~/utils/string';
 import * as stringUtils from '~/utils/string';
 import * as dateUtils from '~/utils/date';
-import { CompleteRecords, NewRecords, Records, NewSession } from '~/models/session';
+import { CompleteRecords, NewRecords, Records, NewSession, RecordUid } from '~/models/session';
 import practice from '~/practice';
 
 const getPageReferenceIds = async (pageTitle): Promise<string[]> => {
@@ -107,7 +107,7 @@ export const getPluginPageData = async ({ dataPageTitle, limitToLatest = true })
 };
 
 export const getDueCardUids = (data) => {
-  const results: string[] = [];
+  const results: RecordUid[] = [];
   if (!Object.keys(data).length) return results;
 
   const now = new Date();
@@ -131,7 +131,56 @@ export const generateNewCardProps = ({ dateCreated = undefined } = {}): NewSessi
   isNew: true,
 });
 
-export const getPracticeCardData = async ({ selectedTag, dataPageTitle }) => {
+/**
+ *  Limit of cards to practice ensuring that due cards are always
+ *  first but ~25% new cards are still practiced when limit is less than total due
+ *  cards.
+ */
+export const selectPracticeCardsData = ({
+  dueCardsUids,
+  newCardsUids,
+  dailyLimit,
+  isCramming,
+}: {
+  dueCardsUids: RecordUid[];
+  newCardsUids: RecordUid[];
+  dailyLimit: number;
+  isCramming: boolean;
+}) => {
+  // @TODO: Consider making this a config option
+  const targetNewCardsRatio = 0.25;
+  const totalDueCards = dueCardsUids.length;
+  const totalNewCards = newCardsUids.length;
+  const totalCards = totalDueCards + totalNewCards;
+
+  if (!dailyLimit || isCramming || totalCards <= dailyLimit) {
+    return {
+      dueCardsUids,
+      newCardsUids,
+    };
+  }
+
+  let totalNewPracticeCount = totalNewCards; // 1
+  let totalDuePracticeCount = totalDueCards; // 3
+
+  // Calculate how many new cards to practice
+  if (dailyLimit === 1) {
+    totalNewPracticeCount = 0;
+  } else {
+    const targetNewCards = Math.max(Math.floor(dailyLimit * targetNewCardsRatio), 1);
+    totalNewPracticeCount = Math.min(totalNewCards, targetNewCards);
+  }
+
+  // Calculate how many due cards to practice
+  totalDuePracticeCount = dailyLimit - totalNewPracticeCount;
+
+  return {
+    dueCardsUids: dueCardsUids.slice(0, totalDuePracticeCount),
+    newCardsUids: newCardsUids.slice(0, totalNewPracticeCount),
+  };
+};
+
+export const getPracticeCardData = async ({ selectedTag, dataPageTitle, dailyLimit }) => {
   const pluginPageData = (await getPluginPageData({
     dataPageTitle,
     limitToLatest: true,
@@ -139,7 +188,7 @@ export const getPracticeCardData = async ({ selectedTag, dataPageTitle }) => {
 
   const selectedTagReferencesIds = await getPageReferenceIds(selectedTag);
   const cardsData = { ...pluginPageData };
-  const newCardsUids: string[] = [];
+  const newCardsUids: RecordUid[] = [];
 
   // Filter out due cards that aren't references to the currently selected tag
   // @TODO: we could probably do this at getPluginPageData query for a
@@ -176,8 +225,7 @@ export const getPracticeCardData = async ({ selectedTag, dataPageTitle }) => {
   return {
     cardsData,
     allSelectedTagCardsUids: selectedTagReferencesIds,
-    newCardsUids,
-    dueCardsUids,
+    ...selectPracticeCardsData({ dueCardsUids, newCardsUids, dailyLimit }),
   };
 };
 

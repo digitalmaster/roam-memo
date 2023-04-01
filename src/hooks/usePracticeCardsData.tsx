@@ -1,9 +1,9 @@
 import * as React from 'react';
-import { NewRecords, Records } from '~/models/session';
+import { NewRecords, Records, RecordUid } from '~/models/session';
 import * as queries from '~/queries';
 
-const usePracticeCardsData = ({ selectedTag, dataPageTitle, isCramming }) => {
-  const [practiceCardsUids, setPracticeCardsUids] = React.useState<string[]>([]);
+const usePracticeCardsData = ({ selectedTag, dataPageTitle, isCramming, dailyLimit }) => {
+  const [practiceCardsUids, setPracticeCardsUids] = React.useState<RecordUid[]>([]);
   const [practiceCardsData, setPracticeCardsData] = React.useState<Records | NewRecords>({});
 
   const [refetchTrigger, setRefetchTrigger] = React.useState(false);
@@ -15,6 +15,7 @@ const usePracticeCardsData = ({ selectedTag, dataPageTitle, isCramming }) => {
         await queries.getPracticeCardData({
           selectedTag,
           dataPageTitle,
+          dailyLimit,
         });
 
       setPracticeCardsData(cardsData);
@@ -29,7 +30,7 @@ const usePracticeCardsData = ({ selectedTag, dataPageTitle, isCramming }) => {
       }
       setDisplayCardCounts({ new: newCardsUids.length, due: dueCardsUids.length });
     })();
-  }, [selectedTag, dataPageTitle, refetchTrigger, isCramming]);
+  }, [selectedTag, dataPageTitle, refetchTrigger, isCramming, dailyLimit]);
 
   return {
     practiceCardsUids,
