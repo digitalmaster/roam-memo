@@ -9,12 +9,17 @@ import useSettings from '~/hooks/useSettings';
 import useCollapseReferenceList from '~/hooks/useCollapseReferenceList';
 import useOnBlockInteract from '~/hooks/useOnBlockInteract';
 import useCommandPaletteAction from './hooks/useCommandPaletteAction';
+import useCachedData from '~/hooks/useCachedData';
 
 const App = () => {
   const [showPracticeOverlay, setShowPracticeOverlay] = React.useState(false);
   const [isCramming, setIsCramming] = React.useState(false);
 
   const { tagsListString, dataPageTitle, dailyLimit } = useSettings();
+  const {
+    data: { lastCompletedDate },
+    saveCacheData,
+  } = useCachedData({ dataPageTitle });
 
   const { selectedTag, setSelectedTag, tagsList } = useTags({ tagsListString });
 
@@ -24,6 +29,7 @@ const App = () => {
       dataPageTitle,
       isCramming,
       dailyLimit,
+      lastCompletedDate,
     });
 
   const handleGradeClick = async ({ grade, refUid }) => {
@@ -105,6 +111,9 @@ const App = () => {
             selectedTag={selectedTag}
             isCramming={isCramming}
             setIsCramming={setIsCramming}
+            dailyLimit={dailyLimit}
+            saveCacheData={saveCacheData}
+            lastCompletedDate={lastCompletedDate}
           />
         )}
       </>

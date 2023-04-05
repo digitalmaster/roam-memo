@@ -2,7 +2,13 @@ import * as React from 'react';
 import { NewRecords, Records, RecordUid } from '~/models/session';
 import * as queries from '~/queries';
 
-const usePracticeCardsData = ({ selectedTag, dataPageTitle, isCramming, dailyLimit }) => {
+const usePracticeCardsData = ({
+  selectedTag,
+  dataPageTitle,
+  isCramming,
+  dailyLimit,
+  lastCompletedDate,
+}) => {
   const [practiceCardsUids, setPracticeCardsUids] = React.useState<RecordUid[]>([]);
   const [practiceCardsData, setPracticeCardsData] = React.useState<Records | NewRecords>({});
 
@@ -16,6 +22,8 @@ const usePracticeCardsData = ({ selectedTag, dataPageTitle, isCramming, dailyLim
           selectedTag,
           dataPageTitle,
           dailyLimit,
+          isCramming,
+          lastCompletedDate,
         });
 
       setPracticeCardsData(cardsData);
@@ -30,7 +38,7 @@ const usePracticeCardsData = ({ selectedTag, dataPageTitle, isCramming, dailyLim
       }
       setDisplayCardCounts({ new: newCardsUids.length, due: dueCardsUids.length });
     })();
-  }, [selectedTag, dataPageTitle, refetchTrigger, isCramming, dailyLimit]);
+  }, [selectedTag, dataPageTitle, refetchTrigger, isCramming, dailyLimit, lastCompletedDate]);
 
   return {
     practiceCardsUids,

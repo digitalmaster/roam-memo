@@ -82,7 +82,7 @@ const mapPluginPageData = (queryResultsData): CompleteRecords =>
       return acc;
     }, {}) || {};
 
-export const getPluginPageData = async ({ dataPageTitle, limitToLatest = true }) => {
+const getPluginPageBlockData = async ({ dataPageTitle, blockName }) => {
   const q = `[
     :find (pull ?pluginPageChildren [
       :block/string
@@ -96,14 +96,38 @@ export const getPluginPageData = async ({ dataPageTitle, limitToLatest = true })
       [?pluginPageChildren :block/string ?dataBlockName]
     ]`;
 
-  const dataBlockName = 'data';
-  const queryResultsData = await window.roamAlphaAPI.q(q, dataPageTitle, dataBlockName);
+  return await window.roamAlphaAPI.q(q, dataPageTitle, blockName);
+};
 
+export const getPluginPageData = async ({ dataPageTitle, limitToLatest = true }) => {
+  const queryResultsData = await getPluginPageBlockData({ dataPageTitle, blockName: 'data' });
   if (!queryResultsData.length) return {};
 
   return limitToLatest
     ? mapPluginPageDataLatest(queryResultsData)
     : mapPluginPageData(queryResultsData);
+};
+
+const mapPluginPageCachedData = (queryResultsData) =>
+  queryResultsData
+    .map((arr) => arr[0])[0]
+    .children?.reduce((acc, cur) => {
+      if (!cur.string) return acc;
+
+      const [key, value] = cur.string.split('::').map((s: string) => s.trim());
+
+      const date = parseRoamDateString(value);
+      acc[key] = date ? date : value;
+
+      return acc;
+    }, {}) || {};
+
+export const getPluginPageCachedData = async ({ dataPageTitle }) => {
+  const queryResultsData = await getPluginPageBlockData({ dataPageTitle, blockName: 'cache' });
+
+  if (!queryResultsData.length) return {};
+
+  return mapPluginPageCachedData(queryResultsData);
 };
 
 export const getDueCardUids = (data) => {
@@ -141,12 +165,24 @@ export const selectPracticeCardsData = ({
   newCardsUids,
   dailyLimit,
   isCramming,
+  lastCompletedDate,
 }: {
   dueCardsUids: RecordUid[];
   newCardsUids: RecordUid[];
   dailyLimit: number;
   isCramming: boolean;
+  lastCompletedDate?: Date;
 }) => {
+  const isLastCompleteDateToday =
+    lastCompletedDate && dateUtils.isSameDay(lastCompletedDate, new Date());
+
+  if (isLastCompleteDateToday) {
+    return {
+      dueCardsUids: [],
+      newCardsUids: [],
+    };
+  }
+
   // @TODO: Consider making this a config option
   const targetNewCardsRatio = 0.25;
   const totalDueCards = dueCardsUids.length;
@@ -180,7 +216,13 @@ export const selectPracticeCardsData = ({
   };
 };
 
-export const getPracticeCardData = async ({ selectedTag, dataPageTitle, dailyLimit }) => {
+export const getPracticeCardData = async ({
+  selectedTag,
+  dataPageTitle,
+  dailyLimit,
+  isCramming,
+  lastCompletedDate,
+}) => {
   const pluginPageData = (await getPluginPageData({
     dataPageTitle,
     limitToLatest: true,
@@ -225,7 +267,13 @@ export const getPracticeCardData = async ({ selectedTag, dataPageTitle, dailyLim
   return {
     cardsData,
     allSelectedTagCardsUids: selectedTagReferencesIds,
-    ...selectPracticeCardsData({ dueCardsUids, newCardsUids, dailyLimit }),
+    ...selectPracticeCardsData({
+      dueCardsUids,
+      newCardsUids,
+      dailyLimit,
+      isCramming,
+      lastCompletedDate,
+    }),
   };
 };
 
@@ -327,23 +375,45 @@ const getBlockOnPage = (page, block) => {
   }
 };
 
-const getChildBlock = (parent_uid, block) => {
+const getChildBlock = (
+  parent_uid: string,
+  block: string,
+  options: {
+    exactMatch?: boolean;
+  } = {
+    exactMatch: true,
+  }
+) => {
   // returns the uid of a specific child block underneath a specific parent
   // block. _parent_uid_: the uid of the parent block. _block_: the text of the
   // child block.
-  let results = window.roamAlphaAPI.q(
-    `
+  const exactMatchQuery = `
     [:find ?block_uid
-     :in $ ?parent_uid ?block_string
-     :where
-     [?parent :block/uid ?parent_uid]
-     [?block :block/parents ?parent]
-     [?block :block/string ?block_string]
-     [?block :block/uid ?block_uid]
-    ]`,
-    parent_uid,
-    block
-  );
+    :in $ ?parent_uid ?block_string
+    :where
+      [?parent :block/uid ?parent_uid]
+      [?block :block/parents ?parent]
+      [?block :block/string ?block_string]
+      [?block :block/uid ?block_uid]
+    ]
+  `;
+
+  const startsWithQuery = `
+    [:find ?block_uid
+      :in $ ?parent_uid ?block_sub_string
+      :where
+        [?parent :block/uid ?parent_uid]
+        [?block :block/parents ?parent]
+        [?block :block/string ?block_string]
+        [(clojure.string/starts-with? ?block_string ?block_sub_string)]
+        [?block :block/uid ?block_uid]
+    ]
+  `;
+  console.log('DEBUG:: ~ file: queries.ts:412 ~ options:', options);
+  console.trace();
+  const query = options.exactMatch ? exactMatchQuery : startsWithQuery;
+
+  let results = window.roamAlphaAPI.q(query, parent_uid, block);
   if (results.length) {
     return results[0][0];
   }
@@ -432,6 +502,30 @@ const getEmojiFromGrade = (grade) => {
       return '🔴';
     default:
       break;
+  }
+};
+
+export const saveCacheData = async ({ dataPageTitle, data }) => {
+  await getOrCreatePage(dataPageTitle);
+  const dataBlockUid = await getOrCreateBlockOnPage(dataPageTitle, 'cache', -1, {
+    open: false,
+    heading: 3,
+  });
+
+  // Insert new block info
+  for (const key of Object.keys(data)) {
+    // Delete block that starts with key if already exists
+    const existingBlockUid = await getChildBlock(dataBlockUid, `${key}::`, { exactMatch: false });
+    if (existingBlockUid) {
+      await window.roamAlphaAPI.deleteBlock({ block: { uid: existingBlockUid } });
+    }
+
+    let value = data[key];
+    if (dateUtils.isDate(value)) {
+      value = stringUtils.dateToRoamDateString(value);
+    }
+
+    await createChildBlock(dataBlockUid, `${key}:: ${value}`, -1);
   }
 };
 

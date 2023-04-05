@@ -67,7 +67,7 @@ export interface PracticeProps {
   refUid: string;
   dataPageTitle: string;
   dateCreated: null | Date;
-  isCramming: boolean;
+  isCramming?: boolean;
 }
 
 const practice = async (practiceProps: PracticeProps, isDryRun = false) => {

@@ -24,11 +24,15 @@ const PracticeOverlay = ({
   handleMemoTagChange,
   isCramming,
   setIsCramming,
+  dailyLimit,
+  saveCacheData,
+  lastCompletedDate,
 }) => {
   const [currentIndex, setCurrentIndex] = React.useState(0);
   const totalCardsCount = practiceCardUids.length;
   const hasCards = totalCardsCount > 0;
   const isDone = currentIndex > practiceCardUids.length - 1;
+  const isLastCompleteDateToday = dateUtils.isSameDay(lastCompletedDate, new Date());
   const isFirst = currentIndex === 0;
 
   const currentCardRefUid = practiceCardUids[currentIndex];
@@ -59,9 +63,14 @@ const PracticeOverlay = ({
     }
   }, [hasBlockChildren, hasCloze, currentIndex, tagsList]);
 
+  // On show "done" screen
   React.useEffect(() => {
-    if (isDone && isCramming) {
-      setIsCramming(false);
+    if (isDone) {
+      if (isCramming) {
+        setIsCramming(false);
+      } else if (!isLastCompleteDateToday) {
+        saveCacheData({ lastCompletedDate: new Date() });
+      }
     }
   }, [isDone]);
 
