@@ -19,6 +19,7 @@ const App = () => {
   const {
     data: { lastCompletedDate },
     saveCacheData,
+    fetchCacheData,
   } = useCachedData({ dataPageTitle });
 
   const { selectedTag, setSelectedTag, tagsList } = useTags({ tagsListString });
@@ -55,6 +56,7 @@ const App = () => {
   };
 
   const onShowPracticeOverlay = () => {
+    fetchCacheData();
     fetchPracticeData();
     setShowPracticeOverlay(true);
     setIsCramming(false);

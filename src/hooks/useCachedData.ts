@@ -23,6 +23,7 @@ const useCachedData = ({ dataPageTitle }: { dataPageTitle: string }) => {
       await saveCacheData({ dataPageTitle, data });
       setRefetchTrigger((prev) => prev + 1);
     },
+    fetchCacheData: () => setRefetchTrigger((prev) => prev + 1),
     data,
   };
 };
