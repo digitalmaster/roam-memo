@@ -6,21 +6,29 @@ const defaultData = {
   lastCompletedDate: null,
 };
 
-const useCachedData = ({ dataPageTitle }: { dataPageTitle: string }) => {
+const useCachedData = ({
+  dataPageTitle,
+  selectedTag,
+}: {
+  dataPageTitle: string;
+  selectedTag: string;
+}) => {
   const [data, setData] = React.useState(defaultData);
   const [refetchTrigger, setRefetchTrigger] = React.useState(0);
 
   React.useEffect(() => {
     const getData = async () => {
-      const result = await queries.getPluginPageCachedData({ dataPageTitle });
-      setData(result);
+      const result = await queries.getPluginPageCachedData({ dataPageTitle, selectedTag });
+
+      setData({ ...defaultData, ...result });
     };
+
     getData();
-  }, [refetchTrigger]);
+  }, [refetchTrigger, dataPageTitle, selectedTag]);
 
   return {
     saveCacheData: async (data: { [key: string]: any }) => {
-      await saveCacheData({ dataPageTitle, data });
+      await saveCacheData({ dataPageTitle, data, selectedTag });
       setRefetchTrigger((prev) => prev + 1);
     },
     fetchCacheData: () => setRefetchTrigger((prev) => prev + 1),

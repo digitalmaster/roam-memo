@@ -108,12 +108,16 @@ export const getPluginPageData = async ({ dataPageTitle, limitToLatest = true })
     : mapPluginPageData(queryResultsData);
 };
 
-const mapPluginPageCachedData = (queryResultsData) =>
-  queryResultsData
-    .map((arr) => arr[0])[0]
-    .children?.reduce((acc, cur) => {
-      if (!cur.string) return acc;
+const mapPluginPageCachedData = (queryResultsData, selectedTag) => {
+  const data = queryResultsData.map((arr) => arr[0])[0].children;
+  if (!data || !data.length) return {};
 
+  const tagData = data.find((d) => d.string === `[[${selectedTag}]]`);
+  if (!tagData) return {};
+
+  const result =
+    tagData.children?.reduce((acc, cur) => {
+      if (!cur.string) return acc;
       const [key, value] = cur.string.split('::').map((s: string) => s.trim());
 
       const date = parseRoamDateString(value);
@@ -122,12 +126,15 @@ const mapPluginPageCachedData = (queryResultsData) =>
       return acc;
     }, {}) || {};
 
-export const getPluginPageCachedData = async ({ dataPageTitle }) => {
+  return result;
+};
+
+export const getPluginPageCachedData = async ({ dataPageTitle, selectedTag }) => {
   const queryResultsData = await getPluginPageBlockData({ dataPageTitle, blockName: 'cache' });
 
   if (!queryResultsData.length) return {};
 
-  return mapPluginPageCachedData(queryResultsData);
+  return mapPluginPageCachedData(queryResultsData, selectedTag);
 };
 
 export const getDueCardUids = (data) => {
@@ -409,8 +416,7 @@ const getChildBlock = (
         [?block :block/uid ?block_uid]
     ]
   `;
-  console.log('DEBUG:: ~ file: queries.ts:412 ~ options:', options);
-  console.trace();
+
   const query = options.exactMatch ? exactMatchQuery : startsWithQuery;
 
   let results = window.roamAlphaAPI.q(query, parent_uid, block);
@@ -505,17 +511,24 @@ const getEmojiFromGrade = (grade) => {
   }
 };
 
-export const saveCacheData = async ({ dataPageTitle, data }) => {
+export const saveCacheData = async ({ dataPageTitle, data, selectedTag }) => {
   await getOrCreatePage(dataPageTitle);
   const dataBlockUid = await getOrCreateBlockOnPage(dataPageTitle, 'cache', -1, {
     open: false,
     heading: 3,
   });
 
+  // Insert selected tag parent block
+  const selectedTagBlockUid = await getOrCreateChildBlock(dataBlockUid, `[[${selectedTag}]]`, -1, {
+    open: false,
+  });
+
   // Insert new block info
   for (const key of Object.keys(data)) {
     // Delete block that starts with key if already exists
-    const existingBlockUid = await getChildBlock(dataBlockUid, `${key}::`, { exactMatch: false });
+    const existingBlockUid = await getChildBlock(selectedTagBlockUid, `${key}::`, {
+      exactMatch: false,
+    });
     if (existingBlockUid) {
       await window.roamAlphaAPI.deleteBlock({ block: { uid: existingBlockUid } });
     }
@@ -525,7 +538,7 @@ export const saveCacheData = async ({ dataPageTitle, data }) => {
       value = stringUtils.dateToRoamDateString(value);
     }
 
-    await createChildBlock(dataBlockUid, `${key}:: ${value}`, -1);
+    await createChildBlock(selectedTagBlockUid, `${key}:: ${value}`, -1);
   }
 };
 

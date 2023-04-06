@@ -16,13 +16,13 @@ const App = () => {
   const [isCramming, setIsCramming] = React.useState(false);
 
   const { tagsListString, dataPageTitle, dailyLimit } = useSettings();
+  const { selectedTag, setSelectedTag, tagsList } = useTags({ tagsListString });
+
   const {
     data: { lastCompletedDate },
     saveCacheData,
     fetchCacheData,
-  } = useCachedData({ dataPageTitle });
-
-  const { selectedTag, setSelectedTag, tagsList } = useTags({ tagsListString });
+  } = useCachedData({ dataPageTitle, selectedTag });
 
   const { practiceCardsUids, practiceCardsData, displayCardCounts, fetchPracticeData } =
     usePracticeCardsData({
