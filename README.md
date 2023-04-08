@@ -84,3 +84,5 @@ If you see any errors, please create an issue [here](https://github.com/digitalm
 Please just create issues [here](https://github.com/digitalmaster/roam-memo/issues) and I'll get to them as soon as I can.
 
 I build this primarily for my own personal use but I hope you find it useful too 🤓
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/H2H0YPGK)
