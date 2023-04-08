@@ -4,17 +4,28 @@ import * as dateUtils from '~/utils/date';
 import { CompleteRecords, NewRecords, Records, NewSession, RecordUid } from '~/models/session';
 import practice from '~/practice';
 
-const getPageReferenceIds = async (pageTitle): Promise<string[]> => {
+const getPageReferenceIds = async (selectedTag, dataPageTitle): Promise<string[]> => {
+  // First query the data page so that we can exclude those references from the results
+  // Otherwise tags used on data page will show up as practice cards
+  const dataPageQuery = `[
+    :find ?page
+    :where
+      [?page :node/title "${dataPageTitle}"]
+  ]`;
+  const dataPage = window.roamAlphaAPI.q(dataPageQuery)[0][0];
+
   const q = `[
     :find ?refUid
-    :in $ ?tag
+    :in $ ?tag ?dataPage
     :where
-        [?tagPage :node/title ?tag]
-        [?tagRefs :block/refs ?tagPage]
-        [?tagRefs :block/uid ?refUid]
+      [?tagPage :node/title ?tag]
+      [?tagRefs :block/refs ?tagPage]
+      [?tagRefs :block/uid ?refUid]
+      [?tagRefs :block/page ?homePage]
+      [(!= ?homePage ?dataPage)]
     ]`;
 
-  const results = window.roamAlphaAPI.q(q, pageTitle).map((arr) => arr[0]);
+  const results = window.roamAlphaAPI.q(q, selectedTag, dataPage).map((arr) => arr[0]);
 
   return results;
 };
@@ -235,7 +246,7 @@ export const getPracticeCardData = async ({
     limitToLatest: true,
   })) as Records;
 
-  const selectedTagReferencesIds = await getPageReferenceIds(selectedTag);
+  const selectedTagReferencesIds = await getPageReferenceIds(selectedTag, dataPageTitle);
   const cardsData = { ...pluginPageData };
   const newCardsUids: RecordUid[] = [];
 
