@@ -4,6 +4,7 @@ import settingsPanelConfig from '~/settingsPanelConfig';
 export const defaultSettings = {
   tagsListString: 'memo',
   dataPageTitle: 'roam/memo',
+  dailyLimit: 0, // 0 = no limit
 };
 
 // @TODO: Refactor/Hoist this so we can call useSettings in multiple places
@@ -31,10 +32,15 @@ const useSettings = () => {
   React.useEffect(() => {
     const allSettings = window.roamMemo.extensionAPI.settings.getAll() || {};
 
-    // Filterout out any settings that are falsey
+    // For some reason the getAll() method casts numbers to strings, so here we
+    // map keys in this list back to numbers
+    const numbers = ['dailyLimit'];
+
     const filteredSettings = Object.keys(allSettings).reduce((acc, key) => {
-      if (allSettings[key]) {
-        acc[key] = allSettings[key];
+      const value = allSettings[key];
+      // Filterout out any settings that are falsey
+      if (value) {
+        acc[key] = numbers.includes(key) ? Number(value) : value;
       }
       return acc;
     }, {});

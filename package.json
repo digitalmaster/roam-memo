@@ -10,7 +10,7 @@
     "format": "prettier --write \"./**/*.{js,jsx,json}\"",
     "lint": "eslint '**/*.{ts,tsx,js,jsx}' --max-warnings 0",
     "typecheck": "tsc",
-    "test": "jest --verbose",
+    "test": "jest",
     "changelog": "auto-changelog --package --commit-limit false && git add CHANGELOG.md"
   },
   "jest": {
@@ -26,7 +26,8 @@
     ],
     "moduleNameMapper": {
       "^~(.*)$": "<rootDir>/src$1"
-    }
+    },
+    "verbose": false
   },
   "devDependencies": {
     "@babel/core": "^7.18.10",

@@ -1,20 +1,31 @@
 import { getStringBetween, parseConfigString, parseRoamDateString } from '~/utils/string';
 import * as stringUtils from '~/utils/string';
 import * as dateUtils from '~/utils/date';
-import { CompleteRecords, NewRecords, Records, NewSession } from '~/models/session';
+import { CompleteRecords, NewRecords, Records, NewSession, RecordUid } from '~/models/session';
 import practice from '~/practice';
 
-const getPageReferenceIds = async (pageTitle): Promise<string[]> => {
+const getPageReferenceIds = async (selectedTag, dataPageTitle): Promise<string[]> => {
+  // First query the data page so that we can exclude those references from the results
+  // Otherwise tags used on data page will show up as practice cards
+  const dataPageQuery = `[
+    :find ?page
+    :where
+      [?page :node/title "${dataPageTitle}"]
+  ]`;
+  const dataPage = window.roamAlphaAPI.q(dataPageQuery)[0][0];
+
   const q = `[
     :find ?refUid
-    :in $ ?tag
+    :in $ ?tag ?dataPage
     :where
-        [?tagPage :node/title ?tag]
-        [?tagRefs :block/refs ?tagPage]
-        [?tagRefs :block/uid ?refUid]
+      [?tagPage :node/title ?tag]
+      [?tagRefs :block/refs ?tagPage]
+      [?tagRefs :block/uid ?refUid]
+      [?tagRefs :block/page ?homePage]
+      [(!= ?homePage ?dataPage)]
     ]`;
 
-  const results = window.roamAlphaAPI.q(q, pageTitle).map((arr) => arr[0]);
+  const results = window.roamAlphaAPI.q(q, selectedTag, dataPage).map((arr) => arr[0]);
 
   return results;
 };
@@ -82,7 +93,7 @@ const mapPluginPageData = (queryResultsData): CompleteRecords =>
       return acc;
     }, {}) || {};
 
-export const getPluginPageData = async ({ dataPageTitle, limitToLatest = true }) => {
+const getPluginPageBlockData = async ({ dataPageTitle, blockName }) => {
   const q = `[
     :find (pull ?pluginPageChildren [
       :block/string
@@ -96,9 +107,11 @@ export const getPluginPageData = async ({ dataPageTitle, limitToLatest = true })
       [?pluginPageChildren :block/string ?dataBlockName]
     ]`;
 
-  const dataBlockName = 'data';
-  const queryResultsData = await window.roamAlphaAPI.q(q, dataPageTitle, dataBlockName);
+  return await window.roamAlphaAPI.q(q, dataPageTitle, blockName);
+};
 
+export const getPluginPageData = async ({ dataPageTitle, limitToLatest = true }) => {
+  const queryResultsData = await getPluginPageBlockData({ dataPageTitle, blockName: 'data' });
   if (!queryResultsData.length) return {};
 
   return limitToLatest
@@ -106,8 +119,37 @@ export const getPluginPageData = async ({ dataPageTitle, limitToLatest = true })
     : mapPluginPageData(queryResultsData);
 };
 
+const mapPluginPageCachedData = (queryResultsData, selectedTag) => {
+  const data = queryResultsData.map((arr) => arr[0])[0].children;
+  if (!data || !data.length) return {};
+
+  const tagData = data.find((d) => d.string === `[[${selectedTag}]]`);
+  if (!tagData) return {};
+
+  const result =
+    tagData.children?.reduce((acc, cur) => {
+      if (!cur.string) return acc;
+      const [key, value] = cur.string.split('::').map((s: string) => s.trim());
+
+      const date = parseRoamDateString(value);
+      acc[key] = date ? date : value;
+
+      return acc;
+    }, {}) || {};
+
+  return result;
+};
+
+export const getPluginPageCachedData = async ({ dataPageTitle, selectedTag }) => {
+  const queryResultsData = await getPluginPageBlockData({ dataPageTitle, blockName: 'cache' });
+
+  if (!queryResultsData.length) return {};
+
+  return mapPluginPageCachedData(queryResultsData, selectedTag);
+};
+
 export const getDueCardUids = (data) => {
-  const results: string[] = [];
+  const results: RecordUid[] = [];
   if (!Object.keys(data).length) return results;
 
   const now = new Date();
@@ -131,15 +173,82 @@ export const generateNewCardProps = ({ dateCreated = undefined } = {}): NewSessi
   isNew: true,
 });
 
-export const getPracticeCardData = async ({ selectedTag, dataPageTitle }) => {
+/**
+ *  Limit of cards to practice ensuring that due cards are always
+ *  first but ~25% new cards are still practiced when limit is less than total due
+ *  cards.
+ */
+export const selectPracticeCardsData = ({
+  dueCardsUids,
+  newCardsUids,
+  dailyLimit,
+  isCramming,
+  lastCompletedDate,
+}: {
+  dueCardsUids: RecordUid[];
+  newCardsUids: RecordUid[];
+  dailyLimit: number;
+  isCramming: boolean;
+  lastCompletedDate?: Date;
+}) => {
+  const isLastCompleteDateToday =
+    lastCompletedDate && dateUtils.isSameDay(lastCompletedDate, new Date());
+
+  if (isLastCompleteDateToday) {
+    return {
+      dueCardsUids: [],
+      newCardsUids: [],
+    };
+  }
+
+  // @TODO: Consider making this a config option
+  const targetNewCardsRatio = 0.25;
+  const totalDueCards = dueCardsUids.length;
+  const totalNewCards = newCardsUids.length;
+  const totalCards = totalDueCards + totalNewCards;
+
+  if (!dailyLimit || isCramming || totalCards <= dailyLimit) {
+    return {
+      dueCardsUids,
+      newCardsUids,
+    };
+  }
+
+  let totalNewPracticeCount = totalNewCards; // 1
+  let totalDuePracticeCount = totalDueCards; // 3
+
+  // Calculate how many new cards to practice
+  if (dailyLimit === 1) {
+    totalNewPracticeCount = 0;
+  } else {
+    const targetNewCards = Math.max(Math.floor(dailyLimit * targetNewCardsRatio), 1);
+    totalNewPracticeCount = Math.min(totalNewCards, targetNewCards);
+  }
+
+  // Calculate how many due cards to practice
+  totalDuePracticeCount = dailyLimit - totalNewPracticeCount;
+
+  return {
+    dueCardsUids: dueCardsUids.slice(0, totalDuePracticeCount),
+    newCardsUids: newCardsUids.slice(0, totalNewPracticeCount),
+  };
+};
+
+export const getPracticeCardData = async ({
+  selectedTag,
+  dataPageTitle,
+  dailyLimit,
+  isCramming,
+  lastCompletedDate,
+}) => {
   const pluginPageData = (await getPluginPageData({
     dataPageTitle,
     limitToLatest: true,
   })) as Records;
 
-  const selectedTagReferencesIds = await getPageReferenceIds(selectedTag);
+  const selectedTagReferencesIds = await getPageReferenceIds(selectedTag, dataPageTitle);
   const cardsData = { ...pluginPageData };
-  const newCardsUids: string[] = [];
+  const newCardsUids: RecordUid[] = [];
 
   // Filter out due cards that aren't references to the currently selected tag
   // @TODO: we could probably do this at getPluginPageData query for a
@@ -176,8 +285,13 @@ export const getPracticeCardData = async ({ selectedTag, dataPageTitle }) => {
   return {
     cardsData,
     allSelectedTagCardsUids: selectedTagReferencesIds,
-    newCardsUids,
-    dueCardsUids,
+    ...selectPracticeCardsData({
+      dueCardsUids,
+      newCardsUids,
+      dailyLimit,
+      isCramming,
+      lastCompletedDate,
+    }),
   };
 };
 
@@ -279,23 +393,44 @@ const getBlockOnPage = (page, block) => {
   }
 };
 
-const getChildBlock = (parent_uid, block) => {
+const getChildBlock = (
+  parent_uid: string,
+  block: string,
+  options: {
+    exactMatch?: boolean;
+  } = {
+    exactMatch: true,
+  }
+) => {
   // returns the uid of a specific child block underneath a specific parent
   // block. _parent_uid_: the uid of the parent block. _block_: the text of the
   // child block.
-  let results = window.roamAlphaAPI.q(
-    `
+  const exactMatchQuery = `
     [:find ?block_uid
-     :in $ ?parent_uid ?block_string
-     :where
-     [?parent :block/uid ?parent_uid]
-     [?block :block/parents ?parent]
-     [?block :block/string ?block_string]
-     [?block :block/uid ?block_uid]
-    ]`,
-    parent_uid,
-    block
-  );
+    :in $ ?parent_uid ?block_string
+    :where
+      [?parent :block/uid ?parent_uid]
+      [?block :block/parents ?parent]
+      [?block :block/string ?block_string]
+      [?block :block/uid ?block_uid]
+    ]
+  `;
+
+  const startsWithQuery = `
+    [:find ?block_uid
+      :in $ ?parent_uid ?block_sub_string
+      :where
+        [?parent :block/uid ?parent_uid]
+        [?block :block/parents ?parent]
+        [?block :block/string ?block_string]
+        [(clojure.string/starts-with? ?block_string ?block_sub_string)]
+        [?block :block/uid ?block_uid]
+    ]
+  `;
+
+  const query = options.exactMatch ? exactMatchQuery : startsWithQuery;
+
+  let results = window.roamAlphaAPI.q(query, parent_uid, block);
   if (results.length) {
     return results[0][0];
   }
@@ -384,6 +519,37 @@ const getEmojiFromGrade = (grade) => {
       return '🔴';
     default:
       break;
+  }
+};
+
+export const saveCacheData = async ({ dataPageTitle, data, selectedTag }) => {
+  await getOrCreatePage(dataPageTitle);
+  const dataBlockUid = await getOrCreateBlockOnPage(dataPageTitle, 'cache', -1, {
+    open: false,
+    heading: 3,
+  });
+
+  // Insert selected tag parent block
+  const selectedTagBlockUid = await getOrCreateChildBlock(dataBlockUid, `[[${selectedTag}]]`, -1, {
+    open: false,
+  });
+
+  // Insert new block info
+  for (const key of Object.keys(data)) {
+    // Delete block that starts with key if already exists
+    const existingBlockUid = await getChildBlock(selectedTagBlockUid, `${key}::`, {
+      exactMatch: false,
+    });
+    if (existingBlockUid) {
+      await window.roamAlphaAPI.deleteBlock({ block: { uid: existingBlockUid } });
+    }
+
+    let value = data[key];
+    if (dateUtils.isDate(value)) {
+      value = stringUtils.dateToRoamDateString(value);
+    }
+
+    await createChildBlock(selectedTagBlockUid, `${key}:: ${value}`, -1);
   }
 };
 

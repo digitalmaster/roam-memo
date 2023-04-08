@@ -46,3 +46,13 @@ export const customFromNow = (date) => {
     return fromNow(date);
   }
 };
+
+export const isSameDay = (d1: Date, d2: Date) => {
+  if (!isDate(d1) || !isDate(d2)) return false;
+
+  return d1.toDateString() === d2.toDateString();
+};
+
+export const isDate = (date: Date) =>
+  // @ts-ignore
+  date && Object.prototype.toString.call(date) === '[object Date]' && !isNaN(date);

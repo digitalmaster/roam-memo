@@ -39,6 +39,12 @@ Text Masking or Cloze Deletion is a technique where you hide or mask a part of t
 - Highlighting the text and adding ^^ on both sides of the text you want to mask. Example: ^^hide me^^
 - Wrapping the text with single brackets { }. Example: {hide me too}.
 
+### Daily Limits
+
+You can set a daily limit for the number of cards you want to review. This is useful if you want to limit the time you spend reviewing cards. We ensure at least ~25% of cards are new cards.
+
+You can set the daily limit in the plugin settings page.
+
 ### Cram Mode
 
 When you're done reviewing all due cards in a deck you can choose to continue in "Cram Mode". This will let you review all the cards in the deck regardless of when they are due. This is useful if you're studying for an exam and can't wait for the cards to become due. Reviewing cards in this mode do not affect spaced reptition scheduling.
@@ -77,12 +83,12 @@ To migrate your data from the old RoamSr plugin follow these steps:
 
 > If you have a lot of data, it might take a while to sync. So go grab coffee.
 
-If you see any errors, please create an issue [here](https://github.com/digitalmaster/roam-memo/issues);
-
 ## Bug Reports and Feature Requests
 
 Please just create issues [here](https://github.com/digitalmaster/roam-memo/issues) and I'll get to them as soon as I can.
 
-I build this primarily for my own personal use but I hope you find it useful too 🤓
+---
+
+I build this primarily because I wanted it to exist but it brings me great joy to see so many of you finding it useful too 🤓🥰
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/H2H0YPGK)

@@ -12,14 +12,16 @@ export interface NewSession extends Omit<Session, 'nextDueDate' | 'grade'> {
   isNew: true;
 }
 
+export type RecordUid = string;
+
 export interface Records {
-  [key: string]: Session;
+  [key: RecordUid]: Session;
 }
 
 export interface NewRecords {
-  [key: string]: NewSession;
+  [key: RecordUid]: NewSession;
 }
 
 export interface CompleteRecords {
-  [key: string]: Session[];
+  [key: RecordUid]: Session[];
 }
