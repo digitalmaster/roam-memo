@@ -15,11 +15,16 @@ const Tag = styled(Blueprint.Tag)`
 `;
 
 const SidePandelWidget = ({ onClickCallback, displayCardCounts }) => {
+  const totalCardsCount = displayCardCounts.new + displayCardCounts.due;
+  const isDone = totalCardsCount === 0;
+
+  const iconClass = isDone ? 'bp3-icon-confirm' : 'bp3-icon-box';
+
   return (
     <Wrapper className="w-full justify-between" onClick={onClickCallback}>
       <div>
         <div className="flex">
-          <span className="bp3-icon bp3-icon-box icon bp3-icon-small flex items-center"></span>
+          <span className={`bp3-icon ${iconClass} icon bp3-icon-small flex items-center`}></span>
           <div>Review</div>
         </div>
       </div>
