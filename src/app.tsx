@@ -10,6 +10,7 @@ import useCollapseReferenceList from '~/hooks/useCollapseReferenceList';
 import useOnBlockInteract from '~/hooks/useOnBlockInteract';
 import useCommandPaletteAction from './hooks/useCommandPaletteAction';
 import useCachedData from '~/hooks/useCachedData';
+import useOnVisibilityStateChange from './hooks/useOnVisibilityStateChange';
 
 const App = () => {
   const [showPracticeOverlay, setShowPracticeOverlay] = React.useState(false);
@@ -55,16 +56,22 @@ const App = () => {
     }
   };
 
-  const onShowPracticeOverlay = () => {
+  const refreshData = () => {
     fetchCacheData();
     fetchPracticeData();
+  };
+
+  useOnVisibilityStateChange(refreshData);
+
+  const onShowPracticeOverlay = () => {
+    refreshData();
     setShowPracticeOverlay(true);
     setIsCramming(false);
   };
 
   const onClosePracticeOverlayCallback = () => {
     setShowPracticeOverlay(false);
-    fetchPracticeData();
+    refreshData();
   };
 
   const handleMemoTagChange = (tag) => {
