@@ -23,16 +23,23 @@ const App = () => {
     data: { lastCompletedDate },
     saveCacheData,
     fetchCacheData,
+    deleteCacheDataKey,
   } = useCachedData({ dataPageTitle, selectedTag });
 
-  const { practiceCardsUids, practiceCardsData, displayCardCounts, fetchPracticeData } =
-    usePracticeCardsData({
-      selectedTag,
-      dataPageTitle,
-      isCramming,
-      dailyLimit,
-      lastCompletedDate,
-    });
+  const {
+    practiceCardsUids,
+    practiceCardsData,
+    displayCardCounts,
+    fetchPracticeData,
+    completedTodayCount,
+    remainingDueCardsCount,
+  } = usePracticeCardsData({
+    selectedTag,
+    dataPageTitle,
+    isCramming,
+    dailyLimit,
+    lastCompletedDate,
+  });
 
   const handleGradeClick = async ({ grade, refUid }) => {
     if (!refUid) return;
@@ -40,17 +47,16 @@ const App = () => {
     const cardData = practiceCardsData[refUid];
 
     try {
-      setTimeout(() => {
-        // Note: Delaying this due to user report of slow UI transitions when data sync happens while UI is transitionsing.
-        practice({
-          ...cardData,
-          grade,
-          refUid,
-          dataPageTitle,
-          dateCreated: new Date(),
-          isCramming,
-        });
-      }, 1000);
+      await practice({
+        ...cardData,
+        grade,
+        refUid,
+        dataPageTitle,
+        dateCreated: new Date(),
+        isCramming,
+      });
+
+      refreshData();
     } catch (error) {
       console.log('Error Saving Practice Data', error);
     }
@@ -76,6 +82,12 @@ const App = () => {
 
   const handleMemoTagChange = (tag) => {
     setSelectedTag(tag);
+  };
+
+  const handleReviewMoreClick = async () => {
+    await deleteCacheDataKey('lastCompletedDate');
+
+    refreshData();
   };
 
   useCollapseReferenceList({ dataPageTitle });
@@ -116,13 +128,16 @@ const App = () => {
             handleGradeClick={handleGradeClick}
             onCloseCallback={onClosePracticeOverlayCallback}
             handleMemoTagChange={handleMemoTagChange}
+            handleReviewMoreClick={handleReviewMoreClick}
             tagsList={tagsList}
             selectedTag={selectedTag}
             isCramming={isCramming}
             setIsCramming={setIsCramming}
-            dailyLimit={dailyLimit}
             saveCacheData={saveCacheData}
             lastCompletedDate={lastCompletedDate}
+            completedTodayCount={completedTodayCount}
+            dailyLimit={dailyLimit}
+            remainingDueCardsCount={remainingDueCardsCount}
           />
         )}
       </>

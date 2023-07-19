@@ -14,19 +14,30 @@ const usePracticeCardsData = ({
 
   const [refetchTrigger, setRefetchTrigger] = React.useState(false);
   const [displayCardCounts, setDisplayCardCounts] = React.useState({ new: 0, due: 0 });
+  const [completedTodayCount, setCompletedTodayCount] = React.useState(0);
+  const [remainingDueCardsCount, setRemainingDueCardsCount] = React.useState(0);
 
   React.useEffect(() => {
     (async () => {
-      const { cardsData, newCardsUids, dueCardsUids, allSelectedTagCardsUids } =
-        await queries.getPracticeCardData({
-          selectedTag,
-          dataPageTitle,
-          dailyLimit,
-          isCramming,
-          lastCompletedDate,
-        });
+      const {
+        cardsData,
+        newCardsUids,
+        dueCardsUids,
+        allSelectedTagCardsUids,
+        completedTodayCount,
+        remainingDueCardsCount,
+      } = await queries.getPracticeCardData({
+        selectedTag,
+        dataPageTitle,
+        dailyLimit,
+        isCramming,
+        lastCompletedDate,
+      });
 
+      setRemainingDueCardsCount(remainingDueCardsCount);
       setPracticeCardsData(cardsData);
+      setCompletedTodayCount(completedTodayCount);
+
       if (isCramming) {
         setPracticeCardsUids(
           Object.keys(cardsData).filter((uid) => allSelectedTagCardsUids.includes(uid))
@@ -45,6 +56,8 @@ const usePracticeCardsData = ({
     practiceCardsData,
     displayCardCounts,
     fetchPracticeData: () => setRefetchTrigger((trigger) => !trigger),
+    completedTodayCount,
+    remainingDueCardsCount,
   };
 };
 
