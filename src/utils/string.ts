@@ -10,3 +10,8 @@ export const dateToRoamDateString = (jsDateObject) =>
 export const toDateString = (jsDateObject) => jsDateObject.toLocaleDateString('en-US');
 
 export const parseConfigString = (configString) => configString.split('::').map((s) => s.trim());
+
+export const pluralize = (value: number, singular: string, plural: string) => {
+  if (value === 1) return singular;
+  return plural;
+};

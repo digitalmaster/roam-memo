@@ -43,6 +43,8 @@ const mapPluginPageDataLatest = (queryResultsData): Records =>
 
       acc[uid].dateCreated = parseRoamDateString(getStringBetween(latestChild.string, '[[', ']]'));
 
+      if (!latestChild.children) return acc;
+
       for (const field of latestChild.children) {
         const [key, value] = parseConfigString(field.string);
 
@@ -148,7 +150,7 @@ export const getPluginPageCachedData = async ({ dataPageTitle, selectedTag }) =>
   return mapPluginPageCachedData(queryResultsData, selectedTag);
 };
 
-export const getDueCardUids = (data) => {
+export const getDueCardUids = (data: Records) => {
   const results: RecordUid[] = [];
   if (!Object.keys(data).length) return results;
 
@@ -165,6 +167,19 @@ export const getDueCardUids = (data) => {
   return results;
 };
 
+const getPracticedTodayCount = (data: Records = {}): number => {
+  let count = 0;
+
+  Object.keys(data).forEach((cardUid) => {
+    const cardData = data[cardUid];
+    const isCreatedToday = dateUtils.isSameDay(cardData.dateCreated, new Date());
+
+    if (isCreatedToday) count++;
+  });
+
+  return count;
+};
+
 export const generateNewCardProps = ({ dateCreated = undefined } = {}): NewSession => ({
   dateCreated: dateCreated || new Date(),
   eFactor: 2.5,
@@ -178,19 +193,22 @@ export const generateNewCardProps = ({ dateCreated = undefined } = {}): NewSessi
  *  first but ~25% new cards are still practiced when limit is less than total due
  *  cards.
  */
+interface SelectedPracticeCardsDataProps {
+  dueCardsUids: RecordUid[];
+  newCardsUids: RecordUid[];
+  dailyLimit: number;
+  completedTodayCount: number;
+  isCramming: boolean;
+  lastCompletedDate?: Date;
+}
 export const selectPracticeCardsData = ({
   dueCardsUids,
   newCardsUids,
   dailyLimit,
+  completedTodayCount,
   isCramming,
   lastCompletedDate,
-}: {
-  dueCardsUids: RecordUid[];
-  newCardsUids: RecordUid[];
-  dailyLimit: number;
-  isCramming: boolean;
-  lastCompletedDate?: Date;
-}) => {
+}: SelectedPracticeCardsDataProps) => {
   const isLastCompleteDateToday =
     lastCompletedDate && dateUtils.isSameDay(lastCompletedDate, new Date());
 
@@ -198,6 +216,7 @@ export const selectPracticeCardsData = ({
     return {
       dueCardsUids: [],
       newCardsUids: [],
+      remainingDueCardsCount: dueCardsUids.length,
     };
   }
 
@@ -206,6 +225,7 @@ export const selectPracticeCardsData = ({
   const totalDueCards = dueCardsUids.length;
   const totalNewCards = newCardsUids.length;
   const totalCards = totalDueCards + totalNewCards;
+  dailyLimit = dailyLimit ? dailyLimit - completedTodayCount : dailyLimit;
 
   if (!dailyLimit || isCramming || totalCards <= dailyLimit) {
     return {
@@ -214,8 +234,8 @@ export const selectPracticeCardsData = ({
     };
   }
 
-  let totalNewPracticeCount = totalNewCards; // 1
-  let totalDuePracticeCount = totalDueCards; // 3
+  let totalNewPracticeCount = totalNewCards;
+  let totalDuePracticeCount = totalDueCards;
 
   // Calculate how many new cards to practice
   if (dailyLimit === 1) {
@@ -231,6 +251,8 @@ export const selectPracticeCardsData = ({
   return {
     dueCardsUids: dueCardsUids.slice(0, totalDuePracticeCount),
     newCardsUids: newCardsUids.slice(0, totalNewPracticeCount),
+    remainingDueCardsCount:
+      totalDueCards - totalDuePracticeCount + (totalNewCards - totalNewPracticeCount),
   };
 };
 
@@ -245,23 +267,30 @@ export const getPracticeCardData = async ({
     dataPageTitle,
     limitToLatest: true,
   })) as Records;
-
   const selectedTagReferencesIds = await getPageReferenceIds(selectedTag, dataPageTitle);
   const cardsData = { ...pluginPageData };
+  const selectedTagCardsData = Object.keys(cardsData).reduce((acc, cur) => {
+    if (selectedTagReferencesIds.indexOf(cur) > -1) {
+      acc[cur] = cardsData[cur];
+    }
+    return acc;
+  }, {});
   const newCardsUids: RecordUid[] = [];
 
   // Filter out due cards that aren't references to the currently selected tag
   // @TODO: we could probably do this at getPluginPageData query for a
   // performance boost
-  const dueCardsUids = getDueCardUids(cardsData).filter(
-    (dueCardUid) => selectedTagReferencesIds.indexOf(dueCardUid) > -1
-  );
+  const dueCardsUids = getDueCardUids(selectedTagCardsData);
+
+  // Used to adjust daily limit so you can complete daily limit in chunks
+  // throughout the same day
+  const completedTodayCount = getPracticedTodayCount(selectedTagCardsData);
 
   // Sort due cards by nextDueDate (due soonest first to increase retention,
   // accepting that cards that are more past due will likely be forgotten)
   dueCardsUids.sort((a, b) => {
-    const aCard = cardsData[a];
-    const bCard = cardsData[b];
+    const aCard = selectedTagCardsData[a];
+    const bCard = selectedTagCardsData[b];
 
     return aCard.nextDueDate < bCard.nextDueDate ? 1 : -1;
   });
@@ -285,10 +314,12 @@ export const getPracticeCardData = async ({
   return {
     cardsData,
     allSelectedTagCardsUids: selectedTagReferencesIds,
+    completedTodayCount,
     ...selectPracticeCardsData({
       dueCardsUids,
       newCardsUids,
       dailyLimit,
+      completedTodayCount,
       isCramming,
       lastCompletedDate,
     }),
@@ -550,6 +581,26 @@ export const saveCacheData = async ({ dataPageTitle, data, selectedTag }) => {
     }
 
     await createChildBlock(selectedTagBlockUid, `${key}:: ${value}`, -1);
+  }
+};
+
+export const deleteCacheDataKey = async ({ dataPageTitle, selectedTag, toDeleteKeyId }) => {
+  await getOrCreatePage(dataPageTitle);
+  const dataBlockUid = await getOrCreateBlockOnPage(dataPageTitle, 'cache', -1, {
+    open: false,
+    heading: 3,
+  });
+
+  const selectedTagBlockUid = await getOrCreateChildBlock(dataBlockUid, `[[${selectedTag}]]`, -1, {
+    open: false,
+  });
+
+  const existingBlockUid = await getChildBlock(selectedTagBlockUid, `${toDeleteKeyId}::`, {
+    exactMatch: false,
+  });
+
+  if (existingBlockUid) {
+    await window.roamAlphaAPI.deleteBlock({ block: { uid: existingBlockUid } });
   }
 };
 
