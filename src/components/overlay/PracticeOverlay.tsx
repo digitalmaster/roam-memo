@@ -31,6 +31,7 @@ const PracticeOverlay = ({
   dailyLimit,
   completedTodayCount,
   remainingDueCardsCount,
+  refreshData,
 }) => {
   const [currentIndex, setCurrentIndex] = React.useState(0);
   const totalCardsCount = practiceCardUids.length;
@@ -78,6 +79,7 @@ const PracticeOverlay = ({
         setIsCramming(false);
       } else if (!isLastCompleteDateToday) {
         saveCacheData({ lastCompletedDate: new Date() });
+        refreshData();
       }
     }
   }, [isDone]);

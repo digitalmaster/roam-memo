@@ -55,8 +55,6 @@ const App = () => {
         dateCreated: new Date(),
         isCramming,
       });
-
-      refreshData();
     } catch (error) {
       console.log('Error Saving Practice Data', error);
     }
@@ -138,6 +136,7 @@ const App = () => {
             completedTodayCount={completedTodayCount}
             dailyLimit={dailyLimit}
             remainingDueCardsCount={remainingDueCardsCount}
+            refreshData={refreshData}
           />
         )}
       </>
