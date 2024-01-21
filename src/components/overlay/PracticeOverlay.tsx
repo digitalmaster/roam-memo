@@ -20,7 +20,7 @@ const PracticeOverlay = ({
   selectedTag,
   onCloseCallback,
   practiceCardUids,
-  practiceCardsData,
+  practiceData,
   handleGradeClick,
   handleMemoTagChange,
   handleReviewMoreClick,
@@ -44,7 +44,7 @@ const PracticeOverlay = ({
     dailyLimit && completedTodayCount && !isDone && !reviewCountReset ? completedTodayCount : 0;
 
   const currentCardRefUid = practiceCardUids[currentIndex];
-  const currentCardData = practiceCardsData[currentCardRefUid];
+  const currentCardData = practiceData[currentCardRefUid];
 
   const isNew = currentCardData?.isNew;
   const nextDueDate = currentCardData?.nextDueDate;

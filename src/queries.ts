@@ -193,7 +193,7 @@ export const generateNewCardProps = ({ dateCreated = undefined } = {}): NewSessi
  *  first but ~25% new cards are still practiced when limit is less than total due
  *  cards.
  */
-interface SelectedPracticeCardsDataProps {
+interface SelectedPracticeDataProps {
   dueCardsUids: RecordUid[];
   newCardsUids: RecordUid[];
   dailyLimit: number;
@@ -201,14 +201,14 @@ interface SelectedPracticeCardsDataProps {
   isCramming: boolean;
   lastCompletedDate?: Date;
 }
-export const selectPracticeCardsData = ({
+export const selectPracticeData = ({
   dueCardsUids,
   newCardsUids,
   dailyLimit,
   completedTodayCount,
   isCramming,
   lastCompletedDate,
-}: SelectedPracticeCardsDataProps) => {
+}: SelectedPracticeDataProps) => {
   const isLastCompleteDateToday =
     lastCompletedDate && dateUtils.isSameDay(lastCompletedDate, new Date());
 
@@ -256,7 +256,7 @@ export const selectPracticeCardsData = ({
   };
 };
 
-export const getPracticeCardData = async ({
+export const getPracticeData = async ({
   selectedTag,
   dataPageTitle,
   dailyLimit,
@@ -268,10 +268,9 @@ export const getPracticeCardData = async ({
     limitToLatest: true,
   })) as Records;
   const selectedTagReferencesIds = await getPageReferenceIds(selectedTag, dataPageTitle);
-  const cardsData = { ...pluginPageData };
-  const selectedTagCardsData = Object.keys(cardsData).reduce((acc, cur) => {
+  const selectedTagCardsData = Object.keys(pluginPageData).reduce((acc, cur) => {
     if (selectedTagReferencesIds.indexOf(cur) > -1) {
-      acc[cur] = cardsData[cur];
+      acc[cur] = pluginPageData[cur];
     }
     return acc;
   }, {});
@@ -300,7 +299,7 @@ export const getPracticeCardData = async ({
     if (!pluginPageData[referenceId]) {
       // New
       newCardsUids.push(referenceId);
-      cardsData[referenceId] = {
+      pluginPageData[referenceId] = {
         ...generateNewCardProps(),
       };
     }
@@ -312,10 +311,10 @@ export const getPracticeCardData = async ({
   newCardsUids.reverse();
 
   return {
-    cardsData,
+    pluginPageData,
     allSelectedTagCardsUids: selectedTagReferencesIds,
     completedTodayCount,
-    ...selectPracticeCardsData({
+    ...selectPracticeData({
       dueCardsUids,
       newCardsUids,
       dailyLimit,

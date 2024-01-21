@@ -3,7 +3,7 @@ import * as Blueprint from '@blueprintjs/core';
 import PracticeOverlay from '~/components/overlay/PracticeOverlay';
 import SidePandelWidget from '~/components/SidePandelWidget';
 import practice from '~/practice';
-import usePracticeCardsData from '~/hooks/usePracticeCardsData';
+import usePracticeData from '~/hooks/usePracticeData';
 import useTags from '~/hooks/useTags';
 import useSettings from '~/hooks/useSettings';
 import useCollapseReferenceList from '~/hooks/useCollapseReferenceList';
@@ -28,12 +28,12 @@ const App = () => {
 
   const {
     practiceCardsUids,
-    practiceCardsData,
+    practiceData,
     displayCardCounts,
     fetchPracticeData,
     completedTodayCount,
     remainingDueCardsCount,
-  } = usePracticeCardsData({
+  } = usePracticeData({
     selectedTag,
     dataPageTitle,
     isCramming,
@@ -44,7 +44,7 @@ const App = () => {
   const handleGradeClick = async ({ grade, refUid }) => {
     if (!refUid) return;
 
-    const cardData = practiceCardsData[refUid];
+    const cardData = practiceData[refUid];
 
     try {
       await practice({
@@ -124,7 +124,7 @@ const App = () => {
           <PracticeOverlay
             isOpen={true}
             practiceCardUids={practiceCardsUids}
-            practiceCardsData={practiceCardsData}
+            practiceData={practiceData}
             handleGradeClick={handleGradeClick}
             onCloseCallback={onClosePracticeOverlayCallback}
             handleMemoTagChange={handleMemoTagChange}
