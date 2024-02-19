@@ -1,5 +1,4 @@
 import * as React from 'react';
-import * as asyncUtils from '~/utils/async';
 
 interface UseCustomClozeProps {
   renderedBlockElm: HTMLElement;
@@ -20,7 +19,7 @@ function wrapMatches(node: Element, regex: RegExp) {
     const textNode = textNodes[i];
     const text = textNode.textContent;
 
-    let match = regex.exec(text);
+    const match = regex.exec(text);
 
     if (match) {
       const matchedText = match[0];

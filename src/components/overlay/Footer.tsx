@@ -5,13 +5,14 @@ import * as asyncUtils from '~/utils/async';
 import { generatePracticeData } from '~/practice';
 import Tooltip from '~/components/Tooltip';
 import ButtonTags from '~/components/ButtonTags';
+import { IntervalMultiplierType, ReviewModes } from '~/models/session';
+import { MainContext } from '~/components/overlay/PracticeOverlay';
 
 const Footer = ({
-  hasBlockChildren,
   setShowAnswers,
   showAnswers,
   refUid,
-  onGradeClick,
+  onPracticeClick,
   onSkipClick,
   onPrevClick,
   isDone,
@@ -20,6 +21,11 @@ const Footer = ({
   currentCardData,
   onStartCrammingClick,
 }) => {
+  const { reviewMode, intervalMultiplier, intervalMultiplierType } = React.useContext(MainContext);
+
+  const [isIntervalEditorOpen, setIsIntervalEditorOpen] = React.useState(false);
+
+  const toggleIntervalEditorOpen = () => setIsIntervalEditorOpen((prev) => !prev);
   // So we can flash the activated button when using keyboard shortcuts before transitioning
   const [activeButtonKey, setActiveButtonKey] = React.useState(null);
   const activateButtonFn = async (key, callbackFn) => {
@@ -52,13 +58,20 @@ const Footer = ({
         default:
           break;
       }
-      activateButtonFn(key, () => onGradeClick({ grade, refUid: refUid }));
+      activateButtonFn(key, () => onPracticeClick({ grade, refUid: refUid }));
     },
-    [onGradeClick, refUid]
+    [onPracticeClick, refUid]
+  );
+
+  const intervalPractice = React.useMemo(
+    () => () => {
+      activateButtonFn('next-button', () => onPracticeClick({ refUid: refUid }));
+    },
+    [onPracticeClick, refUid]
   );
   const skipFn = React.useMemo(
     () => () => {
-      let key = 'skip-button';
+      const key = 'skip-button';
       activateButtonFn(key, () => onSkipClick());
     },
     [onSkipClick]
@@ -69,12 +82,16 @@ const Footer = ({
       {
         combo: 'space',
         global: true,
-        label: 'Show Block Children',
+        label: 'Primary Action Trigger',
         onKeyDown: () => {
           if (!showAnswers) {
             activateButtonFn('space-button', showAnswerFn);
           } else {
-            gradeFn(5);
+            if (reviewMode === ReviewModes.FixedInterval) {
+              intervalPractice();
+            } else {
+              gradeFn(5);
+            }
           }
         },
       },
@@ -101,45 +118,58 @@ const Footer = ({
         global: true,
         label: 'Grade 0',
         onKeyDown: () => gradeFn(0),
+        disabled: reviewMode === ReviewModes.FixedInterval,
       },
       {
         combo: 'H',
         global: true,
         label: 'Grade 2',
         onKeyDown: () => gradeFn(2),
+        disabled: reviewMode === ReviewModes.FixedInterval,
       },
       {
         combo: 'G',
         global: true,
         label: 'Grade 4',
         onKeyDown: () => gradeFn(4),
+        disabled: reviewMode !== ReviewModes.DefaultSpacedInterval,
+      },
+      {
+        combo: 'E',
+        global: true,
+        label: 'Edit Interval',
+        onKeyDown: toggleIntervalEditorOpen,
+        disabled: reviewMode !== ReviewModes.FixedInterval,
       },
     ],
-    [skipFn, hasBlockChildren, showAnswers, showAnswerFn, gradeFn]
+    [skipFn, onPrevClick, reviewMode, showAnswers, showAnswerFn, intervalPractice, gradeFn]
   );
   const { handleKeyDown, handleKeyUp } = Blueprint.useHotkeys(hotkeys);
 
-  const [intervalEstimates, setIntervalEstimates] = React.useState({});
-  React.useEffect(() => {
+  const intervalEstimates = React.useMemo(() => {
     if (!currentCardData) return;
 
     const grades = [0, 1, 2, 3, 4, 5];
     const { interval, repetitions, eFactor } = currentCardData;
     const estimates = {};
 
-    for (const grade of grades) {
+    const iterateCount = reviewMode === ReviewModes.FixedInterval ? 1 : grades.length;
+    for (let i = 0; i < iterateCount; i++) {
+      const grade = grades[i];
       const practiceResultData = generatePracticeData({
         grade,
         interval,
         repetitions,
         eFactor,
         dateCreated: new Date(),
+        reviewMode,
+        intervalMultiplier,
+        intervalMultiplierType,
       });
       estimates[grade] = practiceResultData;
     }
-
-    setIntervalEstimates(estimates);
-  }, [currentCardData]);
+    return estimates;
+  }, [currentCardData, intervalMultiplier, intervalMultiplierType, reviewMode]);
 
   return (
     <FooterWrapper
@@ -147,7 +177,7 @@ const Footer = ({
       onKeyDown={handleKeyDown}
       onKeyUp={handleKeyUp}
     >
-      <FooterActionsWrapper className="bp3-dialog-footer-actions flex-wrap gap-4 justify-evenly w-full mx-3  my-3">
+      <FooterActionsWrapper className="bp3-dialog-footer-actions flex-wrap gap-4 justify-center w-full mx-5  my-3">
         {isDone || !hasCards ? (
           <FinishedControls
             onStartCrammingClick={onStartCrammingClick}
@@ -160,11 +190,15 @@ const Footer = ({
             activeButtonKey={activeButtonKey}
           />
         ) : (
-          <GradingControls
+          <GradingControlsWrapper
+            activateButtonFn={activateButtonFn}
             activeButtonKey={activeButtonKey}
             skipFn={skipFn}
             gradeFn={gradeFn}
             intervalEstimates={intervalEstimates}
+            intervalPractice={intervalPractice}
+            isIntervalEditorOpen={isIntervalEditorOpen}
+            toggleIntervalEditorOpen={toggleIntervalEditorOpen}
           />
         )}
       </FooterActionsWrapper>
@@ -189,6 +223,7 @@ const AnswerHiddenControls = ({ activateButtonFn, showAnswerFn, activeButtonKey 
     </span>
   </ControlButton>
 );
+
 const FinishedControls = ({ onStartCrammingClick, onCloseCallback }) => {
   return (
     <>
@@ -214,21 +249,228 @@ const FinishedControls = ({ onStartCrammingClick, onCloseCallback }) => {
   );
 };
 
-const GradingControls = ({ activeButtonKey, skipFn, gradeFn, intervalEstimates }) => (
-  <>
-    <ControlButton
-      key="forget-button"
-      className="text-base font-medium py-1"
-      tooltipText={`Skip for now`}
-      onClick={() => skipFn()}
-      active={activeButtonKey === 'skip-button'}
-      outlined
-    >
-      Skip{' '}
-      <span className="ml-2">
-        <ButtonTags>S</ButtonTags>
+const GradingControlsWrapper = ({
+  activateButtonFn,
+  activeButtonKey,
+  skipFn,
+  gradeFn,
+  intervalEstimates,
+  intervalPractice,
+  isIntervalEditorOpen,
+  toggleIntervalEditorOpen,
+}) => {
+  const { reviewMode, setReviewMode } = React.useContext(MainContext);
+
+  const toggleReviewMode = () => {
+    setReviewMode((prev: ReviewModes) => {
+      return prev === ReviewModes.DefaultSpacedInterval
+        ? ReviewModes.FixedInterval
+        : ReviewModes.DefaultSpacedInterval;
+    });
+  };
+
+  const isFixedIntervalMode = reviewMode === ReviewModes.FixedInterval;
+  return (
+    <>
+      <ControlButton
+        key="skip-button"
+        className="text-base font-medium py-1"
+        tooltipText={`Skip for now`}
+        onClick={() => skipFn()}
+        active={activeButtonKey === 'skip-button'}
+        outlined
+      >
+        Skip{' '}
+        <span className="ml-2">
+          <ButtonTags>S</ButtonTags>
+        </span>
+      </ControlButton>
+      <div className="flex justify-evenly gap-5">
+        {isFixedIntervalMode ? (
+          <FixedIntervalModeControls
+            activeButtonKey={activeButtonKey}
+            intervalPractice={intervalPractice}
+            isIntervalEditorOpen={isIntervalEditorOpen}
+            toggleIntervalEditorOpen={toggleIntervalEditorOpen}
+            intervalEstimates={intervalEstimates}
+          />
+        ) : (
+          <SpacedIntervalModeControls
+            activeButtonKey={activeButtonKey}
+            gradeFn={gradeFn}
+            intervalEstimates={intervalEstimates}
+          />
+        )}
+      </div>
+      <SetIntervalToggleWrapper>
+        {/* @ts-ignore */}
+        <ControlButton
+          icon={isFixedIntervalMode ? 'calendar' : 'history'}
+          className="text-base font-medium py-1"
+          intent="none"
+          tooltipText={isFixedIntervalMode ? 'Spaced Interval Mode' : 'Fixed Interval Mode'}
+          onClick={() => {
+            activateButtonFn('space-button', toggleReviewMode);
+          }}
+          active={activeButtonKey === 'space-button'}
+          outlined
+        ></ControlButton>
+      </SetIntervalToggleWrapper>
+    </>
+  );
+};
+
+const FixedIntervalEditor = () => {
+  const {
+    intervalMultiplier,
+    intervalMultiplierType,
+    setIntervalMultiplier,
+    setIntervalMultiplierType,
+  } = React.useContext(MainContext);
+  const handleInputValueChange = (numericValue) => {
+    if (isNaN(numericValue)) return;
+    setIntervalMultiplier(numericValue);
+  };
+
+  const intervalMultiplierTypes = [
+    { value: IntervalMultiplierType.Days, label: 'Days' },
+    { value: IntervalMultiplierType.Weeks, label: 'Weeks' },
+    { value: IntervalMultiplierType.Months, label: 'Months' },
+    { value: IntervalMultiplierType.Years, label: 'Years' },
+  ];
+
+  return (
+    <div className="flex p-2 items-center w-80 justify-evenly">
+      <div className="">Every</div>
+      <div className="w-24">
+        <Blueprint.NumericInput
+          min={1}
+          max={365}
+          stepSize={1}
+          majorStepSize={30}
+          minorStepSize={1}
+          value={intervalMultiplier}
+          onValueChange={handleInputValueChange}
+          fill
+        />
+      </div>
+      <div className="bp3-html-select">
+        <select
+          value={intervalMultiplierType}
+          onChange={(e) =>
+            setIntervalMultiplierType(e.currentTarget.value as IntervalMultiplierType)
+          }
+        >
+          {intervalMultiplierTypes.map((option) => (
+            <option
+              key={option.value}
+              value={option.value}
+              selected={option.value === intervalMultiplierType}
+            >
+              {option.label}
+            </option>
+          ))}
+        </select>
+        <span className="bp3-icon bp3-icon-double-caret-vertical"></span>
+      </div>
+    </div>
+  );
+};
+
+const IntervalString = ({ intervalMultiplier, intervalMultiplierType }) => {
+  let singularString = '';
+  if (intervalMultiplier === 1) {
+    switch (intervalMultiplierType) {
+      case IntervalMultiplierType.Weeks:
+        singularString += 'Weekly';
+        break;
+      case IntervalMultiplierType.Months:
+        singularString += 'Monthly';
+        break;
+      case IntervalMultiplierType.Years:
+        singularString += 'Yearly';
+        break;
+      default:
+        singularString += 'Daily';
+        break;
+    }
+  }
+
+  return (
+    <>
+      Review{' '}
+      <span className="font-medium mr-3">
+        {singularString ? (
+          singularString
+        ) : (
+          <>
+            Every {intervalMultiplier} {intervalMultiplierType}
+          </>
+        )}
       </span>
-    </ControlButton>
+    </>
+  );
+};
+
+const FixedIntervalModeControls = ({
+  activeButtonKey,
+  intervalPractice,
+  isIntervalEditorOpen,
+  toggleIntervalEditorOpen,
+  intervalEstimates,
+}) => {
+  const { intervalMultiplier, intervalMultiplierType } = React.useContext(MainContext);
+  const onInteractionhandler = (nextState) => {
+    if (!nextState && isIntervalEditorOpen) toggleIntervalEditorOpen();
+  };
+
+  return (
+    <div>
+      {/* @ts-expect-error */}
+      <Blueprint.Popover
+        isOpen={isIntervalEditorOpen}
+        onInteraction={onInteractionhandler}
+        className="mr-3"
+      >
+        <ControlButton
+          icon="time"
+          className="text-base font-normal py-1"
+          intent="default"
+          onClick={toggleIntervalEditorOpen}
+          tooltipText={`Change Interval`}
+          active={activeButtonKey === 'change-interval-button'}
+          outlined
+        >
+          <span className="ml-2">
+            <IntervalString
+              intervalMultiplier={intervalMultiplier}
+              intervalMultiplierType={intervalMultiplierType}
+            />
+            <ButtonTags>E</ButtonTags>
+          </span>
+        </ControlButton>
+        <FixedIntervalEditor />
+      </Blueprint.Popover>
+      <ControlButton
+        icon="tick"
+        className="text-base font-medium py-1"
+        intent="primary"
+        onClick={() => intervalPractice()}
+        tooltipText={`Review ${intervalEstimates[0]?.nextDueDateFromNow}`}
+        active={activeButtonKey === 'next-button'}
+        outlined
+      >
+        Next{' '}
+        <span className="ml-2">
+          <ButtonTags>SPACE</ButtonTags>
+        </span>
+      </ControlButton>
+    </div>
+  );
+};
+
+const SpacedIntervalModeControls = ({ activeButtonKey, gradeFn, intervalEstimates }) => (
+  <>
     <ControlButton
       key="forget-button"
       className="text-base font-medium py-1"
@@ -302,6 +544,8 @@ const FooterActionsWrapper = styled.div`
     margin-left: 0;
   }
 `;
+
+const SetIntervalToggleWrapper = styled.div``;
 
 const ControlButtonWrapper = styled(Blueprint.Button)`
   background: ${(props) => (props.active ? 'inherit' : 'white !important')};

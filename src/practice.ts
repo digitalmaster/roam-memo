@@ -1,5 +1,6 @@
 import { savePracticeData } from '~/queries';
 import * as dateUtils from '~/utils/date';
+import { IntervalMultiplierType, ReviewModes, Session } from '~/models/session';
 
 export const supermemo = (item, grade) => {
   let nextInterval;
@@ -38,63 +39,105 @@ export const supermemo = (item, grade) => {
   };
 };
 
-export const generatePracticeData = ({ grade, interval, repetitions, eFactor, dateCreated }) => {
-  const supermemoInput = {
-    interval,
-    repetition: repetitions,
-    efactor: eFactor,
+type PracticeDataResult = Session & {
+  nextDueDateFromNow?: string;
+};
+export const generatePracticeData = ({
+  dateCreated,
+  reviewMode,
+  ...props
+}: Session): PracticeDataResult => {
+  const shared = {
+    reviewMode,
   };
 
-  // call supermemo API
-  const supermemoResults = supermemo(supermemoInput, grade);
+  if (reviewMode === ReviewModes.FixedInterval) {
+    const { intervalMultiplier, intervalMultiplierType } = props;
+    const today = new Date();
+    let nextDueDate = null;
+    if (intervalMultiplierType === IntervalMultiplierType.Days) {
+      nextDueDate = dateUtils.addDays(today, intervalMultiplier);
+    } else if (intervalMultiplierType === IntervalMultiplierType.Weeks) {
+      nextDueDate = dateUtils.addDays(today, intervalMultiplier * 7);
+    } else if (intervalMultiplierType === IntervalMultiplierType.Months) {
+      nextDueDate = dateUtils.addDays(today, intervalMultiplier * 30);
+    } else if (intervalMultiplierType === IntervalMultiplierType.Years) {
+      nextDueDate = dateUtils.addDays(today, intervalMultiplier * 365);
+    }
 
-  const nextDueDate = dateUtils.addDays(dateCreated, supermemoResults.interval);
+    return {
+      ...shared,
+      reviewMode: ReviewModes.FixedInterval,
+      intervalMultiplier,
+      intervalMultiplierType,
+      nextDueDate,
+      nextDueDateFromNow: dateUtils.customFromNow(nextDueDate),
+    };
+  } else {
+    const { grade, interval, repetitions, eFactor } = props;
+    const supermemoInput = {
+      interval,
+      repetition: repetitions,
+      efactor: eFactor,
+    };
 
-  return {
-    repetitions: supermemoResults.repetition,
-    interval: supermemoResults.interval,
-    eFactor: supermemoResults.efactor,
-    nextDueDate,
-    nextDueDateFromNow: dateUtils.customFromNow(nextDueDate),
-  };
+    // call supermemo API
+    const supermemoResults = supermemo(supermemoInput, grade);
+
+    const nextDueDate = dateUtils.addDays(dateCreated, supermemoResults.interval);
+
+    return {
+      ...shared,
+      reviewMode: ReviewModes.DefaultSpacedInterval,
+      grade,
+      repetitions: supermemoResults.repetition,
+      interval: supermemoResults.interval,
+      eFactor: supermemoResults.efactor,
+      dateCreated,
+      nextDueDate,
+      nextDueDateFromNow: dateUtils.customFromNow(nextDueDate),
+    };
+  }
 };
 
-export interface PracticeProps {
-  interval: number;
-  repetitions: number;
-  eFactor: number;
-  grade: number;
+export type PracticeProps = Session & {
   refUid: string;
   dataPageTitle: string;
-  dateCreated: null | Date;
   isCramming?: boolean;
-}
+};
 
 const practice = async (practiceProps: PracticeProps, isDryRun = false) => {
   const {
-    interval,
-    repetitions,
-    eFactor,
-    grade,
     refUid,
     dataPageTitle,
     dateCreated = null,
     isCramming,
+    grade,
+    interval,
+    repetitions,
+    eFactor,
+    intervalMultiplier,
+    intervalMultiplierType,
+    reviewMode,
   } = practiceProps;
+
   // Just destructuring nextDueDateFromNow here because I don't want to store it
-  // eslint-disable-next-line no-unused-vars
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { nextDueDateFromNow, ...practiceResultData } = generatePracticeData({
     grade,
     interval,
     repetitions,
     eFactor,
     dateCreated,
+    reviewMode,
+    intervalMultiplier,
+    intervalMultiplierType,
   });
+
   if (!isDryRun && !isCramming) {
     await savePracticeData({
       refUid: refUid,
       dataPageTitle,
-      grade,
       dateCreated,
       ...practiceResultData,
     });

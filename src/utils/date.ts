@@ -6,13 +6,13 @@ import calendar from 'dayjs/plugin/calendar';
 dayjs.extend(calendar);
 
 export const addDays = (date, days) => {
-  var result = new Date(date);
+  const result = new Date(date);
   result.setDate(result.getDate() + days);
   return result;
 };
 
 export const subtractDays = (date, days) => {
-  var result = new Date(date);
+  const result = new Date(date);
   result.setDate(result.getDate() - days);
   return result;
 };
@@ -54,5 +54,5 @@ export const isSameDay = (d1: Date, d2: Date) => {
 };
 
 export const isDate = (date: Date) =>
-  // @ts-ignore
+  // @ts-expect-error we expect data to not be number
   date && Object.prototype.toString.call(date) === '[object Date]' && !isNaN(date);

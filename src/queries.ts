@@ -1,7 +1,14 @@
 import { getStringBetween, parseConfigString, parseRoamDateString } from '~/utils/string';
 import * as stringUtils from '~/utils/string';
 import * as dateUtils from '~/utils/date';
-import { CompleteRecords, NewRecords, Records, NewSession, RecordUid } from '~/models/session';
+import {
+  CompleteRecords,
+  Records,
+  NewSession,
+  RecordUid,
+  ReviewModes,
+  Session,
+} from '~/models/session';
 import practice from '~/practice';
 
 const getPageReferenceIds = async (selectedTag, dataPageTitle): Promise<string[]> => {
@@ -52,8 +59,10 @@ const mapPluginPageDataLatest = (queryResultsData): Records =>
           acc[uid][key] = parseRoamDateString(getStringBetween(value, '[[', ']]'));
         } else if (value === 'true' || value === 'false') {
           acc[uid][key] = value === 'true';
-        } else {
+        } else if (stringUtils.isNumeric(value)) {
           acc[uid][key] = Number(value);
+        } else {
+          acc[uid][key] = value;
         }
       }
       return acc;
@@ -156,7 +165,7 @@ export const getDueCardUids = (data: Records) => {
 
   const now = new Date();
   Object.keys(data).forEach((cardUid) => {
-    const cardData = data[cardUid];
+    const cardData = data[cardUid] as Session;
     const nextDueDate = cardData.nextDueDate;
 
     if (nextDueDate <= now) {
@@ -186,6 +195,7 @@ export const generateNewCardProps = ({ dateCreated = undefined } = {}): NewSessi
   interval: 0,
   repetitions: 0,
   isNew: true,
+  reviewMode: ReviewModes.DefaultSpacedInterval,
 });
 
 /**
@@ -377,7 +387,7 @@ export const fetchBlockInfo: (refUid: any) => Promise<BlockInfo> = async (refUid
 const getPage = (page) => {
   // returns the uid of a specific page in your graph. _page_: the title of the
   // page.
-  let results = window.roamAlphaAPI.q(
+  const results = window.roamAlphaAPI.q(
     `
     [:find ?uid
      :in $ ?title
@@ -404,7 +414,7 @@ export const getOrCreatePage = async (pageTitle) => {
 const getBlockOnPage = (page, block) => {
   // returns the uid of a specific block on a specific page. _page_: the title
   // of the page. _block_: the text of the block.
-  let results = window.roamAlphaAPI.q(
+  const results = window.roamAlphaAPI.q(
     `
     [:find ?block_uid
      :in $ ?page_title ?block_string
@@ -460,7 +470,7 @@ const getChildBlock = (
 
   const query = options.exactMatch ? exactMatchQuery : startsWithQuery;
 
-  let results = window.roamAlphaAPI.q(query, parent_uid, block);
+  const results = window.roamAlphaAPI.q(query, parent_uid, block);
   if (results.length) {
     return results[0][0];
   }
@@ -470,7 +480,7 @@ const getChildBlock = (
 const getChildrenBlocks = (parent_uid) => {
   // returns the uids of children blocks underneath a specific parent block
   // _parent_uid_: the uid of the parent block.
-  let results = window.roamAlphaAPI.q(
+  const results = window.roamAlphaAPI.q(
     `
     [:find ?child_uid ?child_order
      :in $ ?parent_uid
@@ -511,7 +521,7 @@ const createBlockOnPage = async (page, block, order, blockProps) => {
   // uid. _page_: the title of the page. _block_: the text of the block.
   // _order_: (optional) controls where to create the block, 0 for top of page,
   // -1 for bottom of page.
-  let page_uid = getPage(page);
+  const page_uid = getPage(page);
   return createChildBlock(page_uid, block, order, blockProps);
 };
 
@@ -520,7 +530,7 @@ export const getOrCreateBlockOnPage = async (page, block, order, blockProps) => 
   // as a top-level block if it's not already there. _page_: the title of the
   // page. _block_: the text of the block. _order_: (optional) controls where to
   // create the block, 0 for top of page, -1 for bottom of page.
-  let block_uid = getBlockOnPage(page, block);
+  const block_uid = getBlockOnPage(page, block);
   if (block_uid) return block_uid;
   return createBlockOnPage(page, block, order, blockProps);
 };
@@ -530,7 +540,7 @@ const getOrCreateChildBlock = async (parent_uid, block, order, blockProps) => {
   // new block's uid. _parent_uid_: the uid of the parent block. _block_: the
   // text of the new block. _order_: (optional) controls where to create the
   // block, 0 for inserting at the top, -1 for inserting at the bottom.
-  let block_uid = getChildBlock(parent_uid, block);
+  const block_uid = getChildBlock(parent_uid, block);
   if (block_uid) return block_uid;
   return createChildBlock(parent_uid, block, order, blockProps);
 };
@@ -548,7 +558,7 @@ const getEmojiFromGrade = (grade) => {
     case 0:
       return '🔴';
     default:
-      break;
+      return '🔵';
   }
 };
 
@@ -628,7 +638,8 @@ export const savePracticeData = async ({ refUid, dataPageTitle, dateCreated, ...
   );
 
   // Insert new block info
-  const nextDueDate = dateUtils.addDays(referenceDate, data.interval);
+  const nextDueDate = data.nextDueDate || dateUtils.addDays(referenceDate, data.interval);
+
   for (const key of Object.keys(data)) {
     let value = data[key];
     if (key === 'nextDueDate') {
@@ -876,6 +887,7 @@ export const generateRecordsFromRoamSrData = async (
 ) => {
   const mergedRecords = getMergedOldAndExistingRecords(oldReviewRecords, existingPracticeData);
   const results: CompleteRecords = {};
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   for (const [_, resultsArr] of Object.entries(mergedRecords)) {
     //@ts-ignore
     for (const result of resultsArr) {
@@ -901,6 +913,7 @@ export const generateRecordsFromRoamSrData = async (
       }
 
       const practiceResult = {
+        // @ts-expect-error
         ...(await practice(practiceInputData, true)),
         grade,
         dateCreated,

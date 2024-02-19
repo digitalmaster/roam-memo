@@ -8,9 +8,18 @@ import useTags from '~/hooks/useTags';
 import useSettings from '~/hooks/useSettings';
 import useCollapseReferenceList from '~/hooks/useCollapseReferenceList';
 import useOnBlockInteract from '~/hooks/useOnBlockInteract';
-import useCommandPaletteAction from './hooks/useCommandPaletteAction';
+import useCommandPaletteAction from '~/hooks/useCommandPaletteAction';
 import useCachedData from '~/hooks/useCachedData';
-import useOnVisibilityStateChange from './hooks/useOnVisibilityStateChange';
+import useOnVisibilityStateChange from '~/hooks/useOnVisibilityStateChange';
+import { IntervalMultiplierType, ReviewModes } from '~/models/session';
+
+interface handlePracticeProps {
+  refUid: string;
+  grade: number;
+  reviewMode: ReviewModes;
+  intervalMultiplier: number;
+  intervalMultiplierType: IntervalMultiplierType;
+}
 
 const App = () => {
   const [showPracticeOverlay, setShowPracticeOverlay] = React.useState(false);
@@ -41,11 +50,19 @@ const App = () => {
     lastCompletedDate,
   });
 
-  const handleGradeClick = async ({ grade, refUid }) => {
-    if (!refUid) return;
+  const handlePracticeClick = async ({
+    refUid,
+    grade,
+    reviewMode,
+    intervalMultiplier,
+    intervalMultiplierType,
+  }: handlePracticeProps) => {
+    if (!refUid) {
+      console.error('HandlePracticeFn Error: No refUid provided');
+      return;
+    }
 
     const cardData = practiceData[refUid];
-
     try {
       await practice({
         ...cardData,
@@ -54,14 +71,19 @@ const App = () => {
         dataPageTitle,
         dateCreated: new Date(),
         isCramming,
+        reviewMode,
+        intervalMultiplier,
+        intervalMultiplierType,
       });
-
-      refreshData();
     } catch (error) {
-      console.log('Error Saving Practice Data', error);
+      console.error('Error Saving Practice Data', error);
     }
   };
 
+  /**
+   * Warning: Calling this function while the overlay is open resets the state
+   * of the current practice session. Causing you to lose your progress.
+   */
   const refreshData = () => {
     fetchCacheData();
     fetchPracticeData();
@@ -125,7 +147,7 @@ const App = () => {
             isOpen={true}
             practiceCardUids={practiceCardsUids}
             practiceData={practiceData}
-            handleGradeClick={handleGradeClick}
+            handlePracticeClick={handlePracticeClick}
             onCloseCallback={onClosePracticeOverlayCallback}
             handleMemoTagChange={handleMemoTagChange}
             handleReviewMoreClick={handleReviewMoreClick}

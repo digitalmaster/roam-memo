@@ -14,6 +14,18 @@ import mediaQueries from '~/utils/mediaQueries';
 import CardBlock from '~/components/overlay/CardBlock';
 import Footer from '~/components/overlay/Footer';
 import ButtonTags from '~/components/ButtonTags';
+import { IntervalMultiplierType, ReviewModes } from '~/models/session';
+
+interface MainContextProps {
+  reviewMode?: ReviewModes;
+  setReviewMode?: React.Dispatch<React.SetStateAction<ReviewModes>>;
+  intervalMultiplier?: number;
+  setIntervalMultiplier?: (multiplier: number) => void;
+  intervalMultiplierType?: IntervalMultiplierType;
+  setIntervalMultiplierType?: (type: IntervalMultiplierType) => void;
+  onPracticeClick?: (props: any) => void;
+}
+export const MainContext = React.createContext<MainContextProps>({});
 
 const PracticeOverlay = ({
   isOpen,
@@ -22,7 +34,7 @@ const PracticeOverlay = ({
   onCloseCallback,
   practiceCardUids,
   practiceData,
-  handleGradeClick,
+  handlePracticeClick,
   handleMemoTagChange,
   handleReviewMoreClick,
   isCramming,
@@ -63,6 +75,16 @@ const PracticeOverlay = ({
   const hasBlockChildren = !!blockInfo.children && !!blockInfo.children.length;
   const [showAnswers, setShowAnswers] = React.useState(false);
   const [hasCloze, setHasCloze] = React.useState(true);
+  const [reviewMode, setReviewMode] = React.useState<ReviewModes>(
+    currentCardData?.reviewMode || ReviewModes.DefaultSpacedInterval
+  );
+  const [intervalMultiplier, setIntervalMultiplier] = React.useState<number>(
+    currentCardData?.intervalMultiplier || 3
+  );
+  const [intervalMultiplierType, setIntervalMultiplierType] =
+    React.useState<IntervalMultiplierType>(
+      currentCardData?.intervalMultiplierType || IntervalMultiplierType.Days
+    );
 
   React.useEffect(() => {
     if (hasBlockChildren || hasCloze) {
@@ -96,14 +118,21 @@ const PracticeOverlay = ({
     }
   };
 
-  const onGradeClick = React.useCallback(
+  const onPracticeClick = React.useCallback(
     (props) => {
       if (isDone) return;
-      handleGradeClick(props);
+      handlePracticeClick({ ...props, reviewMode, intervalMultiplier, intervalMultiplierType });
       setShowAnswers(false);
       setCurrentIndex(currentIndex + 1);
     },
-    [currentIndex, handleGradeClick, isDone]
+    [
+      currentIndex,
+      handlePracticeClick,
+      isDone,
+      reviewMode,
+      intervalMultiplier,
+      intervalMultiplierType,
+    ]
   );
 
   const onSkipClick = React.useCallback(() => {
@@ -153,69 +182,81 @@ const PracticeOverlay = ({
   Blueprint.useHotkeys(hotkeys);
 
   return (
-    // @ts-ignore
-    <Dialog
-      isOpen={isOpen}
-      onClose={onCloseCallback}
-      className="pb-0 bg-white"
-      canEscapeKeyClose={false}
+    <MainContext.Provider
+      value={{
+        reviewMode,
+        setReviewMode,
+        intervalMultiplier,
+        setIntervalMultiplier,
+        intervalMultiplierType,
+        setIntervalMultiplierType,
+        onPracticeClick,
+      }}
     >
-      <Header
-        className="bp3-dialog-header outline-none focus:outline-none focus-visible:outline-none"
-        tagsList={tagsList}
-        selectedTag={selectedTag}
-        currentIndex={currentIndex}
-        totalCardsCount={totalCardsCount}
-        onCloseCallback={onCloseCallback}
-        onTagChange={onTagChange}
-        status={status}
-        isDone={isDone}
-        nextDueDate={nextDueDate}
-        showBreadcrumbs={showBreadcrumbs}
-        setShowBreadcrumbs={setShowBreadcrumbs}
-        isCramming={isCramming}
-        dailyLimitDelta={dailyLimitDelta}
-      />
+      {/* @ts-ignore */}
+      <Dialog
+        isOpen={isOpen}
+        onClose={onCloseCallback}
+        className="pb-0 bg-white"
+        canEscapeKeyClose={false}
+      >
+        <Header
+          className="bp3-dialog-header outline-none focus:outline-none focus-visible:outline-none"
+          tagsList={tagsList}
+          selectedTag={selectedTag}
+          currentIndex={currentIndex}
+          totalCardsCount={totalCardsCount}
+          onCloseCallback={onCloseCallback}
+          onTagChange={onTagChange}
+          status={status}
+          isDone={isDone}
+          nextDueDate={nextDueDate}
+          showBreadcrumbs={showBreadcrumbs}
+          setShowBreadcrumbs={setShowBreadcrumbs}
+          isCramming={isCramming}
+          dailyLimitDelta={dailyLimitDelta}
+        />
 
-      <DialogBody className="bp3-dialog-body overflow-y-scroll m-0 pt-6 pb-8 px-4">
-        {currentCardRefUid ? (
-          <CardBlock
-            refUid={currentCardRefUid}
-            showAnswers={showAnswers}
-            setHasCloze={setHasCloze}
-            breadcrumbs={blockInfo.breadcrumbs}
-            showBreadcrumbs={showBreadcrumbs}
-          />
-        ) : (
-          <div className="flex items-center flex-col">
-            <Lottie options={lottieAnimationOption} style={lottieStyle} />
-            {remainingDueCardsCount ? (
-              <div>
-                Reviewed {completedTodayCount}{' '}
-                {stringUtils.pluralize(completedTodayCount, 'card', 'cards')} today.{' '}
-                <a onClick={handleReviewMoreClick}>Review more</a>
-              </div>
-            ) : (
-              <div>No cards left to review!</div>
-            )}
-          </div>
-        )}
-      </DialogBody>
-      <Footer
-        refUid={currentCardRefUid}
-        onGradeClick={onGradeClick}
-        onSkipClick={onSkipClick}
-        onPrevClick={onPrevClick}
-        hasBlockChildren={hasBlockChildren}
-        setShowAnswers={setShowAnswers}
-        showAnswers={showAnswers}
-        isDone={isDone}
-        hasCards={hasCards}
-        onCloseCallback={onCloseCallback}
-        currentCardData={currentCardData}
-        onStartCrammingClick={onStartCrammingClick}
-      />
-    </Dialog>
+        <DialogBody className="bp3-dialog-body overflow-y-scroll m-0 pt-6 pb-8 px-4">
+          {currentCardRefUid ? (
+            <CardBlock
+              refUid={currentCardRefUid}
+              showAnswers={showAnswers}
+              setHasCloze={setHasCloze}
+              breadcrumbs={blockInfo.breadcrumbs}
+              showBreadcrumbs={showBreadcrumbs}
+            />
+          ) : (
+            <div className="flex items-center flex-col">
+              <Lottie options={lottieAnimationOption} style={lottieStyle} />
+              {remainingDueCardsCount ? (
+                <div>
+                  Reviewed {completedTodayCount}{' '}
+                  {stringUtils.pluralize(completedTodayCount, 'card', 'cards')} today.{' '}
+                  <a onClick={handleReviewMoreClick}>Review more</a>
+                </div>
+              ) : (
+                <div>No cards left to review!</div>
+              )}
+            </div>
+          )}
+        </DialogBody>
+        <Footer
+          refUid={currentCardRefUid}
+          onPracticeClick={onPracticeClick}
+          onSkipClick={onSkipClick}
+          onPrevClick={onPrevClick}
+          hasBlockChildren={hasBlockChildren}
+          setShowAnswers={setShowAnswers}
+          showAnswers={showAnswers}
+          isDone={isDone}
+          hasCards={hasCards}
+          onCloseCallback={onCloseCallback}
+          currentCardData={currentCardData}
+          onStartCrammingClick={onStartCrammingClick}
+        />
+      </Dialog>
+    </MainContext.Provider>
   );
 };
 
