@@ -26,6 +26,7 @@ interface MainContextProps {
   onPracticeClick?: (props: any) => void;
 }
 export const MainContext = React.createContext<MainContextProps>({});
+const DEFAULT_INTERVAL_MULTIPLIER = 3;
 
 const PracticeOverlay = ({
   isOpen,
@@ -75,16 +76,29 @@ const PracticeOverlay = ({
   const hasBlockChildren = !!blockInfo.children && !!blockInfo.children.length;
   const [showAnswers, setShowAnswers] = React.useState(false);
   const [hasCloze, setHasCloze] = React.useState(true);
+
   const [reviewMode, setReviewMode] = React.useState<ReviewModes>(
     currentCardData?.reviewMode || ReviewModes.DefaultSpacedInterval
   );
   const [intervalMultiplier, setIntervalMultiplier] = React.useState<number>(
-    currentCardData?.intervalMultiplier || 3
+    currentCardData?.intervalMultiplier || DEFAULT_INTERVAL_MULTIPLIER
   );
   const [intervalMultiplierType, setIntervalMultiplierType] =
     React.useState<IntervalMultiplierType>(
       currentCardData?.intervalMultiplierType || IntervalMultiplierType.Days
     );
+
+  React.useEffect(() => {
+    if (currentCardData?.reviewMode === ReviewModes.FixedInterval) {
+      setReviewMode(currentCardData?.reviewMode);
+      setIntervalMultiplier(currentCardData?.intervalMultiplier);
+      setIntervalMultiplierType(currentCardData?.intervalMultiplierType);
+    } else {
+      setReviewMode(ReviewModes.DefaultSpacedInterval);
+      setIntervalMultiplier(DEFAULT_INTERVAL_MULTIPLIER);
+      setIntervalMultiplierType(IntervalMultiplierType.Days);
+    }
+  }, [currentCardData]);
 
   React.useEffect(() => {
     if (hasBlockChildren || hasCloze) {
