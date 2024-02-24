@@ -177,7 +177,7 @@ const Footer = ({
       onKeyDown={handleKeyDown}
       onKeyUp={handleKeyUp}
     >
-      <FooterActionsWrapper className="bp3-dialog-footer-actions flex-wrap gap-4 justify-center w-full mx-5  my-3">
+      <FooterActionsWrapper className="bp3-dialog-footer-actions flex-wrap gap-4 justify-center sm:justify-evenly w-full mx-5  my-3">
         {isDone || !hasCards ? (
           <FinishedControls
             onStartCrammingClick={onStartCrammingClick}
@@ -275,6 +275,7 @@ const GradingControlsWrapper = ({
       <ControlButton
         key="skip-button"
         className="text-base font-medium py-1"
+        wrapperClassName={`${isFixedIntervalMode ? 'sm:mr-auto' : ''}`}
         tooltipText={`Skip for now`}
         onClick={() => skipFn()}
         active={activeButtonKey === 'skip-button'}
@@ -285,24 +286,22 @@ const GradingControlsWrapper = ({
           <ButtonTags>S</ButtonTags>
         </span>
       </ControlButton>
-      <div className="flex justify-evenly gap-5">
-        {isFixedIntervalMode ? (
-          <FixedIntervalModeControls
-            activeButtonKey={activeButtonKey}
-            intervalPractice={intervalPractice}
-            isIntervalEditorOpen={isIntervalEditorOpen}
-            toggleIntervalEditorOpen={toggleIntervalEditorOpen}
-            intervalEstimates={intervalEstimates}
-          />
-        ) : (
-          <SpacedIntervalModeControls
-            activeButtonKey={activeButtonKey}
-            gradeFn={gradeFn}
-            intervalEstimates={intervalEstimates}
-          />
-        )}
-      </div>
-      <SetIntervalToggleWrapper>
+      {isFixedIntervalMode ? (
+        <FixedIntervalModeControls
+          activeButtonKey={activeButtonKey}
+          intervalPractice={intervalPractice}
+          isIntervalEditorOpen={isIntervalEditorOpen}
+          toggleIntervalEditorOpen={toggleIntervalEditorOpen}
+          intervalEstimates={intervalEstimates}
+        />
+      ) : (
+        <SpacedIntervalModeControls
+          activeButtonKey={activeButtonKey}
+          gradeFn={gradeFn}
+          intervalEstimates={intervalEstimates}
+        />
+      )}
+      <SetIntervalToggleWrapper className={`${isFixedIntervalMode ? 'sm:ml-auto' : ''}`}>
         {/* @ts-ignore */}
         <ControlButton
           icon={isFixedIntervalMode ? 'calendar' : 'history'}
@@ -425,13 +424,9 @@ const FixedIntervalModeControls = ({
   };
 
   return (
-    <div>
+    <>
       {/* @ts-expect-error */}
-      <Blueprint.Popover
-        isOpen={isIntervalEditorOpen}
-        onInteraction={onInteractionhandler}
-        className="mr-3"
-      >
+      <Blueprint.Popover isOpen={isIntervalEditorOpen} onInteraction={onInteractionhandler}>
         <ControlButton
           icon="time"
           className="text-base font-normal py-1"
@@ -454,7 +449,7 @@ const FixedIntervalModeControls = ({
       <ControlButton
         icon="tick"
         className="text-base font-medium py-1"
-        intent="primary"
+        intent="success"
         onClick={() => intervalPractice()}
         tooltipText={`Review ${intervalEstimates[0]?.nextDueDateFromNow}`}
         active={activeButtonKey === 'next-button'}
@@ -465,7 +460,7 @@ const FixedIntervalModeControls = ({
           <ButtonTags>SPACE</ButtonTags>
         </span>
       </ControlButton>
-    </div>
+    </>
   );
 };
 
@@ -551,10 +546,10 @@ const ControlButtonWrapper = styled(Blueprint.Button)`
   background: ${(props) => (props.active ? 'inherit' : 'white !important')};
 `;
 
-const ControlButton = ({ tooltipText, ...props }) => {
+const ControlButton = ({ tooltipText, wrapperClassName = '', ...props }) => {
   return (
     // @ts-ignore
-    <Tooltip content={tooltipText} placement="top">
+    <Tooltip content={tooltipText} placement="top" wrapperClassName={wrapperClassName}>
       <ControlButtonWrapper {...props} />
     </Tooltip>
   );
