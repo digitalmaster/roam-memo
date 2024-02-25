@@ -198,6 +198,13 @@ export const generateNewCardProps = ({ dateCreated = undefined } = {}): NewSessi
   reviewMode: ReviewModes.DefaultSpacedInterval,
 });
 
+const calculateDailyLimit = (dailyLimit: number, completedTodayCount: number) => {
+  if (!dailyLimit) return 0;
+
+  // Note never return 0 as a daily limit
+  return Math.max(1, dailyLimit - completedTodayCount);
+};
+
 /**
  *  Limit of cards to practice ensuring that due cards are always
  *  first but ~25% new cards are still practiced when limit is less than total due
@@ -235,7 +242,7 @@ export const selectPracticeData = ({
   const totalDueCards = dueCardsUids.length;
   const totalNewCards = newCardsUids.length;
   const totalCards = totalDueCards + totalNewCards;
-  dailyLimit = dailyLimit ? dailyLimit - completedTodayCount : dailyLimit;
+  dailyLimit = calculateDailyLimit(dailyLimit, completedTodayCount);
 
   if (!dailyLimit || isCramming || totalCards <= dailyLimit) {
     return {
