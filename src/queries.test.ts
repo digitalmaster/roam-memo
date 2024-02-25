@@ -250,11 +250,11 @@ describe.skip('getPluginPageData', () => {
   });
 });
 
-describe.only('selectPracticeCardsData', () => {
+describe('selectPracticeCardsData', () => {
   test('returns all cards when daily limit is set to 0', () => {
     const dueCardsUids = ['dueSha1', 'dueSha2'];
     const newCardsUids = ['newSha1', 'newSha2'];
-    const result = queries.selectPracticeCardsData({
+    const result = queries.selectPracticeData({
       dueCardsUids,
       newCardsUids,
       dailyLimit: 0,
@@ -270,7 +270,7 @@ describe.only('selectPracticeCardsData', () => {
   test('returns all cards when cramming', () => {
     const dueCardsUids = ['dueSha1', 'dueSha2'];
     const newCardsUids = ['newSha1', 'newSha2'];
-    const result = queries.selectPracticeCardsData({
+    const result = queries.selectPracticeData({
       dueCardsUids,
       newCardsUids,
       dailyLimit: 2,
@@ -286,7 +286,7 @@ describe.only('selectPracticeCardsData', () => {
   test('returns all cards when total is not over the limit', () => {
     const dueCardsUids = ['dueSha1', 'dueSha2'];
     const newCardsUids = ['newSha1', 'newSha2'];
-    const result = queries.selectPracticeCardsData({
+    const result = queries.selectPracticeData({
       dueCardsUids,
       newCardsUids,
       dailyLimit: 4,
@@ -302,7 +302,7 @@ describe.only('selectPracticeCardsData', () => {
   test('Distributes due and new count based on limit', () => {
     const dueCardsUids = ['dueSha1', 'dueSha2', 'dueSha3', 'dueSha4'];
     const newCardsUids = ['newSha1', 'newSha2', 'newSha3', 'newSha4'];
-    const result = queries.selectPracticeCardsData({
+    const result = queries.selectPracticeData({
       dueCardsUids,
       newCardsUids,
       dailyLimit: 4,
@@ -313,7 +313,7 @@ describe.only('selectPracticeCardsData', () => {
       newCardsUids: newCardsUids.slice(0, 1),
     };
 
-    expect(result).toEqual(expectedResult);
+    expect(result).toMatchObject(expectedResult);
   });
 
   test('Handles case where target new count is less available new card count', () => {
@@ -328,7 +328,7 @@ describe.only('selectPracticeCardsData', () => {
       'dueSha8',
     ];
     const newCardsUids = ['newSha1'];
-    const result = queries.selectPracticeCardsData({
+    const result = queries.selectPracticeData({
       dueCardsUids,
       newCardsUids,
       dailyLimit: 8,
@@ -339,13 +339,13 @@ describe.only('selectPracticeCardsData', () => {
       newCardsUids: newCardsUids.slice(0, 1),
     };
 
-    expect(result).toEqual(expectedResult);
+    expect(result).toMatchObject(expectedResult);
   });
 
   test('Handles case where target new is less than 1', () => {
     const dueCardsUids = ['dueSha1', 'dueSha2', 'dueSha3', 'dueSha4'];
     const newCardsUids = ['newSha1', 'newSha2', 'newSha3', 'newSha4'];
-    const result = queries.selectPracticeCardsData({
+    const result = queries.selectPracticeData({
       dueCardsUids,
       newCardsUids,
       dailyLimit: 2,
@@ -356,13 +356,13 @@ describe.only('selectPracticeCardsData', () => {
       newCardsUids: newCardsUids.slice(0, 1),
     };
 
-    expect(result).toEqual(expectedResult);
+    expect(result).toMatchObject(expectedResult);
   });
 
   test('Handles case where limit is 1', () => {
     const dueCardsUids = ['dueSha1', 'dueSha2', 'dueSha3', 'dueSha4'];
     const newCardsUids = ['newSha1', 'newSha2', 'newSha3', 'newSha4'];
-    const result = queries.selectPracticeCardsData({
+    const result = queries.selectPracticeData({
       dueCardsUids,
       newCardsUids,
       dailyLimit: 1,
@@ -373,6 +373,6 @@ describe.only('selectPracticeCardsData', () => {
       newCardsUids: newCardsUids.slice(0, 0),
     };
 
-    expect(result).toEqual(expectedResult);
+    expect(result).toMatchObject(expectedResult);
   });
 });

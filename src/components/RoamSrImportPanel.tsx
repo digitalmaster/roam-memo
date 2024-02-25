@@ -4,7 +4,7 @@ import * as queries from '~/queries';
 import * as asyncUtils from '~/utils/async';
 import styled from '@emotion/styled';
 import * as stringUtils from '~/utils/string';
-import { CompleteRecords, Records } from '~/models/session';
+import { CompleteRecords } from '~/models/session';
 
 const BorderColor = '#e5e7eb';
 
@@ -25,8 +25,8 @@ const SessionsTable = ({ sessions }) => {
           </tr>
         </thead>
         <tbody>
-          {sessions.map((session) => (
-            <tr>
+          {sessions.map((session, i) => (
+            <tr key={i}>
               <td>{session.grade}</td>
               <td>{stringUtils.toDateString(session.dateCreated)}</td>
               <td>{session.eFactor.toFixed(2)}</td>
@@ -47,16 +47,7 @@ const Divider = styled.div`
   border-bottom: 1px solid ${BorderColor};
 `;
 
-const Block = ({
-  uuid,
-  sessions,
-  isLast,
-  isFirst,
-  selectedUids,
-  setSelectedUids,
-  importedUids,
-  blockInfo,
-}) => {
+const Block = ({ uuid, sessions, isLast, isFirst, selectedUids, setSelectedUids, blockInfo }) => {
   const [isSelected, setIsSelected] = React.useState(false);
   const [isExpanded, setIsExpanded] = React.useState(isFirst ? true : false);
 
@@ -256,6 +247,7 @@ const TokenPage = ({ token, setToken, setShowImportPage, dataPageTitle }) => {
             <a
               href="https://roamresearch.com/#/app/developer-documentation/page/bmYYKQ4vf"
               target="_blank"
+              rel="noreferrer"
             >
               Click here
             </a>{' '}
@@ -305,12 +297,13 @@ const ImportProgressOverlay = ({
   selectedUids,
   importedUids,
 }) => {
-  if (!isImporting && !hasImported) return null;
   const selectedCount = selectedUids.length;
   const [toImportCount] = React.useState(selectedCount);
   const [startingImportCount] = React.useState(importedUids.length);
   const currentImportedCount = importedUids.length - startingImportCount;
   const finishedImporting = currentImportedCount === toImportCount;
+
+  if (!isImporting && !hasImported) return null;
 
   return (
     <div className="absolute inset-0 flex flex-col bg-white z-10">
@@ -463,13 +456,13 @@ const ImportPage = ({ dataPageTitle, token, setLaunchPanel }) => {
             .sort((uid) => (!importedUids.includes(uid) ? -1 : 1))
             .map((uuid, i, list) => (
               <Block
+                key={uuid}
                 uuid={uuid}
                 sessions={records[uuid]}
                 isLast={i === list.length - 1}
                 isFirst={i === 0}
                 selectedUids={selectedUids}
                 setSelectedUids={setSelectedUids}
-                importedUids={importedUids}
                 blockInfo={blockInfoMap[uuid]}
               />
             ))

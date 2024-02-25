@@ -10,7 +10,7 @@ const usePracticeCardsData = ({
   lastCompletedDate,
 }) => {
   const [practiceCardsUids, setPracticeCardsUids] = React.useState<RecordUid[]>([]);
-  const [practiceCardsData, setPracticeCardsData] = React.useState<Records | NewRecords>({});
+  const [practiceData, setPracticeData] = React.useState<Records | NewRecords>({});
 
   const [refetchTrigger, setRefetchTrigger] = React.useState(false);
   const [displayCardCounts, setDisplayCardCounts] = React.useState({ new: 0, due: 0 });
@@ -20,13 +20,13 @@ const usePracticeCardsData = ({
   React.useEffect(() => {
     (async () => {
       const {
-        cardsData,
+        pluginPageData,
         newCardsUids,
         dueCardsUids,
         allSelectedTagCardsUids,
         completedTodayCount,
         remainingDueCardsCount,
-      } = await queries.getPracticeCardData({
+      } = await queries.getPracticeData({
         selectedTag,
         dataPageTitle,
         dailyLimit,
@@ -35,12 +35,12 @@ const usePracticeCardsData = ({
       });
 
       setRemainingDueCardsCount(remainingDueCardsCount);
-      setPracticeCardsData(cardsData);
+      setPracticeData(pluginPageData);
       setCompletedTodayCount(completedTodayCount);
 
       if (isCramming) {
         setPracticeCardsUids(
-          Object.keys(cardsData).filter((uid) => allSelectedTagCardsUids.includes(uid))
+          Object.keys(pluginPageData).filter((uid) => allSelectedTagCardsUids.includes(uid))
         );
       } else {
         // Always practice due cards first
@@ -53,7 +53,7 @@ const usePracticeCardsData = ({
 
   return {
     practiceCardsUids,
-    practiceCardsData,
+    practiceData,
     displayCardCounts,
     fetchPracticeData: () => setRefetchTrigger((trigger) => !trigger),
     completedTodayCount,

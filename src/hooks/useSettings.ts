@@ -27,6 +27,7 @@ const useSettings = () => {
     window.roamMemo.extensionAPI.settings.panel.create(
       settingsPanelConfig({ settings, setSettings })
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setSettings, settings.dataPageTitle]);
 
   React.useEffect(() => {

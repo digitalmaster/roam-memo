@@ -14,7 +14,7 @@ const useCommandPaletteAction = ({ onShowPracticeOverlay }: CommandPaletteAction
     return () => {
       window.roamAlphaAPI.ui.commandPalette.removeCommand({ label: startLabel });
     };
-  }, []);
+  }, [onShowPracticeOverlay]);
 };
 
 export default useCommandPaletteAction;

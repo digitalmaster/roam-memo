@@ -18,7 +18,7 @@ const useOnBlockInteract = ({
       document.unbindLeave('textarea.rm-block-input', onLeaveCallback);
       document.unbindArrive('textarea.rm-block-input', onEnterCallback);
     };
-  }, [onLeaveCallback]);
+  }, [onEnterCallback, onLeaveCallback]);
 };
 
 export default useOnBlockInteract;

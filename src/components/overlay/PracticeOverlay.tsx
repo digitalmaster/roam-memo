@@ -6,13 +6,27 @@ import useBlockInfo from '~/hooks/useBlockInfo';
 import * as asyncUtils from '~/utils/async';
 import * as dateUtils from '~/utils/date';
 import * as stringUtils from '~/utils/string';
-import { generatePracticeData } from '~/practice';
 import Lottie from 'react-lottie';
 import doneAnimationData from '~/lotties/done.json';
 import Tooltip from '~/components/Tooltip';
 import mediaQueries from '~/utils/mediaQueries';
 
 import CardBlock from '~/components/overlay/CardBlock';
+import Footer from '~/components/overlay/Footer';
+import ButtonTags from '~/components/ButtonTags';
+import { IntervalMultiplierType, ReviewModes } from '~/models/session';
+
+interface MainContextProps {
+  reviewMode?: ReviewModes;
+  setReviewMode?: React.Dispatch<React.SetStateAction<ReviewModes>>;
+  intervalMultiplier?: number;
+  setIntervalMultiplier?: (multiplier: number) => void;
+  intervalMultiplierType?: IntervalMultiplierType;
+  setIntervalMultiplierType?: (type: IntervalMultiplierType) => void;
+  onPracticeClick?: (props: any) => void;
+}
+export const MainContext = React.createContext<MainContextProps>({});
+const DEFAULT_INTERVAL_MULTIPLIER = 3;
 
 const PracticeOverlay = ({
   isOpen,
@@ -20,8 +34,8 @@ const PracticeOverlay = ({
   selectedTag,
   onCloseCallback,
   practiceCardUids,
-  practiceCardsData,
-  handleGradeClick,
+  practiceData,
+  handlePracticeClick,
   handleMemoTagChange,
   handleReviewMoreClick,
   isCramming,
@@ -44,7 +58,7 @@ const PracticeOverlay = ({
     dailyLimit && completedTodayCount && !isDone && !reviewCountReset ? completedTodayCount : 0;
 
   const currentCardRefUid = practiceCardUids[currentIndex];
-  const currentCardData = practiceCardsData[currentCardRefUid];
+  const currentCardData = practiceData[currentCardRefUid];
 
   const isNew = currentCardData?.isNew;
   const nextDueDate = currentCardData?.nextDueDate;
@@ -62,6 +76,29 @@ const PracticeOverlay = ({
   const hasBlockChildren = !!blockInfo.children && !!blockInfo.children.length;
   const [showAnswers, setShowAnswers] = React.useState(false);
   const [hasCloze, setHasCloze] = React.useState(true);
+
+  const [reviewMode, setReviewMode] = React.useState<ReviewModes>(
+    currentCardData?.reviewMode || ReviewModes.DefaultSpacedInterval
+  );
+  const [intervalMultiplier, setIntervalMultiplier] = React.useState<number>(
+    currentCardData?.intervalMultiplier || DEFAULT_INTERVAL_MULTIPLIER
+  );
+  const [intervalMultiplierType, setIntervalMultiplierType] =
+    React.useState<IntervalMultiplierType>(
+      currentCardData?.intervalMultiplierType || IntervalMultiplierType.Days
+    );
+
+  React.useEffect(() => {
+    if (currentCardData?.reviewMode === ReviewModes.FixedInterval) {
+      setReviewMode(currentCardData?.reviewMode);
+      setIntervalMultiplier(currentCardData?.intervalMultiplier);
+      setIntervalMultiplierType(currentCardData?.intervalMultiplierType);
+    } else {
+      setReviewMode(ReviewModes.DefaultSpacedInterval);
+      setIntervalMultiplier(DEFAULT_INTERVAL_MULTIPLIER);
+      setIntervalMultiplierType(IntervalMultiplierType.Days);
+    }
+  }, [currentCardData]);
 
   React.useEffect(() => {
     if (hasBlockChildren || hasCloze) {
@@ -95,14 +132,21 @@ const PracticeOverlay = ({
     }
   };
 
-  const onGradeClick = React.useCallback(
+  const onPracticeClick = React.useCallback(
     (props) => {
       if (isDone) return;
-      handleGradeClick(props);
+      handlePracticeClick({ ...props, reviewMode, intervalMultiplier, intervalMultiplierType });
       setShowAnswers(false);
       setCurrentIndex(currentIndex + 1);
     },
-    [currentIndex, handleGradeClick, isDone]
+    [
+      currentIndex,
+      handlePracticeClick,
+      isDone,
+      reviewMode,
+      intervalMultiplier,
+      intervalMultiplierType,
+    ]
   );
 
   const onSkipClick = React.useCallback(() => {
@@ -152,69 +196,81 @@ const PracticeOverlay = ({
   Blueprint.useHotkeys(hotkeys);
 
   return (
-    // @ts-ignore
-    <Dialog
-      isOpen={isOpen}
-      onClose={onCloseCallback}
-      className="pb-0 bg-white"
-      canEscapeKeyClose={false}
+    <MainContext.Provider
+      value={{
+        reviewMode,
+        setReviewMode,
+        intervalMultiplier,
+        setIntervalMultiplier,
+        intervalMultiplierType,
+        setIntervalMultiplierType,
+        onPracticeClick,
+      }}
     >
-      <Header
-        className="bp3-dialog-header outline-none focus:outline-none focus-visible:outline-none"
-        tagsList={tagsList}
-        selectedTag={selectedTag}
-        currentIndex={currentIndex}
-        totalCardsCount={totalCardsCount}
-        onCloseCallback={onCloseCallback}
-        onTagChange={onTagChange}
-        status={status}
-        isDone={isDone}
-        nextDueDate={nextDueDate}
-        showBreadcrumbs={showBreadcrumbs}
-        setShowBreadcrumbs={setShowBreadcrumbs}
-        isCramming={isCramming}
-        dailyLimitDelta={dailyLimitDelta}
-      />
+      {/* @ts-ignore */}
+      <Dialog
+        isOpen={isOpen}
+        onClose={onCloseCallback}
+        className="pb-0 bg-white"
+        canEscapeKeyClose={false}
+      >
+        <Header
+          className="bp3-dialog-header outline-none focus:outline-none focus-visible:outline-none"
+          tagsList={tagsList}
+          selectedTag={selectedTag}
+          currentIndex={currentIndex}
+          totalCardsCount={totalCardsCount}
+          onCloseCallback={onCloseCallback}
+          onTagChange={onTagChange}
+          status={status}
+          isDone={isDone}
+          nextDueDate={nextDueDate}
+          showBreadcrumbs={showBreadcrumbs}
+          setShowBreadcrumbs={setShowBreadcrumbs}
+          isCramming={isCramming}
+          dailyLimitDelta={dailyLimitDelta}
+        />
 
-      <DialogBody className="bp3-dialog-body overflow-y-scroll m-0 pt-6 pb-8 px-4">
-        {currentCardRefUid ? (
-          <CardBlock
-            refUid={currentCardRefUid}
-            showAnswers={showAnswers}
-            setHasCloze={setHasCloze}
-            breadcrumbs={blockInfo.breadcrumbs}
-            showBreadcrumbs={showBreadcrumbs}
-          />
-        ) : (
-          <div className="flex items-center flex-col">
-            <Lottie options={lottieAnimationOption} style={lottieStyle} />
-            {remainingDueCardsCount ? (
-              <div>
-                Reviewed {completedTodayCount}{' '}
-                {stringUtils.pluralize(completedTodayCount, 'card', 'cards')} today.{' '}
-                <a onClick={handleReviewMoreClick}>Review more</a>
-              </div>
-            ) : (
-              <div>No cards left to review!</div>
-            )}
-          </div>
-        )}
-      </DialogBody>
-      <Footer
-        refUid={currentCardRefUid}
-        onGradeClick={onGradeClick}
-        onSkipClick={onSkipClick}
-        onPrevClick={onPrevClick}
-        hasBlockChildren={hasBlockChildren}
-        setShowAnswers={setShowAnswers}
-        showAnswers={showAnswers}
-        isDone={isDone}
-        hasCards={hasCards}
-        onCloseCallback={onCloseCallback}
-        currentCardData={currentCardData}
-        onStartCrammingClick={onStartCrammingClick}
-      />
-    </Dialog>
+        <DialogBody className="bp3-dialog-body overflow-y-scroll m-0 pt-6 pb-8 px-4">
+          {currentCardRefUid ? (
+            <CardBlock
+              refUid={currentCardRefUid}
+              showAnswers={showAnswers}
+              setHasCloze={setHasCloze}
+              breadcrumbs={blockInfo.breadcrumbs}
+              showBreadcrumbs={showBreadcrumbs}
+            />
+          ) : (
+            <div className="flex items-center flex-col">
+              <Lottie options={lottieAnimationOption} style={lottieStyle} />
+              {remainingDueCardsCount ? (
+                <div>
+                  Reviewed {completedTodayCount}{' '}
+                  {stringUtils.pluralize(completedTodayCount, 'card', 'cards')} today.{' '}
+                  <a onClick={handleReviewMoreClick}>Review more</a>
+                </div>
+              ) : (
+                <div>No cards left to review!</div>
+              )}
+            </div>
+          )}
+        </DialogBody>
+        <Footer
+          refUid={currentCardRefUid}
+          onPracticeClick={onPracticeClick}
+          onSkipClick={onSkipClick}
+          onPrevClick={onPrevClick}
+          hasBlockChildren={hasBlockChildren}
+          setShowAnswers={setShowAnswers}
+          showAnswers={showAnswers}
+          isDone={isDone}
+          hasCards={hasCards}
+          onCloseCallback={onCloseCallback}
+          currentCardData={currentCardData}
+          onStartCrammingClick={onStartCrammingClick}
+        />
+      </Dialog>
+    </MainContext.Provider>
   );
 };
 
@@ -412,300 +468,4 @@ const Header = ({
   );
 };
 
-const FooterWrapper = styled.div`
-  background-color: #f6f9fd;
-  min-height: 50px;
-  border-top: 1px solid rgba(16, 22, 26, 0.1);
-
-  & .bp3-button-text {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-`;
-
-const ButtonTags = styled.span<{ kind?: 'light' }>`
-  background-color: ${({ kind }) =>
-    kind === 'light' ? 'rgba(138, 155, 168, 0.2)' : 'rgba(138, 155, 168, 0.1)'};
-  color: #abbbc9;
-  text-transform: uppercase;
-  font-size: 9px;
-  padding: 1px 2px;
-  border-radius: 2px;
-  position: relative;
-  top: -0.5px;
-`;
-
-const ControlButtonWrapper = styled(Blueprint.Button)`
-  background: ${(props) => (props.active ? 'inherit' : 'white !important')};
-`;
-
-const ControlButton = ({ tooltipText, ...props }) => {
-  return (
-    // @ts-ignore
-    <Tooltip content={tooltipText} placement="top">
-      <ControlButtonWrapper {...props} />
-    </Tooltip>
-  );
-};
-
-const Footer = ({
-  hasBlockChildren,
-  setShowAnswers,
-  showAnswers,
-  refUid,
-  onGradeClick,
-  onSkipClick,
-  onPrevClick,
-  isDone,
-  hasCards,
-  onCloseCallback,
-  currentCardData,
-  onStartCrammingClick,
-}) => {
-  // So we can flash the activated button when using keyboard shortcuts before transitioning
-  const [activeButtonKey, setActiveButtonKey] = React.useState(null);
-  const activateButtonFn = async (key, callbackFn) => {
-    setActiveButtonKey(key);
-    await asyncUtils.sleep(150);
-    callbackFn();
-    setActiveButtonKey(null);
-  };
-
-  const showAnswerFn = React.useMemo(() => {
-    return () => setShowAnswers(true);
-  }, [setShowAnswers]);
-  const gradeFn = React.useMemo(
-    () => (grade) => {
-      let key;
-      switch (grade) {
-        case 0:
-          key = 'forgot-button';
-          break;
-        case 2:
-          key = 'hard-button';
-          break;
-        case 4:
-          key = 'good-button';
-          break;
-        case 5:
-          key = 'perfect-button';
-          break;
-
-        default:
-          break;
-      }
-      activateButtonFn(key, () => onGradeClick({ grade, refUid: refUid }));
-    },
-    [onGradeClick, refUid]
-  );
-  const skipFn = React.useMemo(
-    () => () => {
-      let key = 'skip-button';
-      activateButtonFn(key, () => onSkipClick());
-    },
-    [onSkipClick]
-  );
-
-  const hotkeys = React.useMemo(
-    () => [
-      {
-        combo: 'space',
-        global: true,
-        label: 'Show Block Children',
-        onKeyDown: () => {
-          if (!showAnswers) {
-            activateButtonFn('space-button', showAnswerFn);
-          } else {
-            gradeFn(5);
-          }
-        },
-      },
-      {
-        combo: 'S',
-        global: true,
-        label: 'Skip',
-        onKeyDown: skipFn,
-      },
-      {
-        combo: 'right',
-        global: true,
-        label: 'Skip',
-        onKeyDown: skipFn,
-      },
-      {
-        combo: 'left',
-        global: true,
-        label: 'Previous',
-        onKeyDown: onPrevClick,
-      },
-      {
-        combo: 'F',
-        global: true,
-        label: 'Grade 0',
-        onKeyDown: () => gradeFn(0),
-      },
-      {
-        combo: 'H',
-        global: true,
-        label: 'Grade 2',
-        onKeyDown: () => gradeFn(2),
-      },
-      {
-        combo: 'G',
-        global: true,
-        label: 'Grade 4',
-        onKeyDown: () => gradeFn(4),
-      },
-    ],
-    [skipFn, hasBlockChildren, showAnswers, showAnswerFn, gradeFn]
-  );
-  const { handleKeyDown, handleKeyUp } = Blueprint.useHotkeys(hotkeys);
-
-  const [intervalEstimates, setIntervalEstimates] = React.useState({});
-  React.useEffect(() => {
-    if (!currentCardData) return;
-
-    const grades = [0, 1, 2, 3, 4, 5];
-    const { interval, repetitions, eFactor } = currentCardData;
-    const estimates = {};
-
-    for (const grade of grades) {
-      const practiceResultData = generatePracticeData({
-        grade,
-        interval,
-        repetitions,
-        eFactor,
-        dateCreated: new Date(),
-      });
-      estimates[grade] = practiceResultData;
-    }
-
-    setIntervalEstimates(estimates);
-  }, [currentCardData]);
-
-  return (
-    <FooterWrapper
-      className="bp3-multistep-dialog-footer flex items-center justify-center rounded-b-md p-0"
-      onKeyDown={handleKeyDown}
-      onKeyUp={handleKeyUp}
-    >
-      <FooterActionsWrapper className="bp3-dialog-footer-actions flex-wrap gap-4 justify-evenly w-full mx-3  my-3">
-        {isDone || !hasCards ? (
-          <>
-            <Tooltip content="Review all cards without waiting for scheduling" placement="top">
-              <Blueprint.Button
-                className="text-base font-medium py-1"
-                intent="none"
-                onClick={onStartCrammingClick}
-                outlined
-              >
-                Continue Cramming
-              </Blueprint.Button>
-            </Tooltip>
-            <Blueprint.Button
-              className="text-base font-medium py-1"
-              intent="primary"
-              onClick={onCloseCallback}
-              outlined
-            >
-              Close
-            </Blueprint.Button>
-          </>
-        ) : !showAnswers ? (
-          // @ts-ignore
-          <ControlButton
-            className="text-base font-medium py-1"
-            intent="none"
-            onClick={() => {
-              activateButtonFn('space-button', showAnswerFn);
-            }}
-            active={activeButtonKey === 'space-button'}
-            outlined
-          >
-            Show Answer{' '}
-            <span className="ml-2">
-              <ButtonTags>SPACE</ButtonTags>
-            </span>
-          </ControlButton>
-        ) : (
-          <>
-            <ControlButton
-              key="forget-button"
-              className="text-base font-medium py-1"
-              tooltipText={`Skip for now`}
-              onClick={() => skipFn()}
-              active={activeButtonKey === 'skip-button'}
-              outlined
-            >
-              Skip{' '}
-              <span className="ml-2">
-                <ButtonTags>S</ButtonTags>
-              </span>
-            </ControlButton>
-            <ControlButton
-              key="forget-button"
-              className="text-base font-medium py-1"
-              intent="danger"
-              tooltipText={`Review ${intervalEstimates[0]?.nextDueDateFromNow}`}
-              onClick={() => gradeFn(0)}
-              active={activeButtonKey === 'forgot-button'}
-              outlined
-            >
-              Forgot{' '}
-              <span className="ml-2">
-                <ButtonTags>F</ButtonTags>
-              </span>
-            </ControlButton>
-            <ControlButton
-              className="text-base font-medium py-1"
-              intent="warning"
-              onClick={() => gradeFn(2)}
-              tooltipText={`Review ${intervalEstimates[2]?.nextDueDateFromNow}`}
-              active={activeButtonKey === 'hard-button'}
-              outlined
-            >
-              Hard{' '}
-              <span className="ml-2">
-                <ButtonTags>H</ButtonTags>
-              </span>
-            </ControlButton>
-            <ControlButton
-              className="text-base font-medium py-1"
-              intent="primary"
-              onClick={() => gradeFn(4)}
-              tooltipText={`Review ${intervalEstimates[4]?.nextDueDateFromNow}`}
-              active={activeButtonKey === 'good-button'}
-              outlined
-            >
-              Good{' '}
-              <span className="ml-2">
-                <ButtonTags>G</ButtonTags>
-              </span>
-            </ControlButton>
-            <ControlButton
-              className="text-base font-medium py-1"
-              intent="success"
-              onClick={() => gradeFn(5)}
-              tooltipText={`Review ${intervalEstimates[5]?.nextDueDateFromNow}`}
-              active={activeButtonKey === 'perfect-button'}
-              outlined
-            >
-              Perfect{' '}
-              <span className="ml-2">
-                <ButtonTags>SPACE</ButtonTags>
-              </span>
-            </ControlButton>
-          </>
-        )}
-      </FooterActionsWrapper>
-    </FooterWrapper>
-  );
-};
-
-const FooterActionsWrapper = styled.div`
-  &.bp3-dialog-footer-actions .bp3-button {
-    margin-left: 0;
-  }
-`;
 export default PracticeOverlay;

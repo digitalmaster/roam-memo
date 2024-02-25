@@ -15,3 +15,13 @@ export const pluralize = (value: number, singular: string, plural: string) => {
   if (value === 1) return singular;
   return plural;
 };
+
+export const isNumeric = (str) => {
+  if (typeof str != 'string') return false; // we only process strings!
+
+  return (
+    // @ts-expect-error we expect data to not be number
+    !isNaN(str) && // use type coercion to parse the _entirety_ of the string (`parseFloat` alone does not do this)...
+    !isNaN(parseFloat(str))
+  );
+};
