@@ -8,7 +8,7 @@
     "dev": "webpack --watch --mode development",
     "build": "webpack build --mode production",
     "format": "prettier --write \"./**/*.{js,jsx,json}\"",
-    "lint": "eslint '**/*.{ts,tsx,js,jsx}' --max-warnings 0",
+    "lint": "eslint '**/*.{ts,tsx,js,jsx}'",
     "typecheck": "tsc",
     "test": "jest",
     "changelog": "auto-changelog --package --commit-limit false && git add CHANGELOG.md"

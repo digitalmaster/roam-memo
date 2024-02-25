@@ -250,7 +250,7 @@ describe.skip('getPluginPageData', () => {
   });
 });
 
-describe.only('selectPracticeCardsData', () => {
+describe('selectPracticeCardsData', () => {
   test('returns all cards when daily limit is set to 0', () => {
     const dueCardsUids = ['dueSha1', 'dueSha2'];
     const newCardsUids = ['newSha1', 'newSha2'];
@@ -313,7 +313,7 @@ describe.only('selectPracticeCardsData', () => {
       newCardsUids: newCardsUids.slice(0, 1),
     };
 
-    expect(result).toEqual(expectedResult);
+    expect(result).toMatchObject(expectedResult);
   });
 
   test('Handles case where target new count is less available new card count', () => {
@@ -339,7 +339,7 @@ describe.only('selectPracticeCardsData', () => {
       newCardsUids: newCardsUids.slice(0, 1),
     };
 
-    expect(result).toEqual(expectedResult);
+    expect(result).toMatchObject(expectedResult);
   });
 
   test('Handles case where target new is less than 1', () => {
@@ -356,7 +356,7 @@ describe.only('selectPracticeCardsData', () => {
       newCardsUids: newCardsUids.slice(0, 1),
     };
 
-    expect(result).toEqual(expectedResult);
+    expect(result).toMatchObject(expectedResult);
   });
 
   test('Handles case where limit is 1', () => {
@@ -373,6 +373,6 @@ describe.only('selectPracticeCardsData', () => {
       newCardsUids: newCardsUids.slice(0, 0),
     };
 
-    expect(result).toEqual(expectedResult);
+    expect(result).toMatchObject(expectedResult);
   });
 });

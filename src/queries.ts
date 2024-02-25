@@ -214,15 +214,15 @@ interface SelectedPracticeDataProps {
   dueCardsUids: RecordUid[];
   newCardsUids: RecordUid[];
   dailyLimit: number;
-  completedTodayCount: number;
   isCramming: boolean;
+  completedTodayCount?: number;
   lastCompletedDate?: Date;
 }
 export const selectPracticeData = ({
   dueCardsUids,
   newCardsUids,
   dailyLimit,
-  completedTodayCount,
+  completedTodayCount = 0,
   isCramming,
   lastCompletedDate,
 }: SelectedPracticeDataProps) => {
