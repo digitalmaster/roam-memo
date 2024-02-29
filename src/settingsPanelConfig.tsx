@@ -65,6 +65,17 @@ const settingsPanelConfig = ({ settings, setSettings }) => {
           },
         },
       },
+      {
+        id: 'rtlEnabled',
+        name: 'Right-to-Left (RTL) Enabled',
+        description: 'Enable RTL for languages like Arabic, Hebrew, etc.',
+        action: {
+          type: 'switch',
+          onChange: (e) => {
+            processChange({ key: 'rtlEnabled', value: e.target.checked });
+          },
+        },
+      },
     ],
   };
 };

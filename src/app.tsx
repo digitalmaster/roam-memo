@@ -25,7 +25,7 @@ const App = () => {
   const [showPracticeOverlay, setShowPracticeOverlay] = React.useState(false);
   const [isCramming, setIsCramming] = React.useState(false);
 
-  const { tagsListString, dataPageTitle, dailyLimit } = useSettings();
+  const { tagsListString, dataPageTitle, dailyLimit, rtlEnabled } = useSettings();
   const { selectedTag, setSelectedTag, tagsList } = useTags({ tagsListString });
 
   const {
@@ -160,6 +160,7 @@ const App = () => {
             completedTodayCount={completedTodayCount}
             dailyLimit={dailyLimit}
             remainingDueCardsCount={remainingDueCardsCount}
+            rtlEnabled={rtlEnabled}
           />
         )}
       </>
