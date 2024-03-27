@@ -3,6 +3,9 @@
 /extension.js.map
 /extension.js.LICENSE.txt
 
+# Change log debug data
+changelog-data.json
+
 # Ignore: Just adding so that we get tailwindcss completions in vscode
 tailwind.config.js
 
