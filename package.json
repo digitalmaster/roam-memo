@@ -11,7 +11,9 @@
     "lint": "eslint '**/*.{ts,tsx,js,jsx}'",
     "typecheck": "tsc",
     "test": "jest",
-    "changelog": "auto-changelog --package --commit-limit false && git add CHANGELOG.md"
+    "changelog-generate": "auto-changelog --starting-version v16 --handlebars-setup changelog-setup.js --template changelog-template.hbs --commit-limit false",
+    "changelog-data": "npm run changelog-generate -- --template json --output changelog-data.json",
+    "changelog": "npm run changelog-data && npm run changelog-generate && git add CHANGELOG.md"
   },
   "jest": {
     "testEnvironment": "jsdom",
