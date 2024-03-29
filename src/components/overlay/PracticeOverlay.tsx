@@ -5,6 +5,7 @@ import styled from '@emotion/styled';
 import useBlockInfo from '~/hooks/useBlockInfo';
 import * as asyncUtils from '~/utils/async';
 import * as dateUtils from '~/utils/date';
+import * as stringUtils from '~/utils/string';
 import { generatePracticeData } from '~/practice';
 import Lottie from 'react-lottie';
 import doneAnimationData from '~/lotties/done.json';
@@ -22,11 +23,14 @@ const PracticeOverlay = ({
   practiceCardsData,
   handleGradeClick,
   handleMemoTagChange,
+  handleReviewMoreClick,
   isCramming,
   setIsCramming,
-  dailyLimit,
   saveCacheData,
   lastCompletedDate,
+  dailyLimit,
+  completedTodayCount,
+  remainingDueCardsCount,
 }) => {
   const [currentIndex, setCurrentIndex] = React.useState(0);
   const totalCardsCount = practiceCardUids.length;
@@ -34,6 +38,10 @@ const PracticeOverlay = ({
   const isDone = currentIndex > practiceCardUids.length - 1;
   const isLastCompleteDateToday = dateUtils.isSameDay(lastCompletedDate, new Date());
   const isFirst = currentIndex === 0;
+  const reviewCountReset = completedTodayCount && !lastCompletedDate;
+
+  const dailyLimitDelta =
+    dailyLimit && completedTodayCount && !isDone && !reviewCountReset ? completedTodayCount : 0;
 
   const currentCardRefUid = practiceCardUids[currentIndex];
   const currentCardData = practiceCardsData[currentCardRefUid];
@@ -165,6 +173,7 @@ const PracticeOverlay = ({
         showBreadcrumbs={showBreadcrumbs}
         setShowBreadcrumbs={setShowBreadcrumbs}
         isCramming={isCramming}
+        dailyLimitDelta={dailyLimitDelta}
       />
 
       <DialogBody className="bp3-dialog-body overflow-y-scroll m-0 pt-6 pb-8 px-4">
@@ -179,7 +188,15 @@ const PracticeOverlay = ({
         ) : (
           <div className="flex items-center flex-col">
             <Lottie options={lottieAnimationOption} style={lottieStyle} />
-            <div>No cards left to review!</div>
+            {remainingDueCardsCount ? (
+              <div>
+                Reviewed {completedTodayCount}{' '}
+                {stringUtils.pluralize(completedTodayCount, 'card', 'cards')} today.{' '}
+                <a onClick={handleReviewMoreClick}>Review more</a>
+              </div>
+            ) : (
+              <div>No cards left to review!</div>
+            )}
           </div>
         )}
       </DialogBody>
@@ -348,6 +365,7 @@ const Header = ({
   showBreadcrumbs,
   setShowBreadcrumbs,
   isCramming,
+  dailyLimitDelta,
 }) => {
   return (
     <HeaderWrapper className={className} tabIndex={0}>
@@ -374,9 +392,15 @@ const Header = ({
         )}
         <StatusBadge status={status} nextDueDate={nextDueDate} isCramming={isCramming} />
         <span className="text-sm mx-2 font-medium">
-          <span>{totalCardsCount === 0 ? 0 : isDone ? currentIndex : currentIndex + 1}</span>
+          <span>
+            {totalCardsCount === 0
+              ? 0
+              : isDone
+              ? currentIndex + dailyLimitDelta
+              : currentIndex + 1 + dailyLimitDelta}
+          </span>
           <span className="opacity-50 mx-1">/</span>
-          <span className="opacity-50">{totalCardsCount}</span>
+          <span className="opacity-50">{totalCardsCount + dailyLimitDelta}</span>
         </span>
         <button
           aria-label="Close"

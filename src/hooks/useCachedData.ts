@@ -16,6 +16,10 @@ const useCachedData = ({
   const [data, setData] = React.useState(defaultData);
   const [refetchTrigger, setRefetchTrigger] = React.useState(0);
 
+  const deleteCacheDataKey = async (toDeleteKeyId: string) => {
+    await queries.deleteCacheDataKey({ dataPageTitle, selectedTag, toDeleteKeyId });
+  };
+
   React.useEffect(() => {
     const getData = async () => {
       const result = await queries.getPluginPageCachedData({ dataPageTitle, selectedTag });
@@ -31,6 +35,7 @@ const useCachedData = ({
       await saveCacheData({ dataPageTitle, data, selectedTag });
       setRefetchTrigger((prev) => prev + 1);
     },
+    deleteCacheDataKey,
     fetchCacheData: () => setRefetchTrigger((prev) => prev + 1),
     data,
   };
