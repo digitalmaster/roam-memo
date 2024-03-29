@@ -45,6 +45,7 @@ const PracticeOverlay = ({
   dailyLimit,
   completedTodayCount,
   remainingDueCardsCount,
+  rtlEnabled,
 }) => {
   const [currentIndex, setCurrentIndex] = React.useState(0);
   const totalCardsCount = practiceCardUids.length;
@@ -231,7 +232,10 @@ const PracticeOverlay = ({
           dailyLimitDelta={dailyLimitDelta}
         />
 
-        <DialogBody className="bp3-dialog-body overflow-y-scroll m-0 pt-6 pb-8 px-4">
+        <DialogBody
+          className="bp3-dialog-body overflow-y-scroll m-0 pt-6 pb-8 px-4"
+          dir={rtlEnabled ? 'rtl' : undefined}
+        >
           {currentCardRefUid ? (
             <CardBlock
               refUid={currentCardRefUid}
@@ -260,7 +264,6 @@ const PracticeOverlay = ({
           onPracticeClick={onPracticeClick}
           onSkipClick={onSkipClick}
           onPrevClick={onPrevClick}
-          hasBlockChildren={hasBlockChildren}
           setShowAnswers={setShowAnswers}
           showAnswers={showAnswers}
           isDone={isDone}

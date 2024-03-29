@@ -4,7 +4,8 @@ import settingsPanelConfig from '~/settingsPanelConfig';
 export const defaultSettings = {
   tagsListString: 'memo',
   dataPageTitle: 'roam/memo',
-  dailyLimit: 0, // 0 = no limit
+  dailyLimit: 0, // 0 = no limit,
+  rtlEnabled: false,
 };
 
 // @TODO: Refactor/Hoist this so we can call useSettings in multiple places
