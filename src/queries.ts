@@ -37,6 +37,17 @@ const getPageReferenceIds = async (selectedTag, dataPageTitle): Promise<string[]
   return results;
 };
 
+const getSelectedTagPageBlocksIds = async (selectedTag): Promise<string[]> => {
+  const queryResults = await getChildBlocksOnPage(selectedTag);
+
+  if (!queryResults.length) return [];
+
+  const children = queryResults[0][0].children;
+  const filteredChildren = children.filter((child) => !!child.string);
+
+  return filteredChildren.map((arr) => arr.uid);
+};
+
 const mapPluginPageDataLatest = (queryResultsData): Records =>
   queryResultsData
     .map((arr) => arr[0])[0]
@@ -284,13 +295,18 @@ export const getPracticeData = async ({
     dataPageTitle,
     limitToLatest: true,
   })) as Records;
+
+  // Get all the cards for the selected tag
   const selectedTagReferencesIds = await getPageReferenceIds(selectedTag, dataPageTitle);
+  const selectedTagPageBlocksIds = await getSelectedTagPageBlocksIds(selectedTag);
+  const allSelectedTagCardsUids = selectedTagReferencesIds.concat(selectedTagPageBlocksIds);
   const selectedTagCardsData = Object.keys(pluginPageData).reduce((acc, cur) => {
-    if (selectedTagReferencesIds.indexOf(cur) > -1) {
+    if (allSelectedTagCardsUids.indexOf(cur) > -1) {
       acc[cur] = pluginPageData[cur];
     }
     return acc;
   }, {});
+
   const newCardsUids: RecordUid[] = [];
 
   // Filter out due cards that aren't references to the currently selected tag
@@ -312,7 +328,7 @@ export const getPracticeData = async ({
   });
 
   // Create new cards for all referenced cards with no data yet
-  selectedTagReferencesIds.forEach((referenceId) => {
+  allSelectedTagCardsUids.forEach((referenceId) => {
     if (!pluginPageData[referenceId]) {
       // New
       newCardsUids.push(referenceId);
@@ -329,7 +345,7 @@ export const getPracticeData = async ({
 
   return {
     pluginPageData,
-    allSelectedTagCardsUids: selectedTagReferencesIds,
+    allSelectedTagCardsUids,
     completedTodayCount,
     ...selectPracticeData({
       dueCardsUids,
@@ -483,25 +499,24 @@ const getChildBlock = (
   }
 };
 
-// eslint-disable-next-line
-const getChildrenBlocks = (parent_uid) => {
-  // returns the uids of children blocks underneath a specific parent block
-  // _parent_uid_: the uid of the parent block.
-  const results = window.roamAlphaAPI.q(
-    `
-    [:find ?child_uid ?child_order
-     :in $ ?parent_uid
-     :where
-     [?parent :block/uid ?parent_uid]
-     [?parent :block/children ?child]
-     [?child :block/uid ?child_uid]
-     [?child :block/order ?child_order]
-    ]`,
-    parent_uid
-  );
-  if (results.length) {
-    return results.map((result) => ({ uid: result[0], order: result[1] }));
-  }
+const getChildBlocksOnPage = async (page) => {
+  const q = `[
+    :find (pull ?tagPage [
+      :block/uid
+      :block/string
+      :block/children
+      {:block/children ...}])
+    :in $ ?tag
+    :where
+      [?tagPage :node/title ?tag]
+      [?tagPage :block/children ?tagPageChildren]
+    ]`;
+
+  const queryResults = await window.roamAlphaAPI.q(q, page);
+
+  if (!queryResults.length) return [];
+
+  return queryResults;
 };
 
 const createChildBlock = async (parent_uid, block, order, blockProps = {}) => {

@@ -22,7 +22,9 @@ To use the Memo plugin for studying flashcards:
 2. Open the plugin from the side panel.
 3. Begin reviewing the flashcards.
 
-> If the block nested blocks they will be treated as answers and initially hidden. Click the "Show Answer" button to reveal them.
+> Tip: If the block nested blocks they will be treated as answers and initially hidden. Click the "Show Answer" button to reveal them.
+
+> Tip: Blocks added directly to the page are automatically added as cards without needed to add the page tag to them
 
 ## Features
 
@@ -89,6 +91,6 @@ Please just create issues [here](https://github.com/digitalmaster/roam-memo/issu
 
 ---
 
-I build this primarily because I wanted it to exist but it brings me great joy to see so many of you finding it useful too 🤓🥰
+I built this primarily because I wanted it to exist. That said, it brings me great joy to see so many of you finding it useful too 🤓🥰
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/H2H0YPGK)
