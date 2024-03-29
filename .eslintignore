@@ -1,2 +1,4 @@
 # node_modules/
 /extension.js
+tailwind.config.js
+webpack.config.js
