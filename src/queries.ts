@@ -37,12 +37,12 @@ const mapPluginPageDataLatest = (queryResultsData): Records =>
       const uid = getStringBetween(cur.string, '((', '))');
       acc[uid] = {};
 
-      // Add date
       if (!cur.children) return acc;
-      acc[uid].dateCreated = parseRoamDateString(
-        getStringBetween(cur.children[0].string, '[[', ']]')
-      );
+
       const latestChild = cur.children.find((child) => child.order === 0);
+
+      acc[uid].dateCreated = parseRoamDateString(getStringBetween(latestChild.string, '[[', ']]'));
+
       for (const field of latestChild.children) {
         const [key, value] = parseConfigString(field.string);
 
