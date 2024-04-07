@@ -28,11 +28,8 @@ const useTags = ({ tagsListString }: { tagsListString: string }) => {
   React.useEffect(() => {
     const tagsList = splitStringByCommas(tagsListString);
     setTagsList(tagsList);
-  }, [tagsListString, setTagsList]);
-
-  React.useEffect(() => {
     setSelectedTag(tagsList[0]);
-  }, [tagsList]);
+  }, [tagsListString, setTagsList]);
 
   return {
     selectedTag,

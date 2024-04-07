@@ -15,7 +15,8 @@ const Tag = styled(Blueprint.Tag)`
 `;
 
 const SidePandelWidget = ({ onClickCallback, displayCardCounts }) => {
-  const totalCardsCount = displayCardCounts.new + displayCardCounts.due;
+  const combinedCounts = displayCardCounts.combined;
+  const totalCardsCount = combinedCounts.new + combinedCounts.due;
   const isDone = totalCardsCount === 0;
 
   const iconClass = isDone ? 'bp3-icon-confirm' : 'bp3-icon-box';
@@ -29,19 +30,19 @@ const SidePandelWidget = ({ onClickCallback, displayCardCounts }) => {
         </div>
       </div>
       <div className="ml-2">
-        {displayCardCounts.due > 0 && (
+        {combinedCounts.due > 0 && (
           // @ts-ignore
           <Tooltip content="Due" placement="top">
             <Tag active minimal intent="primary" className="text-center">
-              {displayCardCounts.due}
+              {combinedCounts.due}
             </Tag>
           </Tooltip>
         )}
-        {displayCardCounts.new > 0 && (
+        {combinedCounts.new > 0 && (
           // @ts-ignore
           <Tooltip content="New" placement="top">
             <Tag active minimal intent="success" className="text-center ml-2">
-              {displayCardCounts.new}
+              {combinedCounts.new}
             </Tag>
           </Tooltip>
         )}

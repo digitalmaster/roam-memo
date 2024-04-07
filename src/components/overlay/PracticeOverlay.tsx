@@ -35,6 +35,7 @@ const PracticeOverlay = ({
   onCloseCallback,
   practiceCardUids,
   practiceData,
+  displayCardCounts,
   handlePracticeClick,
   handleMemoTagChange,
   handleReviewMoreClick,
@@ -230,6 +231,7 @@ const PracticeOverlay = ({
           setShowBreadcrumbs={setShowBreadcrumbs}
           isCramming={isCramming}
           dailyLimitDelta={dailyLimitDelta}
+          displayCardCounts={displayCardCounts}
         />
 
         <DialogBody
@@ -316,7 +318,7 @@ const HeaderWrapper = styled.div`
   }
 `;
 
-const TagSelector = ({ tagsList, selectedTag, onTagChange }) => {
+const TagSelector = ({ tagsList, selectedTag, onTagChange, displayCardCounts }) => {
   return (
     // @ts-ignore
     <BlueprintSelect.Select
@@ -325,7 +327,14 @@ const TagSelector = ({ tagsList, selectedTag, onTagChange }) => {
       filterable={false}
       itemRenderer={(tag, { handleClick, modifiers }) => {
         return (
-          <TagSelectorItem text={tag} active={modifiers.active} key={tag} onClick={handleClick} />
+          <TagSelectorItem
+            text={tag}
+            tagsList={tagsList}
+            active={modifiers.active}
+            key={tag}
+            onClick={handleClick}
+            displayCardCounts={displayCardCounts}
+          />
         );
       }}
       onItemSelect={(tag) => {
@@ -339,6 +348,8 @@ const TagSelector = ({ tagsList, selectedTag, onTagChange }) => {
 };
 
 const TagSelectorItemWrapper = styled.div<{ active: boolean }>`
+  display: flex;
+  justify-content: space-between;
   padding: 4px 6px;
   background-color: ${({ active }) => (active ? '#e8edf4' : 'white')};
   user-select: none;
@@ -349,10 +360,42 @@ const TagSelectorItemWrapper = styled.div<{ active: boolean }>`
   }
 `;
 
-const TagSelectorItem = ({ text, onClick, active, key }) => {
+const Tag = styled(Blueprint.Tag)`
+  &.bp3-tag {
+    font-size: 11px;
+    padding: 1px 3px;
+    min-height: auto;
+    min-width: auto;
+  }
+`;
+
+const TagSelectorItem = ({ text, onClick, active, tagsList, displayCardCounts }) => {
+  const dueCount = displayCardCounts[text].due;
+  const newCount = displayCardCounts[text].new;
+  const index = tagsList.indexOf(text);
+  const placement = index === tagsList.length - 1 ? 'bottom' : 'top';
+
   return (
-    <TagSelectorItemWrapper onClick={onClick} active={active} key={key} tabIndex={-1}>
+    <TagSelectorItemWrapper onClick={onClick} active={active} key={text} tabIndex={-1}>
       {text}
+      <div className="ml-2">
+        {dueCount > 0 && (
+          // @ts-ignore
+          <Tooltip content="Due" placement={placement}>
+            <Tag active minimal intent="primary" className="text-center">
+              {dueCount}
+            </Tag>
+          </Tooltip>
+        )}
+        {newCount > 0 && (
+          // @ts-ignore
+          <Tooltip content="New" placement={placement}>
+            <Tag active minimal intent="success" className="text-center ml-2">
+              {newCount}
+            </Tag>
+          </Tooltip>
+        )}
+      </div>
     </TagSelectorItemWrapper>
   );
 };
@@ -425,13 +468,19 @@ const Header = ({
   setShowBreadcrumbs,
   isCramming,
   dailyLimitDelta,
+  displayCardCounts,
 }) => {
   return (
     <HeaderWrapper className={className} tabIndex={0}>
       <div className="flex items-center">
         <BoxIcon icon="box" size={14} />
         <div tabIndex={-1}>
-          <TagSelector tagsList={tagsList} selectedTag={selectedTag} onTagChange={onTagChange} />
+          <TagSelector
+            tagsList={tagsList}
+            selectedTag={selectedTag}
+            onTagChange={onTagChange}
+            displayCardCounts={displayCardCounts}
+          />
         </div>
       </div>
       <div className="flex items-center justify-end">

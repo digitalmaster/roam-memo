@@ -43,6 +43,7 @@ const App = () => {
     completedTodayCount,
     remainingDueCardsCount,
   } = usePracticeData({
+    tagsList,
     selectedTag,
     dataPageTitle,
     isCramming,
@@ -161,6 +162,7 @@ const App = () => {
             dailyLimit={dailyLimit}
             remainingDueCardsCount={remainingDueCardsCount}
             rtlEnabled={rtlEnabled}
+            displayCardCounts={displayCardCounts}
           />
         )}
       </>
