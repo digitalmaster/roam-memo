@@ -4,46 +4,42 @@ Memorize anything with this simple spaced repetition plugin for Roam. Similar to
 
 ![Demo Preview](https://user-images.githubusercontent.com/1279335/189250105-656e6ba3-7703-46e6-bc71-ee8c5f3e39ab.gif)
 
-## What is "Spaced Repetition"
+## What is "Spaced Repetition"?
 
-Spaced repetition is a technique for studying where you review flashcards based on how well you remember them. Instead of reviewing every card in order, you review cards that were harder to remember more often, and cards that were easier to remember less often. This helps you review the cards that you need to work on more, and avoid wasting time reviewing cards that you already know well.
+Spaced repetition is a study technique where you review information based on how well you remember it. Instead of reviewing all cards equally, you focus more on difficult cards and less on easy ones. This method helps you reinforce material that needs more attention, saving time on reviewing familiar content.
 
-This plugin allows you to tag important information with a special tag, and over time it will help you move the information from short term memory to long term memory.
+It's the most effective method for transferring a large amount of knowledge from short-term to long-term memory.
 
 ## Installation
 
-Just install through Roam Depot, then go to settings and configure the page tags you want to use for reviews (default is `#memo`) and that's it. Enjoy.
+Just install "Memo" via Roam Depot.
 
-## Usage
+## Getting Started
 
-To use the Memo plugin for studying flashcards:
+1. Tag any block you wish to memorize with `#memo` (or any of your configured tags).
+2. Launch the app by clicking the "Review" button in the sidebar.
+3. Start reviewing the flashcards.
 
-1. Create a new page and add the #memo tag to it.
-2. Open the plugin from the side panel.
-3. Begin reviewing the flashcards.
-
-> Tip: If the block nested blocks they will be treated as answers and initially hidden. Click the "Show Answer" button to reveal them.
-
-> Tip: Blocks added directly to the page are automatically added as cards without needed to add the page tag to them
+> **Tip:** Child blocks are treated as "answers" and are initially hidden. Click "Show Answer" to reveal them.
 
 ## Features
 
-### Multi Tag Support (aka decks)
+### Multi Deck Support
 
-To create separate decs just got to our plugin settings page, find the "Tag Pages" field and add a comma separated list of all the pages you want to use as decks. For example, if you want to create a deck for "Spanish" and another for "French" you would add `Spanish, French` to the field.
+Create multiple decks by navigating to the plugin settings and entering a comma-separated list of tags in the "Tag Pages" field. For example, use `Spanish, French` to establish decks for each language you're learning.
 
-> To use tags that have commas in them just wrap them in quotes. For example, "Page, with Comma".
+> **Tip:** For tags names that contain commas, enclose them in quotes, e.g., "Page, with Comma".
 
 ### Text Masking
 
-Text Masking or Cloze Deletion is a technique where you hide or mask a part of the text to test your understanding or to make it harder to memorize. To mask a part of text, you can use two different methods:
+Text masking, or Cloze Deletion, challenges your recall by hiding parts of the text. Apply text masking by:
 
-- Highlighting the text and adding ^^ on both sides of the text you want to mask. Example: ^^hide me^^
-- Wrapping the text with single brackets { }. Example: {hide me too}.
+- Enclosing the desired text with `^^`, e.g., `^^hide me^^`.
+- Or, using braces `{}`, e.g., `{hide me too}`.
 
 ### Daily Limits
 
-You can set a daily limit for the number of cards you want to review. This is useful if you want to limit the time you spend reviewing cards. We ensure at least ~25% of cards are new cards.
+You can set a daily review limit. This is useful if you want to limit the time you spend reviewing cards. We ensure at least ~25% of cards are new cards to keep things balanced.
 
 You can set the daily limit in the plugin settings page.
 
@@ -87,7 +83,7 @@ To migrate your data from the old RoamSr plugin follow these steps:
 
 ## Bug Reports and Feature Requests
 
-Please just create issues [here](https://github.com/digitalmaster/roam-memo/issues) and I'll get to them as soon as I can.
+Please create issues [here](https://github.com/digitalmaster/roam-memo/issues) and I'll get to them as soon as I can.
 
 ---
 
