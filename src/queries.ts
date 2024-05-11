@@ -8,6 +8,7 @@ import {
   RecordUid,
   ReviewModes,
   Session,
+  IntervalMultiplierType,
 } from '~/models/session';
 import practice from '~/practice';
 
@@ -48,6 +49,41 @@ const getSelectedTagPageBlocksIds = async (selectedTag): Promise<string[]> => {
   return filteredChildren.map((arr) => arr.uid);
 };
 
+// Ensure that the reviewMode field is always present
+const ensureReviewModeField = (record) => {
+  const hasReviewModeField = record.children.some((child) => child.string.includes('reviewMode'));
+  const children = hasReviewModeField
+    ? record.children
+    : [
+        ...record.children,
+        {
+          order: record.children.length,
+          string: `reviewMode:: ${ReviewModes.DefaultSpacedInterval}`,
+        },
+      ];
+
+  return {
+    ...record,
+    children,
+  };
+};
+
+const parseFieldValues = (object, node) => {
+  for (const field of ensureReviewModeField(node).children) {
+    const [key, value] = parseConfigString(field.string);
+
+    if (key === 'nextDueDate') {
+      object[key] = parseRoamDateString(getStringBetween(value, '[[', ']]'));
+    } else if (value === 'true' || value === 'false') {
+      object[key] = value === 'true';
+    } else if (stringUtils.isNumeric(value)) {
+      object[key] = Number(value);
+    } else {
+      object[key] = value;
+    }
+  }
+};
+
 const mapPluginPageDataLatest = (queryResultsData): Records =>
   queryResultsData
     .map((arr) => arr[0])[0]
@@ -62,20 +98,8 @@ const mapPluginPageDataLatest = (queryResultsData): Records =>
       acc[uid].dateCreated = parseRoamDateString(getStringBetween(latestChild.string, '[[', ']]'));
 
       if (!latestChild.children) return acc;
+      parseFieldValues(acc[uid], latestChild);
 
-      for (const field of latestChild.children) {
-        const [key, value] = parseConfigString(field.string);
-
-        if (key === 'nextDueDate') {
-          acc[uid][key] = parseRoamDateString(getStringBetween(value, '[[', ']]'));
-        } else if (value === 'true' || value === 'false') {
-          acc[uid][key] = value === 'true';
-        } else if (stringUtils.isNumeric(value)) {
-          acc[uid][key] = Number(value);
-        } else {
-          acc[uid][key] = value;
-        }
-      }
       return acc;
     }, {}) || {};
 
@@ -97,17 +121,7 @@ const mapPluginPageData = (queryResultsData): CompleteRecords =>
 
         if (!child.children) return acc;
 
-        for (const field of child.children) {
-          const [key, value] = parseConfigString(field.string);
-
-          if (key === 'nextDueDate') {
-            record[key] = parseRoamDateString(getStringBetween(value, '[[', ']]'));
-          } else if (value === 'true' || value === 'false') {
-            record[key] = value === 'true';
-          } else {
-            record[key] = Number(value);
-          }
-        }
+        parseFieldValues(record, child);
 
         acc[uid].push(record);
       }
@@ -199,15 +213,29 @@ const getPracticedTodayCount = (data: Records = {}): number => {
 
   return count;
 };
+export const generateNewSession = ({
+  reviewMode = ReviewModes.DefaultSpacedInterval,
+  dateCreated = undefined,
+} = {}): NewSession => {
+  if (reviewMode === ReviewModes.DefaultSpacedInterval) {
+    return {
+      dateCreated: dateCreated || new Date(),
+      eFactor: 2.5,
+      interval: 0,
+      repetitions: 0,
+      isNew: true,
+      reviewMode,
+    };
+  }
 
-export const generateNewCardProps = ({ dateCreated = undefined } = {}): NewSession => ({
-  dateCreated: dateCreated || new Date(),
-  eFactor: 2.5,
-  interval: 0,
-  repetitions: 0,
-  isNew: true,
-  reviewMode: ReviewModes.DefaultSpacedInterval,
-});
+  return {
+    dateCreated: dateCreated || new Date(),
+    intervalMultiplier: 3,
+    intervalMultiplierType: IntervalMultiplierType.Days,
+    isNew: true,
+    reviewMode,
+  };
+};
 
 const calculateDailyLimit = (dailyLimit: number, completedTodayCount: number) => {
   if (!dailyLimit) return 0;
@@ -333,7 +361,7 @@ export const getPracticeData = async ({
       // New
       newCardsUids.push(referenceId);
       pluginPageData[referenceId] = {
-        ...generateNewCardProps(),
+        ...generateNewSession(),
       };
     }
   });
@@ -930,7 +958,7 @@ export const generateRecordsFromRoamSrData = async (
         const { eFactor, repetitions, interval } = lastPracticeResult;
         practiceInputData = { ...practiceInputData, eFactor, repetitions, interval };
       } else {
-        const newCardData = generateNewCardProps({ dateCreated });
+        const newCardData = generateNewSession({ dateCreated });
         practiceInputData = { ...practiceInputData, ...newCardData };
       }
 
