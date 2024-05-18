@@ -216,6 +216,7 @@ const getPracticedTodayCount = (data: Records = {}): number => {
 export const generateNewSession = ({
   reviewMode = ReviewModes.DefaultSpacedInterval,
   dateCreated = undefined,
+  isNew = true,
 } = {}): NewSession => {
   if (reviewMode === ReviewModes.DefaultSpacedInterval) {
     return {
@@ -223,7 +224,7 @@ export const generateNewSession = ({
       eFactor: 2.5,
       interval: 0,
       repetitions: 0,
-      isNew: true,
+      isNew,
       reviewMode,
     };
   }
@@ -232,7 +233,7 @@ export const generateNewSession = ({
     dateCreated: dateCreated || new Date(),
     intervalMultiplier: 3,
     intervalMultiplierType: IntervalMultiplierType.Days,
-    isNew: true,
+    isNew,
     reviewMode,
   };
 };

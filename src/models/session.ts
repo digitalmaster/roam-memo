@@ -20,7 +20,7 @@ export type Session = {
 } & SessionCommon;
 
 export interface NewSession extends Omit<Session, 'nextDueDate' | 'grade'> {
-  isNew: true;
+  isNew: boolean;
 }
 
 export type RecordUid = string;

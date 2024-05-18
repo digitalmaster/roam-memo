@@ -145,6 +145,7 @@ const App = () => {
         />
         {showPracticeOverlay && (
           <PracticeOverlay
+            dataPageTitle={dataPageTitle}
             isOpen={true}
             practiceCardUids={practiceCardsUids}
             practiceData={practiceData}

@@ -11,6 +11,7 @@
     "lint": "eslint '**/*.{ts,tsx,js,jsx}'",
     "typecheck": "tsc",
     "test": "jest",
+    "test-dev": "jest --watch",
     "changelog-generate": "auto-changelog --starting-version v16 --handlebars-setup changelog-setup.js --template changelog-template.hbs --commit-limit false",
     "changelog-data": "npm run changelog-generate -- --template json --output changelog-data.json",
     "changelog": "npm run changelog-data && npm run changelog-generate && git add CHANGELOG.md"
@@ -40,6 +41,7 @@
     "@babel/preset-react": "^7.18.6",
     "@babel/preset-typescript": "^7.18.6",
     "@emotion/babel-plugin": "^11.10.0",
+    "@testing-library/react-hooks": "^8.0.1",
     "@types/arrive": "^2.4.1",
     "@types/jest": "^28.1.7",
     "@types/react": "^18.0.21",

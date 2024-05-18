@@ -15,6 +15,8 @@ import CardBlock from '~/components/overlay/CardBlock';
 import Footer from '~/components/overlay/Footer';
 import ButtonTags from '~/components/ButtonTags';
 import { IntervalMultiplierType, ReviewModes } from '~/models/session';
+import useCurrentCardData from '~/hooks/useCurrentCardData';
+import { generateNewSession } from '~/queries';
 
 interface MainContextProps {
   reviewMode?: ReviewModes;
@@ -26,9 +28,9 @@ interface MainContextProps {
   onPracticeClick?: (props: any) => void;
 }
 export const MainContext = React.createContext<MainContextProps>({});
-const DEFAULT_INTERVAL_MULTIPLIER = 3;
 
 const PracticeOverlay = ({
+  dataPageTitle,
   isOpen,
   tagsList,
   selectedTag,
@@ -60,47 +62,48 @@ const PracticeOverlay = ({
     dailyLimit && completedTodayCount && !isDone && !reviewCountReset ? completedTodayCount : 0;
 
   const currentCardRefUid = practiceCardUids[currentIndex];
-  const currentCardData = practiceData[currentCardRefUid];
+  const { currentCardData, reviewMode, setReviewMode } = useCurrentCardData({
+    practiceData,
+    dataPageTitle,
+    currentCardRefUid,
+  });
 
-  const isNew = currentCardData?.isNew;
-  const nextDueDate = currentCardData?.nextDueDate;
+  const newFixedSessionDefaults = React.useMemo(
+    () => generateNewSession({ reviewMode: ReviewModes.FixedInterval }),
+    []
+  );
+  const [intervalMultiplier, setIntervalMultiplier] = React.useState<number>(
+    currentCardData?.intervalMultiplier || newFixedSessionDefaults.intervalMultiplier
+  );
+  const [intervalMultiplierType, setIntervalMultiplierType] =
+    React.useState<IntervalMultiplierType>(
+      currentCardData?.intervalMultiplierType || newFixedSessionDefaults.intervalMultiplierType
+    );
+
+  // When card changes, update multiplier state
+  React.useEffect(() => {
+    if (currentCardData?.reviewMode === ReviewModes.FixedInterval) {
+      // If card has multiplier, use that
+      setIntervalMultiplier(currentCardData?.intervalMultiplier);
+      setIntervalMultiplierType(currentCardData?.intervalMultiplierType);
+    } else {
+      // Otherwise, just reset to default
+      setIntervalMultiplier(newFixedSessionDefaults.intervalMultiplier);
+      setIntervalMultiplierType(newFixedSessionDefaults.intervalMultiplierType);
+    }
+  }, [currentCardData, newFixedSessionDefaults]);
+
+  const hasNextDueDate = currentCardData && 'nextDueDate' in currentCardData;
+  const isNew = currentCardData && 'isNew' in currentCardData && currentCardData.isNew;
+  const nextDueDate = hasNextDueDate ? currentCardData.nextDueDate : undefined;
 
   const isDueToday = dateUtils.daysBetween(nextDueDate, new Date()) === 0;
-  const status = isNew
-    ? 'new'
-    : isDueToday
-    ? 'dueToday'
-    : currentCardData?.nextDueDate
-    ? 'pastDue'
-    : null;
+  const status = isNew ? 'new' : isDueToday ? 'dueToday' : hasNextDueDate ? 'pastDue' : null;
 
   const { data: blockInfo } = useBlockInfo({ refUid: currentCardRefUid });
   const hasBlockChildren = !!blockInfo.children && !!blockInfo.children.length;
   const [showAnswers, setShowAnswers] = React.useState(false);
   const [hasCloze, setHasCloze] = React.useState(true);
-
-  const [reviewMode, setReviewMode] = React.useState<ReviewModes>(
-    currentCardData?.reviewMode || ReviewModes.DefaultSpacedInterval
-  );
-  const [intervalMultiplier, setIntervalMultiplier] = React.useState<number>(
-    currentCardData?.intervalMultiplier || DEFAULT_INTERVAL_MULTIPLIER
-  );
-  const [intervalMultiplierType, setIntervalMultiplierType] =
-    React.useState<IntervalMultiplierType>(
-      currentCardData?.intervalMultiplierType || IntervalMultiplierType.Days
-    );
-
-  React.useEffect(() => {
-    if (currentCardData?.reviewMode === ReviewModes.FixedInterval) {
-      setReviewMode(currentCardData?.reviewMode);
-      setIntervalMultiplier(currentCardData?.intervalMultiplier);
-      setIntervalMultiplierType(currentCardData?.intervalMultiplierType);
-    } else {
-      setReviewMode(ReviewModes.DefaultSpacedInterval);
-      setIntervalMultiplier(DEFAULT_INTERVAL_MULTIPLIER);
-      setIntervalMultiplierType(IntervalMultiplierType.Days);
-    }
-  }, [currentCardData]);
 
   React.useEffect(() => {
     if (hasBlockChildren || hasCloze) {
