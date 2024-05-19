@@ -1,6 +1,12 @@
 import * as dateUtils from '~/utils/date';
 
 describe('addDays', () => {
+  test('Current timezone', () => {
+    const timezoneOffset = new Date().getTimezoneOffset() / 60;
+
+    expect(timezoneOffset).toEqual(0);
+  });
+
   test('Add one day', () => {
     const dayInMs = 1000 * 60 * 60 * 24;
     const tomorrow = new Date(new Date().getTime() + dayInMs * 1);

@@ -3,3 +3,4 @@
 tailwind.config.js
 webpack.config.js
 changelog-setup.js
+jest.setup.js

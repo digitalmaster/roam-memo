@@ -30,7 +30,8 @@
     "moduleNameMapper": {
       "^~(.*)$": "<rootDir>/src$1"
     },
-    "verbose": false
+    "verbose": false,
+    "globalSetup": "./jest.setup.js"
   },
   "devDependencies": {
     "@babel/core": "^7.18.10",
