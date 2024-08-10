@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as Blueprint from '@blueprintjs/core';
 import PracticeOverlay from '~/components/overlay/PracticeOverlay';
-import SidePandelWidget from '~/components/SidePandelWidget';
+import SidePannelWidget from '~/components/SidePanelWidget';
 import practice from '~/practice';
 import usePracticeData from '~/hooks/usePracticeData';
 import useTags from '~/hooks/useTags';
@@ -28,19 +28,14 @@ const App = () => {
   const { tagsListString, dataPageTitle, dailyLimit, rtlEnabled } = useSettings();
   const { selectedTag, setSelectedTag, tagsList } = useTags({ tagsListString });
 
-  const {
-    data: { lastCompletedDate },
-    saveCacheData,
-    fetchCacheData,
-    deleteCacheDataKey,
-  } = useCachedData({ dataPageTitle, selectedTag });
+  const { fetchCacheData } = useCachedData({ dataPageTitle, selectedTag });
 
   const {
     practiceCardsUids,
     practiceData,
-    displayCardCounts,
+    today,
     fetchPracticeData,
-    completedTodayCount,
+    completedTodayCounts,
     remainingDueCardsCount,
   } = usePracticeData({
     tagsList,
@@ -48,7 +43,6 @@ const App = () => {
     dataPageTitle,
     isCramming,
     dailyLimit,
-    lastCompletedDate,
   });
 
   const handlePracticeClick = async ({
@@ -108,8 +102,7 @@ const App = () => {
   };
 
   const handleReviewMoreClick = async () => {
-    await deleteCacheDataKey('lastCompletedDate');
-
+    // @TODOZ: Handle this case.
     refreshData();
   };
 
@@ -139,10 +132,7 @@ const App = () => {
   return (
     <Blueprint.HotkeysProvider>
       <>
-        <SidePandelWidget
-          onClickCallback={onShowPracticeOverlay}
-          displayCardCounts={displayCardCounts}
-        />
+        <SidePannelWidget onClickCallback={onShowPracticeOverlay} today={today} />
         {showPracticeOverlay && (
           <PracticeOverlay
             dataPageTitle={dataPageTitle}
@@ -157,13 +147,11 @@ const App = () => {
             selectedTag={selectedTag}
             isCramming={isCramming}
             setIsCramming={setIsCramming}
-            saveCacheData={saveCacheData}
-            lastCompletedDate={lastCompletedDate}
-            completedTodayCount={completedTodayCount}
+            completedTodayCounts={completedTodayCounts}
             dailyLimit={dailyLimit}
             remainingDueCardsCount={remainingDueCardsCount}
             rtlEnabled={rtlEnabled}
-            displayCardCounts={displayCardCounts}
+            today={today}
           />
         )}
       </>

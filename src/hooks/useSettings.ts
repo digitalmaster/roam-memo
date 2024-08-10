@@ -1,7 +1,13 @@
 import React from 'react';
 import settingsPanelConfig from '~/settingsPanelConfig';
+export type Settings = {
+  tagsListString: string;
+  dataPageTitle: string;
+  dailyLimit: number;
+  rtlEnabled: boolean;
+};
 
-export const defaultSettings = {
+export const defaultSettings: Settings = {
   tagsListString: 'memo',
   dataPageTitle: 'roam/memo',
   dailyLimit: 0, // 0 = no limit,

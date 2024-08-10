@@ -22,8 +22,8 @@ const splitStringByCommas = (str: string) => {
 };
 
 const useTags = ({ tagsListString }: { tagsListString: string }) => {
-  const [tagsList, setTagsList] = React.useState<string[]>([]);
-  const [selectedTag, setSelectedTag] = React.useState<string | undefined>();
+  const [tagsList, setTagsList] = React.useState<string[]>(splitStringByCommas(tagsListString));
+  const [selectedTag, setSelectedTag] = React.useState<string | undefined>(tagsList[0]);
 
   React.useEffect(() => {
     const tagsList = splitStringByCommas(tagsListString);

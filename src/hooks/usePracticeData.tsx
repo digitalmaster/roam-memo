@@ -1,35 +1,15 @@
 import * as React from 'react';
+import { Today, TodayInitial } from '~/models/practice';
 import { NewRecords, Records, RecordUid } from '~/models/session';
 import * as queries from '~/queries';
 
-const calculateCombinedCardCounts = (displayCardCounts) => {
-  const combinedCounts = { combined: { new: 0, due: 0 } };
-  for (const key of Object.keys(displayCardCounts)) {
-    combinedCounts.combined.new += displayCardCounts[key].new;
-    combinedCounts.combined.due += displayCardCounts[key].due;
-  }
-
-  return {
-    ...displayCardCounts,
-    ...combinedCounts,
-  };
-};
-
-const usePracticeCardsData = ({
-  tagsList,
-  selectedTag,
-  dataPageTitle,
-  isCramming,
-  dailyLimit,
-  lastCompletedDate,
-}) => {
+const usePracticeCardsData = ({ tagsList, selectedTag, dataPageTitle, isCramming, dailyLimit }) => {
   const [practiceCardsUids, setPracticeCardsUids] = React.useState<RecordUid[]>([]);
   const [practiceData, setPracticeData] = React.useState<Records | NewRecords>({});
   const [refetchTrigger, setRefetchTrigger] = React.useState(false);
+  const [today, setToday] = React.useState<Today>(TodayInitial);
 
-  const [displayCardCounts, setDisplayCardCounts] = React.useState({});
-
-  const [completedTodayCount, setCompletedTodayCount] = React.useState(0);
+  const [completedTodayCounts, setCompletedTodayCounts] = React.useState({});
   const [remainingDueCardsCount, setRemainingDueCardsCount] = React.useState(0);
   const refetchTriggerFn = () => setRefetchTrigger((trigger) => !trigger);
 
@@ -37,24 +17,22 @@ const usePracticeCardsData = ({
     (async () => {
       if (!selectedTag) return;
 
-      const {
-        pluginPageData,
-        newCardsUids,
-        dueCardsUids,
-        allSelectedTagCardsUids,
-        completedTodayCount,
-        remainingDueCardsCount,
-      } = await queries.getPracticeData({
-        selectedTag,
+      const { pluginPageData, todayStats, cardUids } = await queries.getPracticeData({
+        tagsList,
         dataPageTitle,
         dailyLimit,
         isCramming,
-        lastCompletedDate,
       });
 
-      setRemainingDueCardsCount(remainingDueCardsCount);
+      const selectedTagTodayData = todayStats.tags[selectedTag];
+      const newCardsUids = selectedTagTodayData.newUids;
+      const dueCardsUids = selectedTagTodayData.dueUids;
+      const allSelectedTagCardsUids = cardUids[selectedTag];
+
+      setToday(todayStats);
+      setRemainingDueCardsCount(selectedTagTodayData.due);
       setPracticeData(pluginPageData);
-      setCompletedTodayCount(completedTodayCount);
+      setCompletedTodayCounts(selectedTagTodayData.completed);
 
       if (isCramming) {
         setPracticeCardsUids(
@@ -65,42 +43,15 @@ const usePracticeCardsData = ({
         // @TODO: Perhaps make this order configurable?
         setPracticeCardsUids([...dueCardsUids, ...newCardsUids]);
       }
-
-      const displayCountsData = {
-        [selectedTag]: { new: newCardsUids.length, due: dueCardsUids.length },
-      };
-      for (const tag of tagsList) {
-        if (tag === selectedTag) continue;
-
-        const { newCardsUids, dueCardsUids } = await queries.getPracticeData({
-          selectedTag: tag,
-          dataPageTitle,
-          dailyLimit,
-          isCramming,
-          lastCompletedDate,
-        });
-
-        displayCountsData[tag] = { new: newCardsUids.length, due: dueCardsUids.length };
-      }
-
-      setDisplayCardCounts(displayCountsData);
     })();
-  }, [
-    selectedTag,
-    dataPageTitle,
-    refetchTrigger,
-    isCramming,
-    dailyLimit,
-    lastCompletedDate,
-    tagsList,
-  ]);
+  }, [selectedTag, dataPageTitle, refetchTrigger, isCramming, dailyLimit, tagsList]);
 
   return {
     practiceCardsUids,
     practiceData,
-    displayCardCounts: calculateCombinedCardCounts(displayCardCounts),
     fetchPracticeData: refetchTriggerFn,
-    completedTodayCount,
+    today,
+    completedTodayCounts,
     remainingDueCardsCount,
   };
 };

@@ -17,6 +17,7 @@ import ButtonTags from '~/components/ButtonTags';
 import { IntervalMultiplierType, ReviewModes } from '~/models/session';
 import useCurrentCardData from '~/hooks/useCurrentCardData';
 import { generateNewSession } from '~/queries';
+import { Today } from '~/models/practice';
 
 interface MainContextProps {
   reviewMode?: ReviewModes;
@@ -26,6 +27,7 @@ interface MainContextProps {
   intervalMultiplierType?: IntervalMultiplierType;
   setIntervalMultiplierType?: (type: IntervalMultiplierType) => void;
   onPracticeClick?: (props: any) => void;
+  today?: Today;
 }
 export const MainContext = React.createContext<MainContextProps>({});
 
@@ -37,16 +39,14 @@ const PracticeOverlay = ({
   onCloseCallback,
   practiceCardUids,
   practiceData,
-  displayCardCounts,
+  today,
   handlePracticeClick,
   handleMemoTagChange,
   handleReviewMoreClick,
   isCramming,
   setIsCramming,
-  saveCacheData,
-  lastCompletedDate,
   dailyLimit,
-  completedTodayCount,
+  completedTodayCounts,
   remainingDueCardsCount,
   rtlEnabled,
 }) => {
@@ -54,9 +54,12 @@ const PracticeOverlay = ({
   const totalCardsCount = practiceCardUids.length;
   const hasCards = totalCardsCount > 0;
   const isDone = currentIndex > practiceCardUids.length - 1;
-  const isLastCompleteDateToday = dateUtils.isSameDay(lastCompletedDate, new Date());
   const isFirst = currentIndex === 0;
-  const reviewCountReset = completedTodayCount && !lastCompletedDate;
+  const completedTodayCount = completedTodayCounts[selectedTag];
+
+  // @TODOZ: Handle reset case without lastCompletedDate (ie. Clickig review more after limit)
+  // const reviewCountReset = completedTodayCount && !lastCompletedDate;
+  const reviewCountReset = false;
 
   const dailyLimitDelta =
     dailyLimit && completedTodayCount && !isDone && !reviewCountReset ? completedTodayCount : 0;
@@ -118,10 +121,9 @@ const PracticeOverlay = ({
     if (isDone) {
       if (isCramming) {
         setIsCramming(false);
-      } else if (!isLastCompleteDateToday) {
-        saveCacheData({ lastCompletedDate: new Date() });
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDone]);
 
   const onTagChange = async (tag) => {
@@ -210,6 +212,7 @@ const PracticeOverlay = ({
         intervalMultiplierType,
         setIntervalMultiplierType,
         onPracticeClick,
+        today,
       }}
     >
       {/* @ts-ignore */}
@@ -234,7 +237,6 @@ const PracticeOverlay = ({
           setShowBreadcrumbs={setShowBreadcrumbs}
           isCramming={isCramming}
           dailyLimitDelta={dailyLimitDelta}
-          displayCardCounts={displayCardCounts}
         />
 
         <DialogBody
@@ -321,7 +323,7 @@ const HeaderWrapper = styled.div`
   }
 `;
 
-const TagSelector = ({ tagsList, selectedTag, onTagChange, displayCardCounts }) => {
+const TagSelector = ({ tagsList, selectedTag, onTagChange }) => {
   return (
     // @ts-ignore
     <BlueprintSelect.Select
@@ -336,7 +338,6 @@ const TagSelector = ({ tagsList, selectedTag, onTagChange, displayCardCounts }) 
             active={modifiers.active}
             key={tag}
             onClick={handleClick}
-            displayCardCounts={displayCardCounts}
           />
         );
       }}
@@ -372,9 +373,11 @@ const Tag = styled(Blueprint.Tag)`
   }
 `;
 
-const TagSelectorItem = ({ text, onClick, active, tagsList, displayCardCounts }) => {
-  const dueCount = displayCardCounts[text].due;
-  const newCount = displayCardCounts[text].new;
+const TagSelectorItem = ({ text, onClick, active, tagsList }) => {
+  const { today } = React.useContext(MainContext);
+  const dueCount = today.tags[text].due;
+  const newCount = today.tags[text].new;
+
   const index = tagsList.indexOf(text);
   const placement = index === tagsList.length - 1 ? 'bottom' : 'top';
 
@@ -471,19 +474,13 @@ const Header = ({
   setShowBreadcrumbs,
   isCramming,
   dailyLimitDelta,
-  displayCardCounts,
 }) => {
   return (
     <HeaderWrapper className={className} tabIndex={0}>
       <div className="flex items-center">
         <BoxIcon icon="box" size={14} />
         <div tabIndex={-1}>
-          <TagSelector
-            tagsList={tagsList}
-            selectedTag={selectedTag}
-            onTagChange={onTagChange}
-            displayCardCounts={displayCardCounts}
-          />
+          <TagSelector tagsList={tagsList} selectedTag={selectedTag} onTagChange={onTagChange} />
         </div>
       </div>
       <div className="flex items-center justify-end">

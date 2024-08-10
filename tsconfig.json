@@ -15,6 +15,6 @@
     "resolveJsonModule": true,
     "sourceMap": true
   },
-  "include": ["./src"],
+  "include": ["./src", "./jest.setup.ts"],
   "exclude": ["./node_modules/*"]
 }

@@ -1,9 +1,9 @@
 import { act, renderHook } from '@testing-library/react-hooks';
 import useCurrentCardData from './useCurrentCardData';
-import { generateNewSession } from '~/queries';
+import { generateNewSession, getPluginPageBlockDataQuery } from '~/queries';
 import { NewSession, ReviewModes, Session } from '~/models/session';
 import * as testUtils from '~/utils/testUtils';
-import { TestSessionsResponse } from '~/utils/testUtils';
+import { MockDataBuilder } from '~/utils/testUtils';
 import React from 'react';
 
 describe('useCurrentCardData', () => {
@@ -75,13 +75,19 @@ describe('useCurrentCardData', () => {
         [currentCardRefUid]: currentCardData,
       };
 
-      const TestSessionsData = new TestSessionsResponse({ uid: currentCardRefUid })
+      const TestSessionsData = new MockDataBuilder({ uid: currentCardRefUid })
         .withSession({
           reviewMode: ReviewModes.DefaultSpacedInterval,
         })
-        .build();
+        .buildSessionQueryResult();
 
-      testUtils.mockQueryResult(TestSessionsData);
+      testUtils.mockQueryResult([
+        {
+          query: getPluginPageBlockDataQuery,
+          result: TestSessionsData,
+        },
+      ]);
+
       const { result, waitForNextUpdate } = renderHook(() =>
         useCurrentCardData({ practiceData, dataPageTitle, currentCardRefUid })
       );
@@ -103,7 +109,7 @@ describe('useCurrentCardData', () => {
         [currentCardRefUid]: currentCardData,
       };
 
-      const TestSessionsData = new TestSessionsResponse({ uid: currentCardRefUid })
+      const TestSessionsData = new MockDataBuilder({ uid: currentCardRefUid })
         .withSession({
           reviewMode: ReviewModes.DefaultSpacedInterval,
         })
@@ -115,9 +121,14 @@ describe('useCurrentCardData', () => {
           reviewMode: ReviewModes.FixedInterval,
           grade: 2,
         })
-        .build();
+        .buildSessionQueryResult();
 
-      testUtils.mockQueryResult(TestSessionsData);
+      testUtils.mockQueryResult([
+        {
+          query: getPluginPageBlockDataQuery,
+          result: TestSessionsData,
+        },
+      ]);
 
       const { result, waitForNextUpdate } = renderHook(() =>
         useCurrentCardData({ practiceData, dataPageTitle, currentCardRefUid })
@@ -142,16 +153,21 @@ describe('useCurrentCardData', () => {
         [currentCardRefUid]: originalCurrentCardData,
       };
 
-      const TestSessionsData = new TestSessionsResponse({ uid: currentCardRefUid })
+      const TestSessionsData = new MockDataBuilder({ uid: currentCardRefUid })
         .withSession({
           reviewMode: ReviewModes.DefaultSpacedInterval,
         })
         .withSession({
           reviewMode: ReviewModes.FixedInterval,
         })
-        .build();
+        .buildSessionQueryResult();
 
-      testUtils.mockQueryResult(TestSessionsData);
+      testUtils.mockQueryResult([
+        {
+          query: getPluginPageBlockDataQuery,
+          result: TestSessionsData,
+        },
+      ]);
 
       const { result, waitForNextUpdate } = renderHook(() =>
         useCurrentCardData({ practiceData, dataPageTitle, currentCardRefUid })
@@ -228,16 +244,21 @@ describe('useCurrentCardData', () => {
         [nextCardRefUid]: nextCardData,
       };
 
-      const TestSessionsData = new TestSessionsResponse({ uid: originalCurrentCardRefUid })
+      const TestSessionsData = new MockDataBuilder({ uid: originalCurrentCardRefUid })
         .withSession({
           reviewMode: ReviewModes.DefaultSpacedInterval,
         })
         .withSession({
           reviewMode: ReviewModes.FixedInterval,
         })
-        .build();
+        .buildSessionQueryResult();
 
-      testUtils.mockQueryResult(TestSessionsData);
+      testUtils.mockQueryResult([
+        {
+          query: getPluginPageBlockDataQuery,
+          result: TestSessionsData,
+        },
+      ]);
 
       const { result, waitForNextUpdate } = renderHook(() => {
         const [currentCardRefUid, setCurrentCardRefUid] = React.useState(originalCurrentCardRefUid);
