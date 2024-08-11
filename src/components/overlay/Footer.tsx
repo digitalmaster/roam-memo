@@ -425,7 +425,6 @@ const FixedIntervalModeControls = ({
 
   return (
     <>
-      {/* @ts-expect-error */}
       <Blueprint.Popover isOpen={isIntervalEditorOpen} onInteraction={onInteractionhandler}>
         <ControlButton
           icon="time"

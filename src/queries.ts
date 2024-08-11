@@ -253,53 +253,10 @@ export const generateNewSession = ({
   };
 };
 
-const calculateDailyLimit = (perTagDailyLimit: number, completedTodayCount: number) => {
-  console.log(
-    'DEBUG:: ~ file: queries.ts:257 ~ calculateDailyLimit ~ perTagDailyLimit:',
-    perTagDailyLimit
-  );
-  if (!perTagDailyLimit) return 0;
-
-  // Note never return 0 as a daily limit
-  return Math.max(1, perTagDailyLimit - completedTodayCount);
-};
-
-/**
- *  Limit of cards to practice ensuring that due cards are always
- *  first but ~25% new cards are still practiced when limit is less than total due
- *  cards.
- */
-interface SelectedPracticeDataProps {
-  today: Today;
-  dailyLimit: number;
-  tagsList: string[];
-  sessionData: Record<string, Records>;
-  cardUids: Record<string, string[]>;
-  pluginPageData: Records;
-  isCramming: boolean;
-}
-export const calculateRemainingCounts = ({
-  today,
-  dailyLimit,
-  tagsList,
-  sessionData,
-  cardUids,
-  isCramming,
-  pluginPageData,
-}: SelectedPracticeDataProps) => {
-  // We try to spread the daily limit across all tags evenly.
-  // @MAYBE: Update to allow for custom daily limits per tag
-  let perTagDailyLimit = Math.ceil(dailyLimit / tagsList.length);
+const setRemainingPracticeData = ({ today, tagsList, sessionData, cardUids, pluginPageData }) => {
   for (const currentTag of tagsList) {
-    const completedTodayCount = today.tags[currentTag].completed;
-    const isCompletedToday = !!perTagDailyLimit && completedTodayCount >= perTagDailyLimit;
     const currentTagSessionData = sessionData[currentTag];
-
     const dueCardsUids = getDueCardUids(currentTagSessionData);
-
-    if (isCompletedToday) {
-      continue;
-    }
 
     // Create new cards for all referenced cards with no data yet
     const allSelectedTagCardsUids = cardUids[currentTag];
@@ -319,69 +276,115 @@ export const calculateRemainingCounts = ({
     // first
     newCardsUids.reverse();
 
-    // @MAYBE: Consider making this a config option
-    const targetNewCardsRatio = 0.25;
-    const totalDueCards = dueCardsUids.length;
-    const totalNewCards = newCardsUids.length;
-    const totalCards = totalDueCards + totalNewCards;
-    perTagDailyLimit = calculateDailyLimit(perTagDailyLimit, completedTodayCount);
-    console.log('DEBUG:: ~ file: queries.ts:325 ~ perTagDailyLimit:', perTagDailyLimit);
-
-    // No limit set, practice all cards
-    if (!perTagDailyLimit || isCramming || totalCards <= perTagDailyLimit) {
-      today.tags[currentTag] = {
-        ...today.tags[currentTag],
-        dueUids: dueCardsUids,
-        newUids: newCardsUids,
-        due: dueCardsUids.length,
-        new: newCardsUids.length,
-      };
-
-      continue;
-    }
-
-    // Limit set, calculate how much to practice based on remaining new, due cards.
-    let totalNewPracticeCount = totalNewCards;
-    let totalDuePracticeCount = totalDueCards;
-
-    // Calculate how many new cards to practice
-    if (perTagDailyLimit === 1) {
-      totalNewPracticeCount = 0;
-    } else {
-      // Calculates the min number of new cards to practice.
-      // Should only apply if we need to based on how many due cards we have.
-      const targetNewCards = Math.max(Math.floor(perTagDailyLimit * targetNewCardsRatio), 1);
-      const necessaryDueCards = perTagDailyLimit - targetNewCards; // 5 - 1 = 4
-      const remaining = necessaryDueCards - dueCardsUids.length;
-      console.log('DEBUG:: ~ file: queries.ts:352 ~ necessaryDueCards:', necessaryDueCards);
-      console.log('DEBUG:: ~ file: queries.ts:353 ~ remaining:', remaining);
-
-      console.log('dueCardsUids.length:', dueCardsUids.length);
-      console.log('DEBUG:: ~ file: queries.ts:351 ~ targetNewCards:', targetNewCards);
-      if (remaining > 0) {
-        totalNewPracticeCount = Math.min(totalNewCards, targetNewCards + remaining);
-      } else {
-        totalNewPracticeCount = Math.min(totalNewCards, targetNewCards);
-      }
-      console.log('DEBUG:: ~ file: queries.ts:359 ~ totalNewPracticeCount:', totalNewPracticeCount);
-    }
-
-    // Calculate how many due cards to practice
-    totalDuePracticeCount = perTagDailyLimit - totalNewPracticeCount;
-    const dueUids = dueCardsUids.slice(0, totalDuePracticeCount);
-    const newUids = newCardsUids.slice(0, totalNewPracticeCount);
-
     today.tags[currentTag] = {
       ...today.tags[currentTag],
-      dueUids,
-      newUids,
-      due: dueUids.length,
-      new: newUids.length,
+      dueUids: dueCardsUids,
+      newUids: newCardsUids,
+      due: dueCardsUids.length,
+      new: newCardsUids.length,
+    };
+  }
+};
+
+/**
+ *  Limit of cards to practice ensuring that due cards are always
+ *  first but ~25% new cards are still practiced when limit is less than total due
+ *  cards.
+ */
+const limitRemainingPracticeData = ({
+  today,
+  dailyLimit,
+  tagsList,
+  isCramming,
+}: {
+  today: Today;
+  dailyLimit: number;
+  tagsList: string[];
+  isCramming: boolean;
+}) => {
+  const totalCards = today.combinedToday.due + today.combinedToday.new;
+
+  // When no need to limit, return;
+  if (!dailyLimit || !totalCards || isCramming) {
+    return;
+  }
+
+  // Initialize selected cards
+  const selectedCards = tagsList.reduce(
+    (acc, currentTag) => ({
+      ...acc,
+      [currentTag]: {
+        newUids: [],
+        dueUids: [],
+      },
+    }),
+    {}
+  );
+
+  // @MAYBE: Consider making this a config option
+  const targetNewCardsRatio = 0.25;
+  // We use Math.max here to ensure we have at leats one card even when dailyLimit is < 4.
+  // The exception is when dailyLimit is 1, in which case we want to prioritize due cards
+  const targetNewCards =
+    dailyLimit === 1 ? 0 : Math.max(1, Math.floor(dailyLimit * targetNewCardsRatio));
+  const targetDueCards = dailyLimit - targetNewCards;
+
+  let totalNewAdded = 0;
+  let totalDueAdded = 0;
+  let totalAdded = totalNewAdded + totalDueAdded;
+
+  // Add one card at a time (Round Robin style) to evenly distribute cards
+  // Each round, logic declaratively defines logic for adding the next card
+  roundRobinLoop: while (totalAdded < totalCards) {
+    for (const currentTag of tagsList) {
+      totalAdded = totalNewAdded + totalDueAdded;
+
+      if (totalAdded === dailyLimit) {
+        break roundRobinLoop;
+      }
+
+      const currentCards = selectedCards[currentTag];
+      const nextNewIndex = currentCards.newUids.length;
+      const nextNewCard = today.tags[currentTag].newUids[nextNewIndex];
+      const nextDueIndex = currentCards.dueUids.length;
+      const nextDueCard = today.tags[currentTag].dueUids[nextDueIndex];
+
+      // Add new card
+      if (nextNewCard && (!nextDueCard || totalNewAdded < targetNewCards)) {
+        selectedCards[currentTag].newUids.push(today.tags[currentTag].newUids[nextNewIndex]);
+        totalNewAdded++;
+
+        continue;
+      }
+
+      // Add due card
+      if (nextDueCard && (!nextNewCard || totalDueAdded < targetDueCards)) {
+        selectedCards[currentTag].dueUids.push(today.tags[currentTag].dueUids[nextDueIndex]);
+        totalDueAdded++;
+
+        continue;
+      }
+    }
+  }
+
+  // Replace today values with selected cards
+  for (const tag of tagsList) {
+    today.tags[tag] = {
+      ...today.tags[tag],
+      dueUids: selectedCards[tag].dueUids,
+      newUids: selectedCards[tag].newUids,
+      due: selectedCards[tag].dueUids.length,
+      new: selectedCards[tag].newUids.length,
     };
   }
 };
 
 const calculateCombinedCounts = ({ today, tagsList }) => {
+  // Reset combined counts
+  const todayInitial: Today = objectUtils.deepClone(TodayInitial);
+
+  today.combinedToday = todayInitial.combinedToday;
+
   for (const tag of tagsList) {
     today.combinedToday.completed += today.tags[tag].completed;
     today.combinedToday.due += today.tags[tag].due;
@@ -503,20 +506,22 @@ export const getPracticeData = async ({ tagsList, dataPageTitle, dailyLimit, isC
     sessionData,
   });
 
-  calculateRemainingCounts({
+  setRemainingPracticeData({
     today,
     tagsList,
     sessionData,
-    pluginPageData,
     cardUids,
-    dailyLimit,
-    isCramming,
+    pluginPageData,
   });
+  calculateCombinedCounts({ today, tagsList });
 
+  limitRemainingPracticeData({ today, dailyLimit, tagsList, isCramming });
+
+  // Calculate combined counts again to update counts after limit filtering
   calculateCombinedCounts({ today, tagsList });
 
   calculateTodayStatus({ today, tagsList });
-  console.log('today', today);
+
   return {
     pluginPageData,
     todayStats: today,
