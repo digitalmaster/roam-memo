@@ -480,7 +480,7 @@ describe('Side Panel Widget', () => {
       });
 
       // Add completed deck
-      mockBuilder.withCard({ uid: 'memo_1' }).withSession('memo_1');
+      mockBuilder.withCard({ uid: 'memo_1' });
 
       // Add deck with some new cards
       mockBuilder.withTag('deck-two');
@@ -515,7 +515,7 @@ describe('Side Panel Widget', () => {
       });
 
       // Add completed deck
-      mockBuilder.withCard({ uid: 'memo_1' }).withSession('memo_1');
+      mockBuilder.withCard({ uid: 'memo_1' });
 
       // Add deck with some new cards
       mockBuilder.withTag('deck-two');
@@ -553,15 +553,64 @@ describe('Side Panel Widget', () => {
       expect(newTag).toHaveTextContent('1');
     });
 
+    it('renders correct count when, limit set, has completed today cards', async () => {
+      const mockBuilder = new testUtils.MockDataBuilder();
+
+      mockBuilder.withSetting({
+        dailyLimit: 5,
+      });
+
+      // Add completed deck
+      mockBuilder.withCard({ uid: 'memo_1' });
+
+      // Add deck with some new cards
+      mockBuilder.withTag('deck-two');
+      for (let i = 0; i < 10; i++) {
+        mockBuilder.withCard({ uid: `deck_two_${i}`, tag: 'deck-two' });
+      }
+
+      // Create some cards due today
+      for (let i = 0; i < 5; i++) {
+        mockBuilder
+          .withCard({ uid: `deck_two_due_${i}`, tag: 'deck-two' })
+          .withSession(`deck_two_due_${i}`, {
+            dateCreated: dateUtils.subtractDays(new Date(), 1),
+            nextDueDate: new Date(),
+          });
+      }
+
+      // Complete one new card
+      mockBuilder.withSession(`deck_two_0`, {
+        dateCreated: new Date(),
+        nextDueDate: dateUtils.addDays(new Date(), 1),
+      });
+
+      mockBuilder.mockQueryResults();
+
+      await act(async () => {
+        render(<App />);
+      });
+
+      const sidePanelWrapper = screen.getByTestId('side-panel-wrapper');
+      const incompleteIconClass = '.bp3-icon-box';
+      const incompleteIconElement = sidePanelWrapper.querySelector(incompleteIconClass);
+      expect(incompleteIconElement).toBeInTheDocument();
+
+      const dueTag = screen.queryByTestId('due-tag');
+      expect(dueTag).toBeInTheDocument();
+      expect(dueTag).toHaveTextContent('3');
+
+      const newTag = screen.queryByTestId('new-tag');
+      expect(newTag).toBeInTheDocument();
+      expect(newTag).toHaveTextContent('1');
+    });
+
     it('renders correct count when limit is 1, prioritizig due cards', async () => {
       const mockBuilder = new testUtils.MockDataBuilder();
 
       mockBuilder.withSetting({
         dailyLimit: 1,
       });
-
-      // Add completed deck
-      mockBuilder.withCard({ uid: 'memo_1' }).withSession('memo_1');
 
       // Add deck with some new cards
       mockBuilder.withTag('deck-two');
@@ -606,7 +655,7 @@ describe('Side Panel Widget', () => {
       });
 
       // Add completed deck
-      mockBuilder.withCard({ uid: 'memo_1' }).withSession('memo_1');
+      mockBuilder.withCard({ uid: 'memo_1' });
 
       // Add deck with some new cards
       mockBuilder.withTag('deck-two');
@@ -683,5 +732,46 @@ describe('Side Panel Widget', () => {
       expect(newTag).toBeInTheDocument();
       expect(newTag).toHaveTextContent('4');
     });
+
+    it("renders correct count when target due can't can't be meet in first deck, but is available in second deck", async () => {
+      const mockBuilder = new testUtils.MockDataBuilder();
+
+      mockBuilder.withSetting({
+        dailyLimit: 1,
+      });
+
+      // Add a new card to default deck
+      mockBuilder.withCard({ uid: 'memo_1' });
+
+      // Add a due card to new deck
+      const newDeckDueCard = 'deck-two-due-1';
+      mockBuilder
+        .withTag('deck-two')
+        .withCard({ uid: newDeckDueCard, tag: 'deck-two' })
+        .withSession(newDeckDueCard, {
+          dateCreated: dateUtils.subtractDays(new Date(), 1),
+          nextDueDate: new Date(),
+        });
+
+      mockBuilder.mockQueryResults();
+
+      await act(async () => {
+        render(<App />);
+      });
+
+      const sidePanelWrapper = screen.getByTestId('side-panel-wrapper');
+      const incompleteIconClass = '.bp3-icon-box';
+      const incompleteIconElement = sidePanelWrapper.querySelector(incompleteIconClass);
+      expect(incompleteIconElement).toBeInTheDocument();
+
+      const dueTag = screen.queryByTestId('due-tag');
+      expect(dueTag).toBeInTheDocument();
+      expect(dueTag).toHaveTextContent('1');
+
+      const newTag = screen.queryByTestId('new-tag');
+      expect(newTag).not.toBeInTheDocument();
+    });
+
+    it("renders correrct count when target new can't be met in first deck, but is available in second deck", async () => {});
   });
 });

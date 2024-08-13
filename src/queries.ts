@@ -323,23 +323,29 @@ const limitRemainingPracticeData = ({
 
   // @MAYBE: Consider making this a config option
   const targetNewCardsRatio = 0.25;
-  // We use Math.max here to ensure we have at leats one card even when dailyLimit is < 4.
-  // The exception is when dailyLimit is 1, in which case we want to prioritize due cards
+  const targetTotalCards = dailyLimit - today.combinedToday.completed;
+  console.log('DEBUG:: ~ file: queries.ts:326 ~ targetTotalCards:', targetTotalCards);
+  // We use Math.max here to ensure we have at leats one card even when targetTotal is < 4.
+  // The exception is when targetTotal is 1, in which case we want to prioritize due cards
   const targetNewCards =
-    dailyLimit === 1 ? 0 : Math.max(1, Math.floor(dailyLimit * targetNewCardsRatio));
-  const targetDueCards = dailyLimit - targetNewCards;
+    targetTotalCards === 1 ? 0 : Math.max(1, Math.floor(targetTotalCards * targetNewCardsRatio));
+  const targetDueCards = targetTotalCards - targetNewCards;
 
   let totalNewAdded = 0;
   let totalDueAdded = 0;
   let totalAdded = totalNewAdded + totalDueAdded;
 
-  // Add one card at a time (Round Robin style) to evenly distribute cards
-  // Each round, logic declaratively defines logic for adding the next card
+  // Add one card at a time (Round Robin style) to evenly select cards from each
+  // deck.
+  let rounds = 0;
   roundRobinLoop: while (totalAdded < totalCards) {
     for (const currentTag of tagsList) {
+      rounds++;
+      // if (rounds > 5) break roundRobinLoop;
       totalAdded = totalNewAdded + totalDueAdded;
 
-      if (totalAdded === dailyLimit) {
+      if (totalAdded === targetTotalCards) {
+        console.log("WE'RE DONE");
         break roundRobinLoop;
       }
 
@@ -349,8 +355,29 @@ const limitRemainingPracticeData = ({
       const nextDueIndex = currentCards.dueUids.length;
       const nextDueCard = today.tags[currentTag].dueUids[nextDueIndex];
 
+      const stillNeedNewCards = totalNewAdded < targetNewCards;
+      const stillNeedDueCards = totalDueAdded < targetDueCards;
+      const stillHaveDueCards = !!nextDueCard || totalDueAdded < today.combinedToday.due;
+      const stillHaveNewCards = !!nextNewCard || totalNewAdded < today.combinedToday.new;
+
+      console.log({
+        nextNewCard,
+        nextDueCard,
+        totalNewAdded,
+        targetNewCards,
+        stillNeedNewCards,
+        stillNeedDueCards,
+        stillHaveDueCards,
+        totalDueAdded,
+        totalCombinedTodayDue: today.combinedToday.due,
+      });
       // Add new card
-      if (nextNewCard && (!nextDueCard || totalNewAdded < targetNewCards)) {
+      // This always adds a new card if there is no nextDueCard 🤔
+      // So we always add a card from each deck, regardless of the targetNew/Due goal
+      // Meaning if we have want just 1 due card total, but first deck only has a new card, we'll get that card.
+      // Maybe nextDueCard needs to inclusive of other decks?
+      if (nextNewCard && (stillNeedNewCards || !stillHaveDueCards)) {
+        console.log('ADDING NEW CARD');
         selectedCards[currentTag].newUids.push(today.tags[currentTag].newUids[nextNewIndex]);
         totalNewAdded++;
 
@@ -358,7 +385,8 @@ const limitRemainingPracticeData = ({
       }
 
       // Add due card
-      if (nextDueCard && (!nextNewCard || totalDueAdded < targetDueCards)) {
+      if (nextDueCard && (stillNeedDueCards || !stillHaveNewCards)) {
+        console.log('ADDING DUE CARD');
         selectedCards[currentTag].dueUids.push(today.tags[currentTag].dueUids[nextDueIndex]);
         totalDueAdded++;
 
@@ -514,6 +542,7 @@ export const getPracticeData = async ({ tagsList, dataPageTitle, dailyLimit, isC
     pluginPageData,
   });
   calculateCombinedCounts({ today, tagsList });
+  console.log('today before', today.tags);
 
   limitRemainingPracticeData({ today, dailyLimit, tagsList, isCramming });
 
@@ -522,6 +551,7 @@ export const getPracticeData = async ({ tagsList, dataPageTitle, dailyLimit, isC
 
   calculateTodayStatus({ today, tagsList });
 
+  console.log('today after', today);
   return {
     pluginPageData,
     todayStats: today,
