@@ -416,7 +416,7 @@ const FixedIntervalModeControls = ({
   intervalPractice,
   isIntervalEditorOpen,
   toggleIntervalEditorOpen,
-  intervalEstimates,
+  intervalEstimates = [],
 }) => {
   const { intervalMultiplier, intervalMultiplierType } = React.useContext(MainContext);
   const onInteractionhandler = (nextState) => {
@@ -463,7 +463,7 @@ const FixedIntervalModeControls = ({
   );
 };
 
-const SpacedIntervalModeControls = ({ activeButtonKey, gradeFn, intervalEstimates }) => (
+const SpacedIntervalModeControls = ({ activeButtonKey, gradeFn, intervalEstimates = [] }) => (
   <>
     <ControlButton
       key="forget-button"
