@@ -46,7 +46,6 @@ const PracticeOverlay = ({
   isCramming,
   setIsCramming,
   dailyLimit,
-  completedTodayCounts,
   remainingDueCardsCount,
   rtlEnabled,
 }) => {
@@ -55,7 +54,7 @@ const PracticeOverlay = ({
   const hasCards = totalCardsCount > 0;
   const isDone = currentIndex > practiceCardUids.length - 1;
   const isFirst = currentIndex === 0;
-  const completedTodayCount = completedTodayCounts[selectedTag];
+  const completedTodayCount = today.tags[selectedTag].completed;
 
   // @TODOZ: Handle reset case without lastCompletedDate (ie. Clickig review more after limit)
   // const reviewCountReset = completedTodayCount && !lastCompletedDate;
