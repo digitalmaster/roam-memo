@@ -31,7 +31,7 @@ const CardBlock = ({
       // Ensure block is not collapsed (so we can reveal children programatically)
       const roamBlockElm = ref.current.querySelector('.rm-block');
       setRenderedBlockElm(roamBlockElm);
-      const isCollapsed = roamBlockElm.classList.contains('rm-block--closed');
+      const isCollapsed = roamBlockElm?.classList.contains('rm-block--closed');
       if (isCollapsed) {
         // Currently no Roam API to toggle block collapse, so had to find this hacky
         // way to do it by simulating click

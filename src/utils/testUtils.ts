@@ -1,11 +1,13 @@
 import { Settings, defaultSettings } from '~/hooks/useSettings';
 import { ReviewModes, Session } from '~/models/session';
 import {
+  blockInfoQuery,
   childBlocksOnPageQuery,
   dataPageReferencesIdsQuery,
   generateNewSession,
   getDataPageQuery,
   getPluginPageBlockDataQuery,
+  parentChainInfoQuery,
 } from '~/queries';
 import * as dateUtils from '~/utils/date';
 import * as testUtils from '~/utils/testUtils';
@@ -39,6 +41,15 @@ const mockOtherDependencies = ({ settingsMock }) => {
 
 const dataPageTitle = 'roam/memo';
 const dataPageUid = 1234;
+const mockBlockInfo = {
+  string: 'mock block string',
+  children: [
+    {
+      order: 0,
+      string: 'mock child block string',
+    },
+  ],
+};
 interface MockQuery {
   query: string;
   result: any;
@@ -74,6 +85,14 @@ export const generateMockRoamAlphaAPI = ({ queryMocks, tagsList }) => ({
         result: [],
         args: [dataPageTitle, 'data'],
       },
+      {
+        query: blockInfoQuery,
+        result: [[mockBlockInfo]],
+      },
+      {
+        query: parentChainInfoQuery,
+        result: [[]],
+      },
     ];
 
     const mocks = queryMocks.concat(defaultMocks);
@@ -99,6 +118,10 @@ export const generateMockRoamAlphaAPI = ({ queryMocks, tagsList }) => ({
     commandPalette: {
       addCommand: jest.fn(),
       removeCommand: jest.fn(),
+    },
+    components: {
+      unmountNode: jest.fn(),
+      renderBlock: jest.fn(),
     },
   },
   util: {

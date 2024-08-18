@@ -345,7 +345,12 @@ const TagSelector = ({ tagsList, selectedTag, onTagChange }) => {
       }}
       popoverProps={{ minimal: true }}
     >
-      <Blueprint.Button text={selectedTag} rightIcon="caret-down" minimal />
+      <Blueprint.Button
+        text={selectedTag}
+        rightIcon="caret-down"
+        minimal
+        data-testid="tag-selector-cta"
+      />
     </BlueprintSelect.Select>
   );
 };
@@ -381,13 +386,25 @@ const TagSelectorItem = ({ text, onClick, active, tagsList }) => {
   const placement = index === tagsList.length - 1 ? 'bottom' : 'top';
 
   return (
-    <TagSelectorItemWrapper onClick={onClick} active={active} key={text} tabIndex={-1}>
+    <TagSelectorItemWrapper
+      onClick={onClick}
+      active={active}
+      key={text}
+      tabIndex={-1}
+      data-testid="tag-selector-item"
+    >
       {text}
       <div className="ml-2">
         {dueCount > 0 && (
           // @ts-ignore
           <Tooltip content="Due" placement={placement}>
-            <Tag active minimal intent="primary" className="text-center">
+            <Tag
+              active
+              minimal
+              intent="primary"
+              className="text-center"
+              data-testid="tag-selector-due"
+            >
               {dueCount}
             </Tag>
           </Tooltip>
@@ -395,7 +412,13 @@ const TagSelectorItem = ({ text, onClick, active, tagsList }) => {
         {newCount > 0 && (
           // @ts-ignore
           <Tooltip content="New" placement={placement}>
-            <Tag active minimal intent="success" className="text-center ml-2">
+            <Tag
+              active
+              minimal
+              intent="success"
+              className="text-center ml-2"
+              data-testid="tag-selector-new"
+            >
               {newCount}
             </Tag>
           </Tooltip>

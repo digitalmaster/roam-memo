@@ -189,14 +189,15 @@ export const getPluginPageCachedData = async ({ dataPageTitle }) => {
   return mapPluginPageCachedData(queryResultsData);
 };
 
-export const getDueCardUids = (data: Records) => {
+export const getDueCardUids = (currentTagSessionData: CompleteRecords) => {
   const results: RecordUid[] = [];
-  if (!Object.keys(data).length) return results;
+  if (!Object.keys(currentTagSessionData).length) return results;
 
   const now = new Date();
-  Object.keys(data).forEach((cardUid) => {
-    const cardData = data[cardUid] as Session;
-    const nextDueDate = cardData.nextDueDate;
+  Object.keys(currentTagSessionData).forEach((cardUid) => {
+    const cardData = currentTagSessionData[cardUid] as Session[];
+    const latestSession = cardData[cardData.length - 1];
+    const nextDueDate = latestSession.nextDueDate;
 
     if (nextDueDate <= now) {
       results.push(cardUid);
@@ -206,26 +207,15 @@ export const getDueCardUids = (data: Records) => {
   // Sort due cards by nextDueDate (due soonest first to increase retention,
   // accepting that cards that are more past due will likely be forgotten)
   results.sort((a, b) => {
-    const aCard = data[a] as Session;
-    const bCard = data[b] as Session;
+    const aCards = currentTagSessionData[a] as Session[];
+    const aLatestSession = aCards[aCards.length - 1];
+    const bCards = currentTagSessionData[b] as Session[];
+    const bLatestSession = bCards[bCards.length - 1];
 
-    return aCard.nextDueDate < bCard.nextDueDate ? 1 : -1;
+    return aLatestSession.nextDueDate < bLatestSession.nextDueDate ? 1 : -1;
   });
 
   return results;
-};
-
-export const getPracticedTodayCount = (data: Records = {}): number => {
-  let count = 0;
-
-  Object.keys(data).forEach((cardUid) => {
-    const cardData = data[cardUid];
-    const isCreatedToday = dateUtils.isSameDay(cardData.dateCreated, new Date());
-
-    if (isCreatedToday) count++;
-  });
-
-  return count;
 };
 
 export const generateNewSession = ({
@@ -253,12 +243,11 @@ export const generateNewSession = ({
   };
 };
 
-const setRemainingPracticeData = ({ today, tagsList, sessionData, cardUids, pluginPageData }) => {
+/**
+ * Create new cards for all referenced cards with no session data yet
+ */
+const addNewCards = ({ today, tagsList, cardUids, pluginPageData }) => {
   for (const currentTag of tagsList) {
-    const currentTagSessionData = sessionData[currentTag];
-    const dueCardsUids = getDueCardUids(currentTagSessionData);
-
-    // Create new cards for all referenced cards with no data yet
     const allSelectedTagCardsUids = cardUids[currentTag];
     const newCardsUids: RecordUid[] = [];
     allSelectedTagCardsUids.forEach((referenceId) => {
@@ -278,10 +267,21 @@ const setRemainingPracticeData = ({ today, tagsList, sessionData, cardUids, plug
 
     today.tags[currentTag] = {
       ...today.tags[currentTag],
-      dueUids: dueCardsUids,
       newUids: newCardsUids,
-      due: dueCardsUids.length,
       new: newCardsUids.length,
+    };
+  }
+};
+
+const addDueCards = ({ today, tagsList, sessionData }) => {
+  for (const currentTag of tagsList) {
+    const currentTagSessionData = sessionData[currentTag];
+    const dueCardsUids = getDueCardUids(currentTagSessionData);
+
+    today.tags[currentTag] = {
+      ...today.tags[currentTag],
+      dueUids: dueCardsUids,
+      due: dueCardsUids.length,
     };
   }
 };
@@ -323,13 +323,29 @@ const limitRemainingPracticeData = ({
 
   // @MAYBE: Consider making this a config option
   const targetNewCardsRatio = 0.25;
-  const targetTotalCards = dailyLimit - today.combinedToday.completed;
-  console.log('DEBUG:: ~ file: queries.ts:326 ~ targetTotalCards:', targetTotalCards);
+  const dailyTargetTotalCards = dailyLimit;
+  const targetTotalCards = dailyTargetTotalCards - today.combinedToday.completed;
+  console.log('DEBUG:: ~ file: queries.ts:326 ~ targetTotalCards:', dailyTargetTotalCards);
   // We use Math.max here to ensure we have at leats one card even when targetTotal is < 4.
   // The exception is when targetTotal is 1, in which case we want to prioritize due cards
-  const targetNewCards =
-    targetTotalCards === 1 ? 0 : Math.max(1, Math.floor(targetTotalCards * targetNewCardsRatio));
-  const targetDueCards = targetTotalCards - targetNewCards;
+
+  // We don't want to calculate target new from subtracted number because on
+  // second run we want the number to be the same
+  const dailyTargetNewCards =
+    dailyTargetTotalCards === 1
+      ? 0
+      : Math.max(1, Math.floor(dailyTargetTotalCards * targetNewCardsRatio));
+  const dailyTargetDueCards = dailyTargetTotalCards - dailyTargetNewCards;
+  const targetNewCards = Math.max(0, dailyTargetNewCards - today.combinedToday.completedNew);
+  const targetDueCards = Math.max(0, dailyTargetDueCards - today.combinedToday.completedDue);
+  console.log({
+    dailyTargetTotalCards,
+    targetTotalCards,
+    dailyTargetNewCards,
+    targetNewCards,
+    dailyTargetDueCards,
+    targetDueCards,
+  });
 
   let totalNewAdded = 0;
   let totalDueAdded = 0;
@@ -341,7 +357,7 @@ const limitRemainingPracticeData = ({
   roundRobinLoop: while (totalAdded < totalCards) {
     for (const currentTag of tagsList) {
       rounds++;
-      // if (rounds > 5) break roundRobinLoop;
+      if (rounds > 5) break roundRobinLoop;
       totalAdded = totalNewAdded + totalDueAdded;
 
       if (totalAdded === targetTotalCards) {
@@ -355,27 +371,34 @@ const limitRemainingPracticeData = ({
       const nextDueIndex = currentCards.dueUids.length;
       const nextDueCard = today.tags[currentTag].dueUids[nextDueIndex];
 
+      // Here each round we consider the total cards to be added and what's already been added./
+      // We consider the types new and due
+      // now we need to also consider how many we've added from this deck already
+      // If the deck has already reached it's target, we don't want to add more
+      // But where do we get this target amount for each deck?
+      //  When don't consider completed cards, we have the total number of cards we wanted for each deck
+      //  So have to find a way to re-calculate this value (since we don't want to store any state)
       const stillNeedNewCards = totalNewAdded < targetNewCards;
       const stillNeedDueCards = totalDueAdded < targetDueCards;
       const stillHaveDueCards = !!nextDueCard || totalDueAdded < today.combinedToday.due;
       const stillHaveNewCards = !!nextNewCard || totalNewAdded < today.combinedToday.new;
 
-      console.log({
-        nextNewCard,
-        nextDueCard,
-        totalNewAdded,
+      console.log('round', {
+        currentTag,
         targetNewCards,
+        targetDueCards,
+        totalNewAdded,
+        totalDueAdded,
         stillNeedNewCards,
         stillNeedDueCards,
+        stillHaveNewCards,
         stillHaveDueCards,
-        totalDueAdded,
+        nextNewCard,
+        nextDueCard,
         totalCombinedTodayDue: today.combinedToday.due,
       });
+
       // Add new card
-      // This always adds a new card if there is no nextDueCard 🤔
-      // So we always add a card from each deck, regardless of the targetNew/Due goal
-      // Meaning if we have want just 1 due card total, but first deck only has a new card, we'll get that card.
-      // Maybe nextDueCard needs to inclusive of other decks?
       if (nextNewCard && (stillNeedNewCards || !stillHaveDueCards)) {
         console.log('ADDING NEW CARD');
         selectedCards[currentTag].newUids.push(today.tags[currentTag].newUids[nextNewIndex]);
@@ -414,11 +437,22 @@ const calculateCombinedCounts = ({ today, tagsList }) => {
   today.combinedToday = todayInitial.combinedToday;
 
   for (const tag of tagsList) {
-    today.combinedToday.completed += today.tags[tag].completed;
     today.combinedToday.due += today.tags[tag].due;
     today.combinedToday.new += today.tags[tag].new;
     today.combinedToday.dueUids = today.combinedToday.dueUids.concat(today.tags[tag].dueUids);
     today.combinedToday.newUids = today.combinedToday.newUids.concat(today.tags[tag].newUids);
+    today.combinedToday.completed += today.tags[tag].completed;
+    today.combinedToday.completedUids = today.combinedToday.completedUids.concat(
+      today.tags[tag].completedUids
+    );
+    today.combinedToday.completedDue += today.tags[tag].completedDue;
+    today.combinedToday.completedDueUids = today.combinedToday.completedDueUids.concat(
+      today.tags[tag].completedDueUids
+    );
+    today.combinedToday.completedNew += today.tags[tag].completedNew;
+    today.combinedToday.completedNewUids = today.combinedToday.completedNewUids.concat(
+      today.tags[tag].completedNewUids
+    );
   }
 };
 
@@ -457,6 +491,9 @@ const calculateTodayStatus = ({ today, tagsList }) => {
   }
 };
 
+/**
+ * Gets all the card referencing a tag, then finds all the practice session data for those cards
+ */
 export const getSessionData = async (pluginPageData, tag, dataPageTitle) => {
   // Get all the cards for the tag
   const tagReferencesIds = await getPageReferenceIds(tag, dataPageTitle);
@@ -479,12 +516,42 @@ export const getSessionData = async (pluginPageData, tag, dataPageTitle) => {
   };
 };
 
+/**
+ * Adds data for all the cards practised today
+ */
 const calculateCompletedTodayCounts = async ({ today, tagsList, sessionData }) => {
   for (const tag of tagsList) {
-    const completedTodayCount = getPracticedTodayCount(sessionData[tag]);
+    let count = 0;
+    const completedUids = [];
+    const completedDueUids = [];
+    const completedNewUids = [];
+
+    const currentTagSessionData = sessionData[tag];
+    Object.keys(currentTagSessionData).forEach((cardUid) => {
+      const cardData = currentTagSessionData[cardUid];
+      const latestSession = cardData[cardData.length - 1];
+      const isCompletedToday = dateUtils.isSameDay(latestSession.dateCreated, new Date());
+
+      if (isCompletedToday) {
+        const isFirstSession = cardData.length === 1;
+        const wasDueToday = !isFirstSession;
+        const wasNew = isFirstSession;
+
+        count++;
+        completedUids.push(cardUid);
+        if (wasDueToday) completedDueUids.push(cardUid);
+        if (wasNew) completedNewUids.push(cardUid);
+      }
+    });
+
     today.tags[tag] = {
       ...(today.tags[tag] || {}),
-      completed: completedTodayCount,
+      completed: count,
+      completedUids,
+      completedDueUids,
+      completedNewUids,
+      completedDue: completedDueUids.length,
+      completedNew: completedNewUids.length,
     };
   }
 
@@ -511,7 +578,7 @@ const initializeToday = ({ tagsList }) => {
 export const getPracticeData = async ({ tagsList, dataPageTitle, dailyLimit, isCramming }) => {
   const pluginPageData = (await getPluginPageData({
     dataPageTitle,
-    limitToLatest: true,
+    limitToLatest: false,
   })) as Records;
 
   const today = initializeToday({ tagsList });
@@ -534,15 +601,16 @@ export const getPracticeData = async ({ tagsList, dataPageTitle, dailyLimit, isC
     sessionData,
   });
 
-  setRemainingPracticeData({
+  addNewCards({ today, tagsList, cardUids, pluginPageData });
+  addDueCards({
     today,
     tagsList,
     sessionData,
-    cardUids,
-    pluginPageData,
   });
+
   calculateCombinedCounts({ today, tagsList });
-  console.log('today before', today.tags);
+  console.log('today before', today);
+  console.log('dailyLimit', dailyLimit);
 
   limitRemainingPracticeData({ today, dailyLimit, tagsList, isCramming });
 
@@ -559,19 +627,19 @@ export const getPracticeData = async ({ tagsList, dataPageTitle, dailyLimit, isC
   };
 };
 
-const getParentChainInfo = async ({ refUid }) => {
-  const q = `[
-    :find (pull ?parentIds [
-      :node/title
-      :block/string
-      :block/uid])
-    :in $ ?refId
-    :where
-      [?block :block/uid ?refId]
-      [?block :block/parents ?parentIds]
-    ]`;
+export const parentChainInfoQuery = `[
+  :find (pull ?parentIds [
+    :node/title
+    :block/string
+    :block/uid])
+  :in $ ?refId
+  :where
+    [?block :block/uid ?refId]
+    [?block :block/parents ?parentIds]
+  ]`;
 
-  const dataResults = await window.roamAlphaAPI.q(q, refUid);
+const getParentChainInfo = async ({ refUid }) => {
+  const dataResults = await window.roamAlphaAPI.q(parentChainInfoQuery, refUid);
 
   return dataResults.map((r) => r[0]);
 };
@@ -584,16 +652,17 @@ export interface BlockInfo {
 export interface Breadcrumbs {
   [index: number]: { uid: string; title: string };
 }
+
+export const blockInfoQuery = `[
+  :find (pull ?block [
+    :block/string
+    :block/children
+    {:block/children ...}])
+  :in $ ?refId
+  :where
+    [?block :block/uid ?refId]
+  ]`;
 export const fetchBlockInfo: (refUid: any) => Promise<BlockInfo> = async (refUid) => {
-  const blockInfoQuery = `[
-    :find (pull ?block [
-      :block/string
-      :block/children
-      {:block/children ...}])
-    :in $ ?refId
-    :where
-      [?block :block/uid ?refId]
-    ]`;
   const blockInfo = (await window.roamAlphaAPI.q(blockInfoQuery, refUid))[0][0];
   const parentChainInfo = await getParentChainInfo({ refUid });
 

@@ -1,4 +1,4 @@
-import { render, screen, act } from '@testing-library/react';
+import { render, screen, act, within } from '@testing-library/react';
 
 import * as testUtils from '~/utils/testUtils';
 import * as dateUtils from '~/utils/date';
@@ -740,8 +740,11 @@ describe('Side Panel Widget', () => {
         dailyLimit: 1,
       });
 
-      // Add a new card to default deck
-      mockBuilder.withCard({ uid: 'memo_1' });
+      // Add a due card to default deck (this is the one we want to skip)
+      mockBuilder.withCard({ uid: 'memo_1' }).withSession('memo_1', {
+        dateCreated: dateUtils.subtractDays(new Date(), 1),
+        nextDueDate: new Date(),
+      });
 
       // Add a due card to new deck
       const newDeckDueCard = 'deck-two-due-1';
@@ -772,6 +775,88 @@ describe('Side Panel Widget', () => {
       expect(newTag).not.toBeInTheDocument();
     });
 
-    it("renders correrct count when target new can't be met in first deck, but is available in second deck", async () => {});
+    it.skip('takes completed cards in decks into acount, alocating remaing limit count consistently', async () => {
+      /**
+       * This handles the case where we have a limit set between multiple decks,
+       * we finish on deck, then refetch. we expect the limit to not restart but
+       * instead take the completed cards into account and spread the remainder
+       * accross the other decks. Essentially, distribution should remain the same.
+       */
+      const mockBuilder = new testUtils.MockDataBuilder();
+
+      mockBuilder.withSetting({
+        dailyLimit: 3,
+      });
+
+      // Add some cards to default deck
+      for (let i = 0; i < 5; i++) {
+        mockBuilder.withCard({ uid: `1_due_${i}` }).withSession(`1_due_${i}`, {
+          dateCreated: dateUtils.subtractDays(new Date(), 1),
+          nextDueDate: new Date(),
+        });
+        mockBuilder.withCard({ uid: `1_new_${i}` });
+      }
+
+      // Add some cards to second deck
+      mockBuilder.withTag('deck-two');
+      for (let i = 0; i < 5; i++) {
+        mockBuilder.withCard({ uid: `2_due_${i}`, tag: 'deck-two' }).withSession(`2_due_${i}`, {
+          dateCreated: dateUtils.subtractDays(new Date(), 1),
+          nextDueDate: new Date(),
+        });
+        mockBuilder.withCard({ uid: `2_new_${i}`, tag: 'deck-two' });
+      }
+
+      mockBuilder.mockQueryResults();
+
+      await act(async () => {
+        render(<App />);
+      });
+
+      // Complete all the cards in the first deck
+      mockBuilder.withSession(`1_due_0`, {
+        dateCreated: new Date(),
+        nextDueDate: dateUtils.addDays(new Date(), 1),
+      });
+      mockBuilder.withSession(`1_new_0`, {
+        dateCreated: new Date(),
+        nextDueDate: dateUtils.addDays(new Date(), 1),
+      });
+      mockBuilder.mockQueryResults();
+      console.log('---- complete both due cards in first deck ----');
+
+      // Refresh data by launching modal
+      await act(async () => {
+        const sidePanelButtonElm = document.querySelector<HTMLSpanElement>(
+          '[data-testid="side-panel-wrapper"]'
+        );
+        sidePanelButtonElm.click();
+      });
+
+      // Open Tag Selector
+      await act(async () => {
+        const tagSelectorElm = document.querySelector<HTMLButtonElement>(
+          '[data-testid="tag-selector-cta"]'
+        );
+
+        tagSelectorElm.click();
+      });
+
+      // Here we expect the first deck to be marked complete, and the second deck retains its 1 due card
+      const tagListElements = screen.queryAllByTestId('tag-selector-item');
+
+      const defaultDeck = within(tagListElements[0].parentNode as HTMLElement).getByText('memo');
+      const secondDeck = within(tagListElements[0].parentNode as HTMLElement).getByText('deck-two');
+
+      const defaultDeckDue = within(defaultDeck).queryByTestId('tag-selector-due');
+      const defaultDeckNew = within(defaultDeck).queryByTestId('tag-selector-new');
+      const secondDeckDue = within(secondDeck).queryByTestId('tag-selector-due');
+      const secondDeckNew = within(secondDeck).queryByTestId('tag-selector-new');
+
+      expect(defaultDeckDue).not.toBeInTheDocument();
+      expect(defaultDeckNew).not.toBeInTheDocument();
+      expect(secondDeckDue).toHaveTextContent('1');
+      expect(secondDeckNew).not.toBeInTheDocument();
+    });
   });
 });

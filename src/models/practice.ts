@@ -9,20 +9,30 @@ export type Today = {
   tags: {
     [tag: string]: {
       status: CompletionStatus;
-      completed: number;
       due: number;
       new: number;
       dueUids: RecordUid[];
       newUids: RecordUid[];
+      completed: number;
+      completedUids: RecordUid[];
+      completedDue: number;
+      completedNew: number;
+      completedDueUids: RecordUid[];
+      completedNewUids: RecordUid[];
     };
   };
   combinedToday: {
     status: CompletionStatus;
-    completed: number;
     due: number;
     new: number;
     dueUids: RecordUid[];
     newUids: RecordUid[];
+    completed: number;
+    completedUids: RecordUid[];
+    completedDue: number;
+    completedNew: number;
+    completedDueUids: RecordUid[];
+    completedNewUids: RecordUid[];
   };
 };
 
@@ -30,10 +40,15 @@ export const TodayInitial: Today = {
   tags: {},
   combinedToday: {
     status: CompletionStatus.Unstarted,
-    completed: 0,
     due: 0,
     new: 0,
     dueUids: [],
     newUids: [],
+    completed: 0,
+    completedUids: [],
+    completedDue: 0,
+    completedDueUids: [],
+    completedNew: 0,
+    completedNewUids: [],
   },
 };
