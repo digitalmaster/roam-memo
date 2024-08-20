@@ -318,13 +318,11 @@ describe('Side Panel Widget', () => {
 
   describe('Daily Limit Set', () => {
     it('Renders correct counts when single deck, with only only new cards', async () => {
-      const newCardCount = 10;
-
       const mockBuilder = new testUtils.MockDataBuilder().withSetting({
         dailyLimit: 5,
       });
 
-      for (let i = 0; i < newCardCount; i++) {
+      for (let i = 0; i < 10; i++) {
         mockBuilder.withCard({ uid: `id_${i}` });
       }
 
@@ -579,8 +577,8 @@ describe('Side Panel Widget', () => {
           });
       }
 
-      // Complete one new card
-      mockBuilder.withSession(`deck_two_0`, {
+      // Complete one new card (this is the one that was originaly selected)
+      mockBuilder.withSession(`memo_1`, {
         dateCreated: new Date(),
         nextDueDate: dateUtils.addDays(new Date(), 1),
       });
@@ -598,11 +596,10 @@ describe('Side Panel Widget', () => {
 
       const dueTag = screen.queryByTestId('due-tag');
       expect(dueTag).toBeInTheDocument();
-      expect(dueTag).toHaveTextContent('3');
+      expect(dueTag).toHaveTextContent('4');
 
       const newTag = screen.queryByTestId('new-tag');
-      expect(newTag).toBeInTheDocument();
-      expect(newTag).toHaveTextContent('1');
+      expect(newTag).not.toBeInTheDocument();
     });
 
     it('renders correct count when limit is 1, prioritizig due cards', async () => {
@@ -775,12 +772,12 @@ describe('Side Panel Widget', () => {
       expect(newTag).not.toBeInTheDocument();
     });
 
-    it.skip('takes completed cards in decks into acount, alocating remaing limit count consistently', async () => {
+    it('takes completed cards in decks into acount, alocating remaing limit count consistently', async () => {
       /**
        * This handles the case where we have a limit set between multiple decks,
-       * we finish on deck, then refetch. we expect the limit to not restart but
-       * instead take the completed cards into account and spread the remainder
-       * accross the other decks. Essentially, distribution should remain the same.
+       * we finish one deck, then refetch. we expect the limit to not restart
+       * but instead remember the original distribution and subtract completed
+       * cards from that. Essentially, distribution should remain the same.
        */
       const mockBuilder = new testUtils.MockDataBuilder();
 

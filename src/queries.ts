@@ -196,7 +196,10 @@ export const getDueCardUids = (currentTagSessionData: CompleteRecords) => {
   const now = new Date();
   Object.keys(currentTagSessionData).forEach((cardUid) => {
     const cardData = currentTagSessionData[cardUid] as Session[];
+
     const latestSession = cardData[cardData.length - 1];
+    if (!latestSession) return;
+
     const nextDueDate = latestSession.nextDueDate;
 
     if (nextDueDate <= now) {
@@ -287,6 +290,21 @@ const addDueCards = ({ today, tagsList, sessionData }) => {
 };
 
 /**
+ * Here we're adding back completed cards to counts. This is so we can compute
+ * the initial distribution of cards (the distribution before we completed
+ * cards). This allows us to maintain the same distribution on re-runs (enabling
+ * features like partial completions that don't redistribute everytime)
+ */
+const restoreCompletedUids = ({ today, tagsList }) => {
+  for (const currentTag of tagsList) {
+    today.tags[currentTag].newUids.push(...today.tags[currentTag].completedNewUids);
+    today.tags[currentTag].dueUids.push(...today.tags[currentTag].completedDueUids);
+    today.tags[currentTag].new = today.tags[currentTag].newUids.length;
+    today.tags[currentTag].due = today.tags[currentTag].dueUids.length;
+  }
+};
+
+/**
  *  Limit of cards to practice ensuring that due cards are always
  *  first but ~25% new cards are still practiced when limit is less than total due
  *  cards.
@@ -309,6 +327,8 @@ const limitRemainingPracticeData = ({
     return;
   }
 
+  restoreCompletedUids({ today, tagsList });
+
   // Initialize selected cards
   const selectedCards = tagsList.reduce(
     (acc, currentTag) => ({
@@ -323,29 +343,12 @@ const limitRemainingPracticeData = ({
 
   // @MAYBE: Consider making this a config option
   const targetNewCardsRatio = 0.25;
-  const dailyTargetTotalCards = dailyLimit;
-  const targetTotalCards = dailyTargetTotalCards - today.combinedToday.completed;
-  console.log('DEBUG:: ~ file: queries.ts:326 ~ targetTotalCards:', dailyTargetTotalCards);
+  const targetTotalCards = dailyLimit;
   // We use Math.max here to ensure we have at leats one card even when targetTotal is < 4.
   // The exception is when targetTotal is 1, in which case we want to prioritize due cards
-
-  // We don't want to calculate target new from subtracted number because on
-  // second run we want the number to be the same
-  const dailyTargetNewCards =
-    dailyTargetTotalCards === 1
-      ? 0
-      : Math.max(1, Math.floor(dailyTargetTotalCards * targetNewCardsRatio));
-  const dailyTargetDueCards = dailyTargetTotalCards - dailyTargetNewCards;
-  const targetNewCards = Math.max(0, dailyTargetNewCards - today.combinedToday.completedNew);
-  const targetDueCards = Math.max(0, dailyTargetDueCards - today.combinedToday.completedDue);
-  console.log({
-    dailyTargetTotalCards,
-    targetTotalCards,
-    dailyTargetNewCards,
-    targetNewCards,
-    dailyTargetDueCards,
-    targetDueCards,
-  });
+  const targetNewCards =
+    targetTotalCards === 1 ? 0 : Math.max(1, Math.floor(targetTotalCards * targetNewCardsRatio));
+  const targetDueCards = targetTotalCards - targetNewCards;
 
   let totalNewAdded = 0;
   let totalDueAdded = 0;
@@ -353,15 +356,12 @@ const limitRemainingPracticeData = ({
 
   // Add one card at a time (Round Robin style) to evenly select cards from each
   // deck.
-  let rounds = 0;
   roundRobinLoop: while (totalAdded < totalCards) {
     for (const currentTag of tagsList) {
-      rounds++;
-      if (rounds > 5) break roundRobinLoop;
+      // if (rounds > 5) break roundRobinLoop;
       totalAdded = totalNewAdded + totalDueAdded;
 
       if (totalAdded === targetTotalCards) {
-        console.log("WE'RE DONE");
         break roundRobinLoop;
       }
 
@@ -371,36 +371,13 @@ const limitRemainingPracticeData = ({
       const nextDueIndex = currentCards.dueUids.length;
       const nextDueCard = today.tags[currentTag].dueUids[nextDueIndex];
 
-      // Here each round we consider the total cards to be added and what's already been added./
-      // We consider the types new and due
-      // now we need to also consider how many we've added from this deck already
-      // If the deck has already reached it's target, we don't want to add more
-      // But where do we get this target amount for each deck?
-      //  When don't consider completed cards, we have the total number of cards we wanted for each deck
-      //  So have to find a way to re-calculate this value (since we don't want to store any state)
       const stillNeedNewCards = totalNewAdded < targetNewCards;
       const stillNeedDueCards = totalDueAdded < targetDueCards;
       const stillHaveDueCards = !!nextDueCard || totalDueAdded < today.combinedToday.due;
       const stillHaveNewCards = !!nextNewCard || totalNewAdded < today.combinedToday.new;
 
-      console.log('round', {
-        currentTag,
-        targetNewCards,
-        targetDueCards,
-        totalNewAdded,
-        totalDueAdded,
-        stillNeedNewCards,
-        stillNeedDueCards,
-        stillHaveNewCards,
-        stillHaveDueCards,
-        nextNewCard,
-        nextDueCard,
-        totalCombinedTodayDue: today.combinedToday.due,
-      });
-
       // Add new card
       if (nextNewCard && (stillNeedNewCards || !stillHaveDueCards)) {
-        console.log('ADDING NEW CARD');
         selectedCards[currentTag].newUids.push(today.tags[currentTag].newUids[nextNewIndex]);
         totalNewAdded++;
 
@@ -409,13 +386,32 @@ const limitRemainingPracticeData = ({
 
       // Add due card
       if (nextDueCard && (stillNeedDueCards || !stillHaveNewCards)) {
-        console.log('ADDING DUE CARD');
         selectedCards[currentTag].dueUids.push(today.tags[currentTag].dueUids[nextDueIndex]);
         totalDueAdded++;
 
         continue;
       }
     }
+  }
+
+  // Now that we've generated the original distribution we can subtract
+  // completed cards from selected cards without affecting the original
+  // distribution
+  for (const tag of tagsList) {
+    const tagStats = today.tags[tag];
+    const completedDueUids = tagStats.completedDueUids;
+    const completedNewUids = tagStats.completedNewUids;
+    const remainingTargetDue = Math.max(
+      selectedCards[tag].dueUids.length - completedDueUids.length,
+      0
+    );
+    const remainingTargetNew = Math.max(
+      selectedCards[tag].newUids.length - completedNewUids.length,
+      0
+    );
+
+    selectedCards[tag].dueUids = selectedCards[tag].dueUids.slice(0, remainingTargetDue);
+    selectedCards[tag].newUids = selectedCards[tag].newUids.slice(0, remainingTargetNew);
   }
 
   // Replace today values with selected cards
@@ -530,7 +526,8 @@ const calculateCompletedTodayCounts = async ({ today, tagsList, sessionData }) =
     Object.keys(currentTagSessionData).forEach((cardUid) => {
       const cardData = currentTagSessionData[cardUid];
       const latestSession = cardData[cardData.length - 1];
-      const isCompletedToday = dateUtils.isSameDay(latestSession.dateCreated, new Date());
+      const isCompletedToday =
+        latestSession && dateUtils.isSameDay(latestSession.dateCreated, new Date());
 
       if (isCompletedToday) {
         const isFirstSession = cardData.length === 1;
@@ -609,7 +606,7 @@ export const getPracticeData = async ({ tagsList, dataPageTitle, dailyLimit, isC
   });
 
   calculateCombinedCounts({ today, tagsList });
-  console.log('today before', today);
+  console.log('today before', JSON.stringify(today, null, 2));
   console.log('dailyLimit', dailyLimit);
 
   limitRemainingPracticeData({ today, dailyLimit, tagsList, isCramming });
@@ -619,7 +616,7 @@ export const getPracticeData = async ({ tagsList, dataPageTitle, dailyLimit, isC
 
   calculateTodayStatus({ today, tagsList });
 
-  console.log('today after', today);
+  console.log('today after', JSON.stringify(today, null, 2));
   return {
     pluginPageData,
     todayStats: today,
