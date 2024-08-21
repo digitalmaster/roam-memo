@@ -249,7 +249,17 @@ export const generateNewSession = ({
 /**
  * Create new cards for all referenced cards with no session data yet
  */
-const addNewCards = ({ today, tagsList, cardUids, pluginPageData }) => {
+const addNewCards = ({
+  today,
+  tagsList,
+  cardUids,
+  pluginPageData,
+}: {
+  today: Today;
+  tagsList: string[];
+  cardUids: Record<string, RecordUid[]>;
+  pluginPageData: CompleteRecords;
+}) => {
   for (const currentTag of tagsList) {
     const allSelectedTagCardsUids = cardUids[currentTag];
     const newCardsUids: RecordUid[] = [];
@@ -257,9 +267,7 @@ const addNewCards = ({ today, tagsList, cardUids, pluginPageData }) => {
       if (!pluginPageData[referenceId]) {
         // New
         newCardsUids.push(referenceId);
-        pluginPageData[referenceId] = {
-          ...generateNewSession(),
-        };
+        pluginPageData[referenceId] = [generateNewSession()];
       }
     });
 
@@ -490,7 +498,15 @@ const calculateTodayStatus = ({ today, tagsList }) => {
 /**
  * Gets all the card referencing a tag, then finds all the practice session data for those cards
  */
-export const getSessionData = async (pluginPageData, tag, dataPageTitle) => {
+export const getSessionData = async ({
+  pluginPageData,
+  tag,
+  dataPageTitle,
+}: {
+  pluginPageData: CompleteRecords;
+  tag: string;
+  dataPageTitle: string;
+}) => {
   // Get all the cards for the tag
   const tagReferencesIds = await getPageReferenceIds(tag, dataPageTitle);
   const tagPageBlocksIds = await getSelectedTagPageBlocksIds(tag);
@@ -576,18 +592,18 @@ export const getPracticeData = async ({ tagsList, dataPageTitle, dailyLimit, isC
   const pluginPageData = (await getPluginPageData({
     dataPageTitle,
     limitToLatest: false,
-  })) as Records;
+  })) as CompleteRecords;
 
   const today = initializeToday({ tagsList });
   const sessionData = {};
-  const cardUids = {};
+  const cardUids: Record<string, RecordUid[]> = {};
 
   for (const tag of tagsList) {
-    const { sessionData: currentSessionData, cardUids: currentCardUids } = await getSessionData(
+    const { sessionData: currentSessionData, cardUids: currentCardUids } = await getSessionData({
       pluginPageData,
       tag,
-      dataPageTitle
-    );
+      dataPageTitle,
+    });
     sessionData[tag] = currentSessionData;
     cardUids[tag] = currentCardUids;
   }

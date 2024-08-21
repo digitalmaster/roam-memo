@@ -1,11 +1,11 @@
 import * as React from 'react';
 import { Today, TodayInitial } from '~/models/practice';
-import { NewRecords, Records, RecordUid } from '~/models/session';
+import { CompleteRecords, RecordUid } from '~/models/session';
 import * as queries from '~/queries';
 
 const usePracticeCardsData = ({ tagsList, selectedTag, dataPageTitle, isCramming, dailyLimit }) => {
   const [practiceCardsUids, setPracticeCardsUids] = React.useState<RecordUid[]>([]);
-  const [practiceData, setPracticeData] = React.useState<Records | NewRecords>({});
+  const [practiceData, setPracticeData] = React.useState<CompleteRecords>({});
   const [refetchTrigger, setRefetchTrigger] = React.useState(false);
   const [today, setToday] = React.useState<Today>(TodayInitial);
 
@@ -40,7 +40,7 @@ const usePracticeCardsData = ({ tagsList, selectedTag, dataPageTitle, isCramming
         );
       } else {
         // Always practice due cards first
-        // @TODO: Perhaps make this order configurable?
+        // @MAYBE: Make this order configurable?
         setPracticeCardsUids([...dueCardsUids, ...newCardsUids]);
       }
     })();

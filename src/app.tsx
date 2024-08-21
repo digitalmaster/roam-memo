@@ -58,9 +58,11 @@ const App = () => {
     }
 
     const cardData = practiceData[refUid];
+    const latestSession = cardData[cardData.length - 1];
+
     try {
       await practice({
-        ...cardData,
+        ...latestSession,
         grade,
         refUid,
         dataPageTitle,
@@ -80,7 +82,6 @@ const App = () => {
    * of the current practice session. Causing you to lose your progress.
    */
   const refreshData = () => {
-    console.log('----   REFRESHDATA   ----');
     fetchCacheData();
     fetchPracticeData();
   };
