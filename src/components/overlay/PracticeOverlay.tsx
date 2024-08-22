@@ -29,6 +29,8 @@ interface MainContextProps {
   setIntervalMultiplierType?: (type: IntervalMultiplierType) => void;
   onPracticeClick?: (props: any) => void;
   today?: Today;
+  selectedTag?: string;
+  currentIndex?: number;
 }
 export const MainContext = React.createContext<MainContextProps>({});
 
@@ -44,7 +46,6 @@ interface Props {
   handleReviewMoreClick: () => void;
   isCramming: boolean;
   setIsCramming: (isCramming: boolean) => void;
-  dailyLimit: number;
   rtlEnabled: boolean;
 }
 
@@ -60,7 +61,6 @@ const PracticeOverlay = ({
   handleReviewMoreClick,
   isCramming,
   setIsCramming,
-  dailyLimit,
   rtlEnabled,
 }: Props) => {
   const todaySelectedTag = today.tags[selectedTag];
@@ -74,16 +74,8 @@ const PracticeOverlay = ({
   const totalCardsCount = todaySelectedTag.new + todaySelectedTag.due;
   const hasCards = totalCardsCount > 0;
   const isDone = todaySelectedTag.status === CompletionStatus.Finished;
-  console.log('DEBUG:: ~ file: PracticeOverlay.tsx:77 ~ isDone:', isDone);
   const isFirst = currentIndex === 0;
   const completedTodayCount = todaySelectedTag.completed;
-
-  // @TODOZ: Handle reset case without lastCompletedDate (ie. Clickig review more after limit)
-  // const reviewCountReset = completedTodayCount && !lastCompletedDate;
-  const reviewCountReset = false;
-
-  const dailyLimitDelta =
-    dailyLimit && completedTodayCount && !isDone && !reviewCountReset ? completedTodayCount : 0;
 
   const currentCardRefUid = practiceCardUids[currentIndex];
   const { currentCardData, reviewMode, setReviewMode } = useCurrentCardData({
@@ -226,6 +218,8 @@ const PracticeOverlay = ({
         setIntervalMultiplierType,
         onPracticeClick,
         today,
+        selectedTag,
+        currentIndex,
       }}
     >
       {/* @ts-ignore */}
@@ -238,9 +232,6 @@ const PracticeOverlay = ({
         <Header
           className="bp3-dialog-header outline-none focus:outline-none focus-visible:outline-none"
           tagsList={tagsList}
-          selectedTag={selectedTag}
-          currentIndex={currentIndex}
-          totalCardsCount={totalCardsCount}
           onCloseCallback={onCloseCallback}
           onTagChange={onTagChange}
           status={status}
@@ -249,7 +240,6 @@ const PracticeOverlay = ({
           showBreadcrumbs={showBreadcrumbs}
           setShowBreadcrumbs={setShowBreadcrumbs}
           isCramming={isCramming}
-          dailyLimitDelta={dailyLimitDelta}
         />
 
         <DialogBody
@@ -499,10 +489,7 @@ const BreadcrumbTooltipContent = ({ showBreadcrumbs }) => {
 
 const Header = ({
   tagsList,
-  selectedTag,
-  currentIndex,
   onCloseCallback,
-  totalCardsCount,
   onTagChange,
   className,
   status,
@@ -511,8 +498,13 @@ const Header = ({
   showBreadcrumbs,
   setShowBreadcrumbs,
   isCramming,
-  dailyLimitDelta,
 }) => {
+  const { selectedTag, today, currentIndex } = React.useContext(MainContext);
+  const todaySelectedTag = today.tags[selectedTag];
+  const completedTodayCount = todaySelectedTag.completed;
+  const remainingTodayCount = todaySelectedTag.due + todaySelectedTag.new;
+
+  const currentDisplayCount = completedTodayCount + currentIndex;
   return (
     <HeaderWrapper className={className} tabIndex={0}>
       <div className="flex items-center">
@@ -538,15 +530,9 @@ const Header = ({
         )}
         <StatusBadge status={status} nextDueDate={nextDueDate} isCramming={isCramming} />
         <span className="text-sm mx-2 font-medium">
-          <span>
-            {totalCardsCount === 0
-              ? 0
-              : isDone
-              ? currentIndex + dailyLimitDelta
-              : currentIndex + 1 + dailyLimitDelta}
-          </span>
+          <span>{currentDisplayCount}</span>
           <span className="opacity-50 mx-1">/</span>
-          <span className="opacity-50">{totalCardsCount + dailyLimitDelta}</span>
+          <span className="opacity-50">{remainingTodayCount}</span>
         </span>
         <button
           aria-label="Close"
