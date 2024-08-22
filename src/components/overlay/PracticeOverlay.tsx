@@ -14,10 +14,11 @@ import mediaQueries from '~/utils/mediaQueries';
 import CardBlock from '~/components/overlay/CardBlock';
 import Footer from '~/components/overlay/Footer';
 import ButtonTags from '~/components/ButtonTags';
-import { IntervalMultiplierType, ReviewModes } from '~/models/session';
+import { CompleteRecords, IntervalMultiplierType, ReviewModes } from '~/models/session';
 import useCurrentCardData from '~/hooks/useCurrentCardData';
 import { generateNewSession } from '~/queries';
-import { Today } from '~/models/practice';
+import { CompletionStatus, Today } from '~/models/practice';
+import { handlePracticeProps } from '~/app';
 
 interface MainContextProps {
   reviewMode?: ReviewModes;
@@ -31,13 +32,27 @@ interface MainContextProps {
 }
 export const MainContext = React.createContext<MainContextProps>({});
 
+interface Props {
+  isOpen: boolean;
+  tagsList: string[];
+  selectedTag: string;
+  onCloseCallback: () => void;
+  practiceData: CompleteRecords;
+  today: Today;
+  handlePracticeClick: (props: handlePracticeProps) => void;
+  handleMemoTagChange: (tag: string) => void;
+  handleReviewMoreClick: () => void;
+  isCramming: boolean;
+  setIsCramming: (isCramming: boolean) => void;
+  dailyLimit: number;
+  rtlEnabled: boolean;
+}
+
 const PracticeOverlay = ({
-  dataPageTitle,
   isOpen,
   tagsList,
   selectedTag,
   onCloseCallback,
-  practiceCardUids,
   practiceData,
   today,
   handlePracticeClick,
@@ -46,15 +61,22 @@ const PracticeOverlay = ({
   isCramming,
   setIsCramming,
   dailyLimit,
-  remainingDueCardsCount,
   rtlEnabled,
-}) => {
+}: Props) => {
+  const todaySelectedTag = today.tags[selectedTag];
+  const newCardsUids = todaySelectedTag.newUids;
+  const dueCardsUids = todaySelectedTag.dueUids;
+  // Always practice due cards first
+  // @MAYBE: Make this order configurable?
+  const practiceCardUids = [...dueCardsUids, ...newCardsUids];
   const [currentIndex, setCurrentIndex] = React.useState(0);
-  const totalCardsCount = practiceCardUids.length;
+
+  const totalCardsCount = todaySelectedTag.new + todaySelectedTag.due;
   const hasCards = totalCardsCount > 0;
-  const isDone = currentIndex > practiceCardUids.length - 1;
+  const isDone = todaySelectedTag.status === CompletionStatus.Finished;
+  console.log('DEBUG:: ~ file: PracticeOverlay.tsx:77 ~ isDone:', isDone);
   const isFirst = currentIndex === 0;
-  const completedTodayCount = today.tags[selectedTag].completed;
+  const completedTodayCount = todaySelectedTag.completed;
 
   // @TODOZ: Handle reset case without lastCompletedDate (ie. Clickig review more after limit)
   // const reviewCountReset = completedTodayCount && !lastCompletedDate;
@@ -66,7 +88,6 @@ const PracticeOverlay = ({
   const currentCardRefUid = practiceCardUids[currentIndex];
   const { currentCardData, reviewMode, setReviewMode } = useCurrentCardData({
     practiceData,
-    dataPageTitle,
     currentCardRefUid,
   });
 
@@ -143,16 +164,9 @@ const PracticeOverlay = ({
       if (isDone) return;
       handlePracticeClick({ ...props, reviewMode, intervalMultiplier, intervalMultiplierType });
       setShowAnswers(false);
-      setCurrentIndex(currentIndex + 1);
+      setCurrentIndex(0);
     },
-    [
-      currentIndex,
-      handlePracticeClick,
-      isDone,
-      reviewMode,
-      intervalMultiplier,
-      intervalMultiplierType,
-    ]
+    [handlePracticeClick, isDone, reviewMode, intervalMultiplier, intervalMultiplierType]
   );
 
   const onSkipClick = React.useCallback(() => {
@@ -253,14 +267,16 @@ const PracticeOverlay = ({
           ) : (
             <div className="flex items-center flex-col">
               <Lottie options={lottieAnimationOption} style={lottieStyle} />
-              {remainingDueCardsCount ? (
+              {/* @TODOZ: Add support for review more*/}
+              {/* eslint-disable-next-line no-constant-condition */}
+              {false ? (
                 <div>
-                  Reviewed {completedTodayCount}{' '}
+                  Reviewed {todaySelectedTag.completed}{' '}
                   {stringUtils.pluralize(completedTodayCount, 'card', 'cards')} today.{' '}
                   <a onClick={handleReviewMoreClick}>Review more</a>
                 </div>
               ) : (
-                <div>No cards left to review!</div>
+                <div>Reviewed {todaySelectedTag.completed} cards today.</div>
               )}
             </div>
           )}

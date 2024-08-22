@@ -466,14 +466,12 @@ const calculateTodayStatus = ({ today, tagsList }) => {
     const completed = today.tags[tag].completed;
     const remaining = today.tags[tag].new + today.tags[tag].due;
 
-    if (completed === 0) {
-      today.tags[tag].status = CompletionStatus.Unstarted;
+    if (remaining === 0) {
+      today.tags[tag].status = CompletionStatus.Finished;
     } else if (completed > 0) {
       today.tags[tag].status = CompletionStatus.Partial;
-    } else if (completed === remaining) {
-      today.tags[tag].status = CompletionStatus.Finished;
     } else {
-      throw new Error('Unable to determine status');
+      today.tags[tag].status = CompletionStatus.Unstarted;
     }
   }
 
@@ -483,15 +481,10 @@ const calculateTodayStatus = ({ today, tagsList }) => {
 
   if (remaining === 0) {
     today.combinedToday.status = CompletionStatus.Finished;
-  } else if (completed === 0) {
-    today.combinedToday.status = CompletionStatus.Unstarted;
   } else if (completed > 0) {
     today.combinedToday.status = CompletionStatus.Partial;
-  } else if (completed === remaining) {
-    // @TODOZ: If remaining decreases to 0, this should never be reached?
-    today.combinedToday.status = CompletionStatus.Finished;
   } else {
-    throw new Error('Unable to determine status');
+    today.combinedToday.status = CompletionStatus.Unstarted;
   }
 };
 
@@ -582,6 +575,11 @@ const initializeToday = ({ tagsList }) => {
       new: 0,
       newUids: [],
       dueUids: [],
+      completedUids: [],
+      completedDue: 0,
+      completedNew: 0,
+      completedDueUids: [],
+      completedNewUids: [],
     };
   }
 
@@ -636,7 +634,6 @@ export const getPracticeData = async ({ tagsList, dataPageTitle, dailyLimit, isC
   return {
     pluginPageData,
     todayStats: today,
-    cardUids,
   };
 };
 

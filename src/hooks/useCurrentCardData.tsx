@@ -1,30 +1,18 @@
 import React from 'react';
 import { CompleteRecords, NewSession, ReviewModes, Session } from '~/models/session';
-import { generateNewSession, getPluginPageData } from '~/queries';
+import { generateNewSession } from '~/queries';
 
-const getCurrentCardSessions = async ({
-  dataPageTitle,
+const getResolvedCardData = ({
+  practiceData,
+  reviewMode,
   currentCardRefUid,
 }: {
-  dataPageTitle: string;
+  practiceData: CompleteRecords;
+  reviewMode: ReviewModes;
   currentCardRefUid: string;
 }) => {
-  // Fetch last matching review mode for this card or use default
-  const pluginPageData = (await getPluginPageData({
-    dataPageTitle,
-    limitToLatest: false,
-  })) as CompleteRecords;
-
-  return pluginPageData[currentCardRefUid];
-};
-
-const getResolvedCardData = async ({ reviewMode, currentCardRefUid, dataPageTitle }) => {
-  const allCurrentCardSessions = await getCurrentCardSessions({
-    dataPageTitle,
-    currentCardRefUid,
-  });
-
-  const lastSessionWithMatchingReviewMode = allCurrentCardSessions.find(
+  const currentCardSessions = practiceData[currentCardRefUid];
+  const lastSessionWithMatchingReviewMode = currentCardSessions.find(
     (data) => data.reviewMode === reviewMode
   );
 
@@ -46,7 +34,7 @@ const getResolvedCardData = async ({ reviewMode, currentCardRefUid, dataPageTitl
  * Here i'm doing both. First I try to find the last session with matching review mode
  * and if I can't find one I generate a new session.
  */
-const useCurrentCardData = ({ practiceData, dataPageTitle, currentCardRefUid }) => {
+const useCurrentCardData = ({ practiceData, currentCardRefUid }) => {
   const [cardRefUidHasChanged, setCardREfUidHasChanged] = React.useState(null);
   const [cachedCurrentCardRefUid, setCachedCurrentCardRefUid] = React.useState(currentCardRefUid);
   const [currentCardData, setCurrentCardData] = React.useState<Session | NewSession>(
@@ -69,25 +57,18 @@ const useCurrentCardData = ({ practiceData, dataPageTitle, currentCardRefUid }) 
       return;
     }
 
-    const fetchResolvedCardData = async () => {
-      const response = await getResolvedCardData({
+    const fetchResolvedCardData = () => {
+      const response = getResolvedCardData({
+        practiceData,
         reviewMode,
         currentCardRefUid: cachedCurrentCardRefUid,
-        dataPageTitle,
       });
       setCurrentCardData(response);
       setHasResolvedMismatch(true);
     };
 
     fetchResolvedCardData();
-  }, [
-    reviewMode,
-    currentCardData,
-    cachedCurrentCardRefUid,
-    dataPageTitle,
-    practiceData,
-    hasResolvedMismatch,
-  ]);
+  }, [reviewMode, currentCardData, cachedCurrentCardRefUid, practiceData, hasResolvedMismatch]);
 
   // Handle cardRefUid change so we have clean signal to reset state
   // This is ugly, but it keeps the reset state hook logic simple

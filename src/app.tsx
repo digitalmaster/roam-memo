@@ -13,7 +13,7 @@ import useCachedData from '~/hooks/useCachedData';
 import useOnVisibilityStateChange from '~/hooks/useOnVisibilityStateChange';
 import { IntervalMultiplierType, ReviewModes } from '~/models/session';
 
-interface handlePracticeProps {
+export interface handlePracticeProps {
   refUid: string;
   grade: number;
   reviewMode: ReviewModes;
@@ -30,14 +30,7 @@ const App = () => {
 
   const { fetchCacheData } = useCachedData({ dataPageTitle, selectedTag });
 
-  const {
-    practiceCardsUids,
-    practiceData,
-    today,
-    fetchPracticeData,
-    completedTodayCounts,
-    remainingDueCardsCount,
-  } = usePracticeData({
+  const { practiceData, today, fetchPracticeData } = usePracticeData({
     tagsList,
     selectedTag,
     dataPageTitle,
@@ -72,15 +65,13 @@ const App = () => {
         intervalMultiplier,
         intervalMultiplierType,
       });
+
+      refreshData();
     } catch (error) {
       console.error('Error Saving Practice Data', error);
     }
   };
 
-  /**
-   * Warning: Calling this function while the overlay is open resets the state
-   * of the current practice session. Causing you to lose your progress.
-   */
   const refreshData = () => {
     fetchCacheData();
     fetchPracticeData();
@@ -137,9 +128,7 @@ const App = () => {
         <SidePannelWidget onClickCallback={onShowPracticeOverlay} today={today} />
         {showPracticeOverlay && (
           <PracticeOverlay
-            dataPageTitle={dataPageTitle}
             isOpen={true}
-            practiceCardUids={practiceCardsUids}
             practiceData={practiceData}
             handlePracticeClick={handlePracticeClick}
             onCloseCallback={onClosePracticeOverlayCallback}
@@ -149,9 +138,7 @@ const App = () => {
             selectedTag={selectedTag}
             isCramming={isCramming}
             setIsCramming={setIsCramming}
-            completedTodayCounts={completedTodayCounts}
             dailyLimit={dailyLimit}
-            remainingDueCardsCount={remainingDueCardsCount}
             rtlEnabled={rtlEnabled}
             today={today}
           />
