@@ -8,6 +8,7 @@ import {
   getDataPageQuery,
   getPluginPageBlockDataQuery,
   parentChainInfoQuery,
+  getPracticeData,
 } from '~/queries';
 import * as dateUtils from '~/utils/date';
 import * as testUtils from '~/utils/testUtils';
@@ -232,6 +233,7 @@ export class MockDataBuilder {
       ...defaultSettings,
       ...this.settingsOverride,
       tagsListString: this.tags.join(', '),
+      isCramming: false,
     };
   }
 
@@ -263,6 +265,18 @@ export class MockDataBuilder {
     );
 
     return [[this.createChild(0, 'data', renderedSessions)]];
+  }
+
+  async getPracticeData() {
+    const settings = this.buildSettingsResult();
+    const practiceData = await getPracticeData({
+      tagsList: this.tags,
+      dataPageTitle,
+      dailyLimit: settings.dailyLimit,
+      isCramming: !!settings.isCramming,
+    });
+
+    return practiceData;
   }
 }
 

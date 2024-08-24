@@ -12,9 +12,15 @@ const getResolvedCardData = ({
   currentCardRefUid: string;
 }) => {
   const currentCardSessions = practiceData[currentCardRefUid];
-  const lastSessionWithMatchingReviewMode = currentCardSessions.find(
-    (data) => data.reviewMode === reviewMode
-  );
+
+  let lastSessionWithMatchingReviewMode: Session;
+  for (let i = currentCardSessions.length - 1; i >= 0; i--) {
+    const data = currentCardSessions[i];
+    if (data.reviewMode === reviewMode) {
+      lastSessionWithMatchingReviewMode = data;
+      break;
+    }
+  }
 
   if (lastSessionWithMatchingReviewMode) {
     return lastSessionWithMatchingReviewMode;
@@ -31,15 +37,24 @@ const getResolvedCardData = ({
  *  2. We can find the last session with the matching review mode and pickup
  *     where we left off
  *
- * Here i'm doing both. First I try to find the last session with matching review mode
- * and if I can't find one I generate a new session.
+ * Here i'm doing both. First I try to find the last session with matching
+ * review mode and if I can't find one I generate a new session.
+ *
+ * Thinking: I since we're no longer fetching the rest of the cards async here
+ * we should be able to refactor this to a plain function?
  */
-const useCurrentCardData = ({ practiceData, currentCardRefUid }) => {
+const useCurrentCardData = ({
+  practiceData,
+  currentCardRefUid,
+}: {
+  practiceData: CompleteRecords;
+  currentCardRefUid: string;
+}) => {
   const [cardRefUidHasChanged, setCardREfUidHasChanged] = React.useState(null);
   const [cachedCurrentCardRefUid, setCachedCurrentCardRefUid] = React.useState(currentCardRefUid);
-  const [currentCardData, setCurrentCardData] = React.useState<Session | NewSession>(
-    practiceData[cachedCurrentCardRefUid]
-  );
+  const sessions = practiceData[cachedCurrentCardRefUid] || [];
+  const latestSession = sessions[sessions.length - 1];
+  const [currentCardData, setCurrentCardData] = React.useState<Session | NewSession>(latestSession);
   const [reviewMode, setReviewMode] = React.useState<ReviewModes>(
     currentCardData?.reviewMode || ReviewModes.DefaultSpacedInterval
   );
@@ -52,7 +67,7 @@ const useCurrentCardData = ({ practiceData, currentCardRefUid }) => {
 
     if (!hasReviewModeMismatch || hasResolvedMismatch) {
       if (hasReviewModeMismatch) {
-        setCurrentCardData(practiceData[cachedCurrentCardRefUid]);
+        setCurrentCardData(latestSession);
       }
       return;
     }
@@ -68,7 +83,14 @@ const useCurrentCardData = ({ practiceData, currentCardRefUid }) => {
     };
 
     fetchResolvedCardData();
-  }, [reviewMode, currentCardData, cachedCurrentCardRefUid, practiceData, hasResolvedMismatch]);
+  }, [
+    reviewMode,
+    currentCardData,
+    cachedCurrentCardRefUid,
+    practiceData,
+    hasResolvedMismatch,
+    latestSession,
+  ]);
 
   // Handle cardRefUid change so we have clean signal to reset state
   // This is ugly, but it keeps the reset state hook logic simple
@@ -81,7 +103,7 @@ const useCurrentCardData = ({ practiceData, currentCardRefUid }) => {
   // When we switch cards reset state
   React.useEffect(() => {
     if (!cardRefUidHasChanged) return;
-    const nextCard = practiceData[cachedCurrentCardRefUid];
+    const nextCard = latestSession;
 
     setCurrentCardData(nextCard);
     setHasResolvedMismatch(false);
@@ -93,6 +115,7 @@ const useCurrentCardData = ({ practiceData, currentCardRefUid }) => {
     currentCardData,
     hasResolvedMismatch,
     cardRefUidHasChanged,
+    latestSession,
   ]);
 
   return {

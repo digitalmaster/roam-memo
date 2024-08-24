@@ -620,8 +620,6 @@ export const getPracticeData = async ({ tagsList, dataPageTitle, dailyLimit, isC
   });
 
   calculateCombinedCounts({ today, tagsList });
-  console.log('today before', JSON.stringify(today, null, 2));
-  console.log('dailyLimit', dailyLimit);
 
   limitRemainingPracticeData({ today, dailyLimit, tagsList, isCramming });
 
@@ -630,9 +628,8 @@ export const getPracticeData = async ({ tagsList, dataPageTitle, dailyLimit, isC
 
   calculateTodayStatus({ today, tagsList });
 
-  console.log('today after', JSON.stringify(today, null, 2));
   return {
-    pluginPageData,
+    practiceData: pluginPageData,
     todayStats: today,
   };
 };

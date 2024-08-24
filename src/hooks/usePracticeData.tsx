@@ -14,7 +14,7 @@ const usePracticeCardsData = ({ tagsList, selectedTag, dataPageTitle, isCramming
     (async () => {
       if (!selectedTag) return;
 
-      const { pluginPageData, todayStats } = await queries.getPracticeData({
+      const { practiceData, todayStats } = await queries.getPracticeData({
         tagsList,
         dataPageTitle,
         dailyLimit,
@@ -22,7 +22,7 @@ const usePracticeCardsData = ({ tagsList, selectedTag, dataPageTitle, isCramming
       });
 
       setToday(todayStats);
-      setPracticeData(pluginPageData);
+      setPracticeData(practiceData);
     })();
   }, [selectedTag, dataPageTitle, refetchTrigger, isCramming, dailyLimit, tagsList]);
 

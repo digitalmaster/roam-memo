@@ -530,7 +530,7 @@ const Header = ({
         )}
         <StatusBadge status={status} nextDueDate={nextDueDate} isCramming={isCramming} />
         <span className="text-sm mx-2 font-medium">
-          <span>{currentDisplayCount}</span>
+          <span>{isDone ? 0 : currentDisplayCount}</span>
           <span className="opacity-50 mx-1">/</span>
           <span className="opacity-50">{remainingTodayCount}</span>
         </span>
