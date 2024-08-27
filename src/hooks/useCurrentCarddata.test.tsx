@@ -6,7 +6,6 @@ import * as testUtils from '~/utils/testUtils';
 import React from 'react';
 
 describe('useCurrentCardData', () => {
-  const dataPageTitle = 'roam/memo';
   const originalLocation = window;
 
   afterEach(() => {
@@ -22,7 +21,9 @@ describe('useCurrentCardData', () => {
       [currentCardRefUid]: [currentCardData],
     };
 
-    const { result } = renderHook(() => useCurrentCardData({ practiceData, currentCardRefUid }));
+    const { result } = renderHook(() =>
+      useCurrentCardData({ sessions: practiceData[currentCardRefUid], currentCardRefUid })
+    );
 
     expect(result.current.currentCardData).toEqual(currentCardData);
   });
@@ -31,20 +32,25 @@ describe('useCurrentCardData', () => {
     const currentCardRefUid = undefined;
     const practiceData = {};
 
-    const { result } = renderHook(() => useCurrentCardData({ practiceData, currentCardRefUid }));
+    const { result } = renderHook(() =>
+      useCurrentCardData({
+        sessions: currentCardRefUid ? practiceData[currentCardRefUid] : [],
+        currentCardRefUid,
+      })
+    );
 
     expect(result.current.currentCardData).toEqual(undefined);
   });
 
   it('returns undefined when currentCardRefUid becomes undefined (on complete)', async () => {
     const { result } = renderHook(() => {
-      const [currentCardRefUid, setCurrentCardRefUid] = React.useState('id_0');
+      const [currentCardRefUid, setCurrentCardRefUid] = React.useState<string | undefined>('id_0');
       const currentCardData = generateNewSession({ isNew: false });
       const practiceData = {
         ['id_0']: [currentCardData],
       };
       const { currentCardData: currentCardDataResult } = useCurrentCardData({
-        practiceData,
+        sessions: currentCardRefUid ? practiceData[currentCardRefUid] : [],
         currentCardRefUid,
       });
 
@@ -72,10 +78,12 @@ describe('useCurrentCardData', () => {
 
       mockBuilder.mockQueryResults();
       const { practiceData } = await mockBuilder.getPracticeData();
-      const { result } = renderHook(() => useCurrentCardData({ practiceData, currentCardRefUid }));
+      const { result } = renderHook(() =>
+        useCurrentCardData({ sessions: practiceData[currentCardRefUid], currentCardRefUid })
+      );
 
       act(() => {
-        result.current.setReviewMode(ReviewModes.FixedInterval);
+        result.current.setReviewModeOverride(ReviewModes.FixedInterval);
       });
 
       const resultData = result.current.currentCardData as NewSession;
@@ -102,10 +110,12 @@ describe('useCurrentCardData', () => {
 
       mockBuilder.mockQueryResults();
       const { practiceData } = await mockBuilder.getPracticeData();
-      const { result } = renderHook(() => useCurrentCardData({ practiceData, currentCardRefUid }));
+      const { result } = renderHook(() =>
+        useCurrentCardData({ sessions: practiceData[currentCardRefUid], currentCardRefUid })
+      );
 
       act(() => {
-        result.current.setReviewMode(ReviewModes.FixedInterval);
+        result.current.setReviewModeOverride(ReviewModes.FixedInterval);
       });
 
       const resultData = result.current.currentCardData as Session;
@@ -125,29 +135,49 @@ describe('useCurrentCardData', () => {
         })
         .withSession(currentCardRefUid, {
           reviewMode: ReviewModes.FixedInterval,
+          grade: 1,
         });
 
       mockBuilder.mockQueryResults();
       const { practiceData } = await mockBuilder.getPracticeData();
 
-      const { result } = renderHook(() => useCurrentCardData({ practiceData, currentCardRefUid }));
+      const { result } = renderHook(() =>
+        useCurrentCardData({ sessions: practiceData[currentCardRefUid], currentCardRefUid })
+      );
 
       act(() => {
-        result.current.setReviewMode(ReviewModes.FixedInterval);
+        result.current.setReviewModeOverride(ReviewModes.DefaultSpacedInterval);
       });
 
-      let resultData = result.current.currentCardData as Session;
-      expect(resultData.reviewMode).toEqual(ReviewModes.FixedInterval);
-      expect((resultData as NewSession).isNew).toBe(false);
-
-      act(() => {
-        result.current.setReviewMode(ReviewModes.DefaultSpacedInterval);
-      });
-
-      resultData = result.current.currentCardData;
+      let resultData = result.current.currentCardData as Session | undefined;
+      expect(resultData?.reviewMode).toEqual(ReviewModes.DefaultSpacedInterval);
       expect(resultData).toMatchObject({
         reviewMode: ReviewModes.DefaultSpacedInterval,
         grade: 2,
+        isNew: false,
+      });
+
+      act(() => {
+        result.current.setReviewModeOverride(ReviewModes.FixedInterval);
+      });
+
+      resultData = result.current.currentCardData;
+      expect(resultData?.reviewMode).toEqual(ReviewModes.FixedInterval);
+      expect(resultData).toMatchObject({
+        reviewMode: ReviewModes.FixedInterval,
+        grade: 1,
+      });
+
+      act(() => {
+        result.current.setReviewModeOverride(ReviewModes.DefaultSpacedInterval);
+      });
+
+      resultData = result.current.currentCardData as Session;
+      expect(resultData.reviewMode).toEqual(ReviewModes.DefaultSpacedInterval);
+      expect(resultData).toMatchObject({
+        reviewMode: ReviewModes.DefaultSpacedInterval,
+        grade: 2,
+        isNew: false,
       });
     });
 
@@ -169,14 +199,14 @@ describe('useCurrentCardData', () => {
       const { practiceData } = await mockBuilder.getPracticeData();
       const { result } = renderHook(() => {
         const [currentCardRefUid, setCurrentCardRefUid] = React.useState(currentCardRefUid_0);
-        const { reviewMode, setReviewMode, currentCardData } = useCurrentCardData({
-          practiceData,
+        const { reviewMode, setReviewModeOverride, currentCardData } = useCurrentCardData({
+          sessions: practiceData[currentCardRefUid],
           currentCardRefUid: currentCardRefUid,
         });
 
         return {
           reviewMode,
-          setReviewMode,
+          setReviewModeOverride,
           currentCardData,
           currentCardRefUid,
           setCurrentCardRefUid,
@@ -220,14 +250,14 @@ describe('useCurrentCardData', () => {
       const { practiceData } = await mockBuilder.getPracticeData();
       const { result } = renderHook(() => {
         const [currentCardRefUid, setCurrentCardRefUid] = React.useState(originalCurrentCardRefUid);
-        const { reviewMode, setReviewMode, currentCardData } = useCurrentCardData({
-          practiceData,
+        const { reviewMode, setReviewModeOverride, currentCardData } = useCurrentCardData({
+          sessions: practiceData[currentCardRefUid],
           currentCardRefUid: currentCardRefUid,
         });
 
         return {
           reviewMode,
-          setReviewMode,
+          setReviewModeOverride,
           currentCardData,
           currentCardRefUid,
           setCurrentCardRefUid,
@@ -236,7 +266,7 @@ describe('useCurrentCardData', () => {
 
       act(() => {
         // Switch to fixed
-        result.current.setReviewMode(ReviewModes.FixedInterval);
+        result.current.setReviewModeOverride(ReviewModes.FixedInterval);
       });
 
       const resultData = result.current.currentCardData as Session;
@@ -245,7 +275,7 @@ describe('useCurrentCardData', () => {
 
       act(() => {
         // Switch back
-        result.current.setReviewMode(ReviewModes.DefaultSpacedInterval);
+        result.current.setReviewModeOverride(ReviewModes.DefaultSpacedInterval);
       });
 
       expect(result.current.currentCardData).toMatchObject({

@@ -22,7 +22,7 @@ import { handlePracticeProps } from '~/app';
 
 interface MainContextProps {
   reviewMode?: ReviewModes;
-  setReviewMode?: React.Dispatch<React.SetStateAction<ReviewModes>>;
+  setReviewModeOverride?: React.Dispatch<React.SetStateAction<ReviewModes>>;
   intervalMultiplier?: number;
   setIntervalMultiplier?: (multiplier: number) => void;
   intervalMultiplierType?: IntervalMultiplierType;
@@ -77,10 +77,11 @@ const PracticeOverlay = ({
   const isFirst = currentIndex === 0;
   const completedTodayCount = todaySelectedTag.completed;
 
-  const currentCardRefUid = practiceCardUids[currentIndex];
-  const { currentCardData, reviewMode, setReviewMode } = useCurrentCardData({
-    practiceData,
+  const currentCardRefUid = practiceCardUids[currentIndex] as string | undefined;
+  const sessions = currentCardRefUid ? practiceData[currentCardRefUid] : [];
+  const { currentCardData, reviewMode, setReviewModeOverride } = useCurrentCardData({
     currentCardRefUid,
+    sessions,
   });
 
   const newFixedSessionDefaults = React.useMemo(
@@ -211,7 +212,7 @@ const PracticeOverlay = ({
     <MainContext.Provider
       value={{
         reviewMode,
-        setReviewMode,
+        setReviewModeOverride,
         intervalMultiplier,
         setIntervalMultiplier,
         intervalMultiplierType,

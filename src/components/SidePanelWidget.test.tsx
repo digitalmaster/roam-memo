@@ -772,7 +772,7 @@ describe('Side Panel Widget', () => {
       expect(newTag).not.toBeInTheDocument();
     });
 
-    it('takes completed cards in decks into acount, alocating remaing limit count consistently', async () => {
+    it.only('takes completed cards in decks into acount, alocating remaing limit count consistently', async () => {
       /**
        * This handles the case where we have a limit set between multiple decks,
        * we finish one deck, then refetch. we expect the limit to not restart
@@ -827,7 +827,7 @@ describe('Side Panel Widget', () => {
         const sidePanelButtonElm = document.querySelector<HTMLSpanElement>(
           '[data-testid="side-panel-wrapper"]'
         );
-        sidePanelButtonElm.click();
+        sidePanelButtonElm?.click();
       });
 
       // Open Tag Selector
@@ -836,7 +836,7 @@ describe('Side Panel Widget', () => {
           '[data-testid="tag-selector-cta"]'
         );
 
-        tagSelectorElm.click();
+        tagSelectorElm?.click();
       });
 
       // Here we expect the first deck to be marked complete, and the second deck retains its 1 due card

@@ -345,3 +345,12 @@ function mockPageTitleToDate(formattedDate) {
   // Create and return the Date object
   return new Date(year, monthIndex, day);
 }
+
+export const actions = {
+  launchModal: () => {
+    const sidePanelButtonElm = document.querySelector<HTMLSpanElement>(
+      '[data-testid="side-panel-wrapper"]'
+    );
+    sidePanelButtonElm.click();
+  },
+};

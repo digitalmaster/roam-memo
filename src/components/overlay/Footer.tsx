@@ -259,10 +259,12 @@ const GradingControlsWrapper = ({
   isIntervalEditorOpen,
   toggleIntervalEditorOpen,
 }) => {
-  const { reviewMode, setReviewMode } = React.useContext(MainContext);
+  const { reviewMode, setReviewModeOverride } = React.useContext(MainContext);
 
   const toggleReviewMode = () => {
-    setReviewMode((prev: ReviewModes) => {
+    if (setReviewModeOverride === undefined) return;
+
+    setReviewModeOverride((prev: ReviewModes) => {
       return prev === ReviewModes.DefaultSpacedInterval
         ? ReviewModes.FixedInterval
         : ReviewModes.DefaultSpacedInterval;

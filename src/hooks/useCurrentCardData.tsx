@@ -1,21 +1,22 @@
-import React from 'react';
-import { CompleteRecords, NewSession, ReviewModes, Session } from '~/models/session';
+import * as React from 'react';
+import { ReviewModes, Session } from '~/models/session';
 import { generateNewSession } from '~/queries';
 
-const getResolvedCardData = ({
-  practiceData,
+/**
+ * Find the last session with matching review mode and returns it.
+ * If no matching session exists, generate a new session.
+ */
+export const getResolvedCardData = ({
+  sessions,
   reviewMode,
-  currentCardRefUid,
 }: {
-  practiceData: CompleteRecords;
+  sessions: Session[];
   reviewMode: ReviewModes;
-  currentCardRefUid: string;
 }) => {
-  const currentCardSessions = practiceData[currentCardRefUid];
+  let lastSessionWithMatchingReviewMode: Session | undefined;
 
-  let lastSessionWithMatchingReviewMode: Session;
-  for (let i = currentCardSessions.length - 1; i >= 0; i--) {
-    const data = currentCardSessions[i];
+  for (let i = sessions.length - 1; i >= 0; i--) {
+    const data = sessions[i];
     if (data.reviewMode === reviewMode) {
       lastSessionWithMatchingReviewMode = data;
       break;
@@ -30,99 +31,57 @@ const getResolvedCardData = ({
   }
 };
 
-/**
- * How do we handle switching review mode for a card that already has practice
- * data? We have two options:
- *  1. We can just start from scratch (ie. generate a new session)
- *  2. We can find the last session with the matching review mode and pickup
- *     where we left off
- *
- * Here i'm doing both. First I try to find the last session with matching
- * review mode and if I can't find one I generate a new session.
- *
- * Thinking: I since we're no longer fetching the rest of the cards async here
- * we should be able to refactor this to a plain function?
- */
-const useCurrentCardData = ({
-  practiceData,
+export default function useCurrentCardData({
   currentCardRefUid,
+  sessions,
 }: {
-  practiceData: CompleteRecords;
-  currentCardRefUid: string;
-}) => {
-  const [cardRefUidHasChanged, setCardREfUidHasChanged] = React.useState(null);
-  const [cachedCurrentCardRefUid, setCachedCurrentCardRefUid] = React.useState(currentCardRefUid);
-  const sessions = practiceData[cachedCurrentCardRefUid] || [];
-  const latestSession = sessions[sessions.length - 1];
-  const [currentCardData, setCurrentCardData] = React.useState<Session | NewSession>(latestSession);
-  const [reviewMode, setReviewMode] = React.useState<ReviewModes>(
-    currentCardData?.reviewMode || ReviewModes.DefaultSpacedInterval
+  currentCardRefUid: string | undefined;
+  sessions: Session[];
+}) {
+  const latestSession = sessions[sessions.length - 1] as Session | undefined;
+  const [currentCardData, setCurrentCardData] = React.useState<Session | undefined>(latestSession);
+  const [reviewMode, setReviewMode] = React.useState<ReviewModes | undefined>(
+    latestSession?.reviewMode
   );
-  const [hasResolvedMismatch, setHasResolvedMismatch] = React.useState(false);
 
+  // Create separate review mode override toggle This is to keep the default
+  // case of review mode being the same as the latest session easy to understand
+  const [reviewModeOverride, setReviewModeOverride] = React.useState<ReviewModes | undefined>();
+
+  // console.log({ sessions, latestSession, currentCardData, reviewMode });
   React.useEffect(() => {
-    if (!currentCardData) return;
-
-    const hasReviewModeMismatch = reviewMode !== currentCardData.reviewMode;
-
-    if (!hasReviewModeMismatch || hasResolvedMismatch) {
-      if (hasReviewModeMismatch) {
-        setCurrentCardData(latestSession);
-      }
+    if (!currentCardRefUid) {
+      console.log('No card. Resetting', { currentCardRefUid });
+      setCurrentCardData(undefined);
       return;
     }
 
-    const fetchResolvedCardData = () => {
-      const response = getResolvedCardData({
-        practiceData,
-        reviewMode,
-        currentCardRefUid: cachedCurrentCardRefUid,
+    if (reviewModeOverride && reviewModeOverride !== latestSession?.reviewMode) {
+      console.log('Overriding review mode', { reviewModeOverride, latestSession });
+      const resolvedCardData = getResolvedCardData({
+        sessions,
+        reviewMode: reviewModeOverride,
       });
-      setCurrentCardData(response);
-      setHasResolvedMismatch(true);
-    };
+      setCurrentCardData(resolvedCardData);
+      setReviewMode(resolvedCardData.reviewMode);
 
-    fetchResolvedCardData();
-  }, [
-    reviewMode,
-    currentCardData,
-    cachedCurrentCardRefUid,
-    practiceData,
-    hasResolvedMismatch,
-    latestSession,
-  ]);
+      return;
+    }
 
-  // Handle cardRefUid change so we have clean signal to reset state
-  // This is ugly, but it keeps the reset state hook logic simple
+    setCurrentCardData(latestSession);
+    setReviewMode(latestSession?.reviewMode);
+  }, [reviewMode, sessions, currentCardRefUid, latestSession, reviewModeOverride]);
+
+  // Here we just need to reset the override each time we change cards
   React.useEffect(() => {
-    if (currentCardRefUid === cachedCurrentCardRefUid) return;
-    setCachedCurrentCardRefUid(currentCardRefUid);
-    setCardREfUidHasChanged(true);
-  }, [cachedCurrentCardRefUid, currentCardRefUid]);
-
-  // When we switch cards reset state
-  React.useEffect(() => {
-    if (!cardRefUidHasChanged) return;
-    const nextCard = latestSession;
-
-    setCurrentCardData(nextCard);
-    setHasResolvedMismatch(false);
-    setReviewMode(nextCard?.reviewMode || ReviewModes.DefaultSpacedInterval);
-    setCardREfUidHasChanged(false);
-  }, [
-    cachedCurrentCardRefUid,
-    practiceData,
-    currentCardData,
-    hasResolvedMismatch,
-    cardRefUidHasChanged,
-    latestSession,
-  ]);
+    console.log('Resetting review mode override');
+    setReviewModeOverride(undefined);
+    setReviewMode(latestSession?.reviewMode);
+  }, [currentCardRefUid, latestSession]);
 
   return {
-    reviewMode,
-    setReviewMode,
     currentCardData,
+    reviewMode,
+    setReviewModeOverride,
   };
-};
-
-export default useCurrentCardData;
+}

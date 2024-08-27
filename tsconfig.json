@@ -13,7 +13,8 @@
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
-    "sourceMap": true
+    "sourceMap": true,
+    "strictNullChecks": true
   },
   "include": ["./src", "./jest.setup.ts"],
   "exclude": ["./node_modules/*"]
