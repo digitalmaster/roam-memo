@@ -10,9 +10,9 @@
     "format": "prettier --write \"./**/*.{js,jsx,json}\"",
     "lint": "eslint '**/*.{ts,tsx,js,jsx}'",
     "typecheck": "tsc",
-    "test": "jest",
-    "test-dev": "jest --watch --verbose --runInBand",
-    "test-debug": "node --inspect-brk node_modules/.bin/jest --runInBand --watch --verbose",
+    "test": "TZ=UTC jest",
+    "test-dev": "TZ=UTC jest --watch --verbose --runInBand",
+    "test-debug": "TZ=UTC node --inspect-brk node_modules/.bin/jest --runInBand --watch --verbose",
     "changelog-generate": "auto-changelog --starting-version v16 --handlebars-setup changelog-setup.js --template changelog-template.hbs --commit-limit false",
     "changelog-data": "npm run changelog-generate -- --template json --output changelog-data.json",
     "changelog": "npm run changelog-data && npm run changelog-generate && git add CHANGELOG.md"
