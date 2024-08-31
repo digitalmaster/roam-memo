@@ -152,14 +152,26 @@ const PracticeOverlay = ({
     }
   };
 
+  // When sessions are updated, reset current index
+  React.useEffect(() => {
+    setCurrentIndex(0);
+  }, [sessions]);
+
   const onPracticeClick = React.useCallback(
     (props) => {
       if (isDone) return;
       handlePracticeClick({ ...props, reviewMode, intervalMultiplier, intervalMultiplierType });
       setShowAnswers(false);
-      setCurrentIndex(0);
+      setCurrentIndex(currentIndex + 1);
     },
-    [handlePracticeClick, isDone, reviewMode, intervalMultiplier, intervalMultiplierType]
+    [
+      handlePracticeClick,
+      isDone,
+      reviewMode,
+      intervalMultiplier,
+      intervalMultiplierType,
+      currentIndex,
+    ]
   );
 
   const onSkipClick = React.useCallback(() => {
