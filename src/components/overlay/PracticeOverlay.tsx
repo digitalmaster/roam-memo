@@ -78,7 +78,10 @@ const PracticeOverlay = ({
   const completedTodayCount = todaySelectedTag.completed;
 
   const currentCardRefUid = practiceCardUids[currentIndex] as string | undefined;
-  const sessions = currentCardRefUid ? practiceData[currentCardRefUid] : [];
+  const sessions = React.useMemo(
+    () => (currentCardRefUid ? practiceData[currentCardRefUid] : []),
+    [currentCardRefUid, practiceData]
+  );
   const { currentCardData, reviewMode, setReviewModeOverride } = useCurrentCardData({
     currentCardRefUid,
     sessions,
@@ -89,23 +92,28 @@ const PracticeOverlay = ({
     []
   );
   const [intervalMultiplier, setIntervalMultiplier] = React.useState<number>(
-    currentCardData?.intervalMultiplier || newFixedSessionDefaults.intervalMultiplier
+    currentCardData?.intervalMultiplier || (newFixedSessionDefaults.intervalMultiplier as number)
   );
   const [intervalMultiplierType, setIntervalMultiplierType] =
     React.useState<IntervalMultiplierType>(
-      currentCardData?.intervalMultiplierType || newFixedSessionDefaults.intervalMultiplierType
+      currentCardData?.intervalMultiplierType ||
+        (newFixedSessionDefaults.intervalMultiplierType as IntervalMultiplierType)
     );
 
   // When card changes, update multiplier state
   React.useEffect(() => {
+    if (!currentCardData) return;
+
     if (currentCardData?.reviewMode === ReviewModes.FixedInterval) {
       // If card has multiplier, use that
-      setIntervalMultiplier(currentCardData?.intervalMultiplier);
-      setIntervalMultiplierType(currentCardData?.intervalMultiplierType);
+      setIntervalMultiplier(currentCardData.intervalMultiplier as number);
+      setIntervalMultiplierType(currentCardData.intervalMultiplierType as IntervalMultiplierType);
     } else {
       // Otherwise, just reset to default
-      setIntervalMultiplier(newFixedSessionDefaults.intervalMultiplier);
-      setIntervalMultiplierType(newFixedSessionDefaults.intervalMultiplierType);
+      setIntervalMultiplier(newFixedSessionDefaults.intervalMultiplier as number);
+      setIntervalMultiplierType(
+        newFixedSessionDefaults.intervalMultiplierType as IntervalMultiplierType
+      );
     }
   }, [currentCardData, newFixedSessionDefaults]);
 
