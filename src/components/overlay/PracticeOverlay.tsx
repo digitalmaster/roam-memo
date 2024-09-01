@@ -276,7 +276,7 @@ const PracticeOverlay = ({
               showBreadcrumbs={showBreadcrumbs}
             />
           ) : (
-            <div className="flex items-center flex-col">
+            <div data-testid="practice-overlay-done-state" className="flex items-center flex-col">
               <Lottie options={lottieAnimationOption} style={lottieStyle} />
               {/* @TODOZ: Add support for review more*/}
               {/* eslint-disable-next-line no-constant-condition */}
@@ -287,7 +287,12 @@ const PracticeOverlay = ({
                   <a onClick={handleReviewMoreClick}>Review more</a>
                 </div>
               ) : (
-                <div>Reviewed {todaySelectedTag.completed} cards today.</div>
+                <div>
+                  You&apos;re all caught up! 🌟{' '}
+                  {todaySelectedTag.completed > 0
+                    ? `Reviewed ${todaySelectedTag.completed} cards today.`
+                    : ''}
+                </div>
               )}
             </div>
           )}

@@ -351,6 +351,13 @@ export const actions = {
     const sidePanelButtonElm = document.querySelector<HTMLSpanElement>(
       '[data-testid="side-panel-wrapper"]'
     );
-    sidePanelButtonElm.click();
+    sidePanelButtonElm?.click();
+  },
+  openTagSelector: () => {
+    const tagSelectorElm = document.querySelector<HTMLButtonElement>(
+      '[data-testid="tag-selector-cta"]'
+    );
+
+    tagSelectorElm?.click();
   },
 };

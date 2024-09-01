@@ -772,7 +772,7 @@ describe('Side Panel Widget', () => {
       expect(newTag).not.toBeInTheDocument();
     });
 
-    it.only('takes completed cards in decks into acount, alocating remaing limit count consistently', async () => {
+    it('takes completed cards in decks into acount, alocating remaing limit count consistently', async () => {
       /**
        * This handles the case where we have a limit set between multiple decks,
        * we finish one deck, then refetch. we expect the limit to not restart
@@ -820,23 +820,15 @@ describe('Side Panel Widget', () => {
         nextDueDate: dateUtils.addDays(new Date(), 1),
       });
       mockBuilder.mockQueryResults();
-      console.log('---- complete both due cards in first deck ----');
 
       // Refresh data by launching modal
       await act(async () => {
-        const sidePanelButtonElm = document.querySelector<HTMLSpanElement>(
-          '[data-testid="side-panel-wrapper"]'
-        );
-        sidePanelButtonElm?.click();
+        testUtils.actions.launchModal();
       });
 
       // Open Tag Selector
       await act(async () => {
-        const tagSelectorElm = document.querySelector<HTMLButtonElement>(
-          '[data-testid="tag-selector-cta"]'
-        );
-
-        tagSelectorElm?.click();
+        testUtils.actions.openTagSelector();
       });
 
       // Here we expect the first deck to be marked complete, and the second deck retains its 1 due card

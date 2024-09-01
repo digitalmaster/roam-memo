@@ -51,7 +51,6 @@ export default function useCurrentCardData({
   // console.log({ sessions, latestSession, currentCardData, reviewMode });
   React.useEffect(() => {
     if (!currentCardRefUid) {
-      console.log('No card. Resetting', { currentCardRefUid });
       setCurrentCardData(undefined);
       return;
     }
@@ -74,7 +73,6 @@ export default function useCurrentCardData({
 
   // Here we just need to reset the override each time we change cards
   React.useEffect(() => {
-    console.log('Resetting review mode override');
     setReviewModeOverride(undefined);
     setReviewMode(latestSession?.reviewMode);
   }, [currentCardRefUid, latestSession]);

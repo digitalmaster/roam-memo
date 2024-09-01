@@ -138,7 +138,6 @@ const App = () => {
             selectedTag={selectedTag}
             isCramming={isCramming}
             setIsCramming={setIsCramming}
-            dailyLimit={dailyLimit}
             rtlEnabled={rtlEnabled}
             today={today}
           />
