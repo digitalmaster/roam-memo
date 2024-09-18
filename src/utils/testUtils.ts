@@ -1,3 +1,4 @@
+import { act, screen, within } from '@testing-library/react';
 import { Settings, defaultSettings } from '~/hooks/useSettings';
 import { ReviewModes, Session } from '~/models/session';
 import {
@@ -9,9 +10,12 @@ import {
   getPluginPageBlockDataQuery,
   parentChainInfoQuery,
   getPracticeData,
+  getPageQuery,
 } from '~/queries';
 import * as dateUtils from '~/utils/date';
 import * as testUtils from '~/utils/testUtils';
+import * as queries from '~/queries';
+import practice from '~/practice';
 
 export const mockQueryResult = ({ queryMocks, settingsMock, tagsList }) => {
   const mockRoamAlphaAPI = generateMockRoamAlphaAPI({ queryMocks, tagsList });
@@ -40,7 +44,7 @@ const mockOtherDependencies = ({ settingsMock }) => {
   });
 };
 
-const dataPageTitle = 'roam/memo';
+export const dataPageTitle = 'roam/memo';
 const dataPageUid = 1234;
 const mockBlockInfo = {
   string: 'mock block string',
@@ -93,6 +97,12 @@ export const generateMockRoamAlphaAPI = ({ queryMocks, tagsList }) => ({
       {
         query: parentChainInfoQuery,
         result: [[]],
+      },
+      {
+        query: getPageQuery,
+        args: [dataPageTitle],
+        result: [[`${dataPageUid}`]],
+        shouldReturnPromise: false,
       },
     ];
 
@@ -360,4 +370,46 @@ export const actions = {
 
     tagSelectorElm?.click();
   },
+  clickControlButton: (buttonText: string) => {
+    const footerActionsElm = screen.getByTestId('footer-actions-wrapper');
+    const showAnswerButton = within(footerActionsElm).getByText(buttonText);
+
+    // The button click sets a timeout to visually show the hover state when using keyboard shortcuts.
+    // So we need to manually run the timers here
+    jest.useFakeTimers();
+    const buttonElm = showAnswerButton.closest<HTMLButtonElement>('button');
+    buttonElm?.click();
+    jest.runAllTimers();
+  },
+  clickSwitchReviewModeButton: () => {
+    const footerActionsElm = screen.getByTestId('footer-actions-wrapper');
+    const reviewModeToggleButton = within(footerActionsElm).getByTestId('review-mode-button');
+
+    // The button click sets a timeout to visually show the hover state when using keyboard shortcuts.
+    // So we need to manually run the timers here
+    jest.useFakeTimers();
+    const buttonElm = reviewModeToggleButton.closest<HTMLButtonElement>('button');
+    buttonElm?.click();
+    jest.runAllTimers();
+  },
+};
+
+export const grade = async (gradeString: string, mockBuilder: MockDataBuilder) => {
+  const promise = new Promise((resolve) => {
+    const savePracticeDataSpy = jest.spyOn(queries, 'savePracticeData');
+    savePracticeDataSpy.mockImplementation(async (updatedRecord) => {
+      const { refUid, ...practiceData } = updatedRecord;
+
+      // Manually save next sessions
+      mockBuilder.withSession(refUid, practiceData);
+      mockBuilder.mockQueryResults();
+      resolve(updatedRecord);
+    });
+  });
+
+  await act(async () => {
+    actions.clickControlButton(gradeString);
+  });
+
+  return promise;
 };

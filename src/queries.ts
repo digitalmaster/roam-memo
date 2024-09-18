@@ -684,19 +684,16 @@ export const fetchBlockInfo: (refUid: any) => Promise<BlockInfo> = async (refUid
  *  Shout out to David Bieber for these helpful functions Blog:
  *  https://davidbieber.com/snippets/2021-02-12-javascript-functions-for-inserting-blocks-in-roam/
  */
+export const getPageQuery = `[
+  :find ?uid :in $ ?title
+  :where
+    [?page :node/title ?title]
+    [?page :block/uid ?uid]
+]`;
 const getPage = (page) => {
   // returns the uid of a specific page in your graph. _page_: the title of the
   // page.
-  const results = window.roamAlphaAPI.q(
-    `
-    [:find ?uid
-     :in $ ?title
-     :where
-     [?page :node/title ?title]
-     [?page :block/uid ?uid]
-    ]`,
-    page
-  );
+  const results = window.roamAlphaAPI.q(getPageQuery, page);
   if (results.length) {
     return results[0][0];
   }

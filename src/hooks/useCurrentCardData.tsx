@@ -56,7 +56,6 @@ export default function useCurrentCardData({
     }
 
     if (reviewModeOverride && reviewModeOverride !== latestSession?.reviewMode) {
-      console.log('Overriding review mode', { reviewModeOverride, latestSession });
       const resolvedCardData = getResolvedCardData({
         sessions,
         reviewMode: reviewModeOverride,

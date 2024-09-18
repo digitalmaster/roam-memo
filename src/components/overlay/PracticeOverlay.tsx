@@ -19,20 +19,22 @@ import useCurrentCardData from '~/hooks/useCurrentCardData';
 import { generateNewSession } from '~/queries';
 import { CompletionStatus, Today } from '~/models/practice';
 import { handlePracticeProps } from '~/app';
+import { useSafeContext } from '~/hooks/useSafeContext';
 
 interface MainContextProps {
-  reviewMode?: ReviewModes;
-  setReviewModeOverride?: React.Dispatch<React.SetStateAction<ReviewModes>>;
-  intervalMultiplier?: number;
-  setIntervalMultiplier?: (multiplier: number) => void;
-  intervalMultiplierType?: IntervalMultiplierType;
-  setIntervalMultiplierType?: (type: IntervalMultiplierType) => void;
-  onPracticeClick?: (props: any) => void;
-  today?: Today;
-  selectedTag?: string;
-  currentIndex?: number;
+  reviewMode: ReviewModes | undefined;
+  setReviewModeOverride: React.Dispatch<React.SetStateAction<ReviewModes | undefined>>;
+  intervalMultiplier: number;
+  setIntervalMultiplier: (multiplier: number) => void;
+  intervalMultiplierType: IntervalMultiplierType;
+  setIntervalMultiplierType: (type: IntervalMultiplierType) => void;
+  onPracticeClick: (props: any) => void;
+  today: Today;
+  selectedTag: string;
+  currentIndex: number;
 }
-export const MainContext = React.createContext<MainContextProps>({});
+
+export const MainContext = React.createContext<MainContextProps>({} as MainContextProps);
 
 interface Props {
   isOpen: boolean;
@@ -290,7 +292,11 @@ const PracticeOverlay = ({
                 <div>
                   You&apos;re all caught up! 🌟{' '}
                   {todaySelectedTag.completed > 0
-                    ? `Reviewed ${todaySelectedTag.completed} cards today.`
+                    ? `Reviewed ${todaySelectedTag.completed} ${stringUtils.pluralize(
+                        todaySelectedTag.completed,
+                        'card',
+                        'cards'
+                      )} today.`
                     : ''}
                 </div>
               )}
@@ -525,12 +531,12 @@ const Header = ({
   setShowBreadcrumbs,
   isCramming,
 }) => {
-  const { selectedTag, today, currentIndex } = React.useContext(MainContext);
+  const { selectedTag, today, currentIndex } = useSafeContext(MainContext);
   const todaySelectedTag = today.tags[selectedTag];
   const completedTodayCount = todaySelectedTag.completed;
   const remainingTodayCount = todaySelectedTag.due + todaySelectedTag.new;
 
-  const currentDisplayCount = completedTodayCount + currentIndex;
+  const currentDisplayCount = completedTodayCount + currentIndex + 1;
   return (
     <HeaderWrapper className={className} tabIndex={0}>
       <div className="flex items-center">
@@ -554,11 +560,20 @@ const Header = ({
             </Tooltip>
           </div>
         )}
-        <StatusBadge status={status} nextDueDate={nextDueDate} isCramming={isCramming} />
+        <span data-testid="status-badge">
+          <StatusBadge
+            status={status}
+            nextDueDate={nextDueDate}
+            isCramming={isCramming}
+            data-testid="status-badge"
+          />
+        </span>
         <span className="text-sm mx-2 font-medium">
-          <span>{isDone ? 0 : currentDisplayCount}</span>
+          <span data-testid="display-count-current">{isDone ? 0 : currentDisplayCount}</span>
           <span className="opacity-50 mx-1">/</span>
-          <span className="opacity-50">{remainingTodayCount}</span>
+          <span className="opacity-50" data-testid="display-count-total">
+            {remainingTodayCount}
+          </span>
         </span>
         <button
           aria-label="Close"
