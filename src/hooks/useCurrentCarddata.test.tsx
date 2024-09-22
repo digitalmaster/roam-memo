@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react-hooks';
 import useCurrentCardData from './useCurrentCardData';
-import { generateNewSession, getPluginPageBlockDataQuery } from '~/queries';
+import { generateNewSession } from '~/queries';
 import { NewSession, ReviewModes, Session } from '~/models/session';
 import * as testUtils from '~/utils/testUtils';
 import React from 'react';
