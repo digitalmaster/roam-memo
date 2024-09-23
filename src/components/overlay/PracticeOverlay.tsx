@@ -73,9 +73,6 @@ const PracticeOverlay = ({
   const practiceCardUids = [...dueCardsUids, ...newCardsUids];
   const [currentIndex, setCurrentIndex] = React.useState(0);
 
-  const totalCardsCount = todaySelectedTag.new + todaySelectedTag.due;
-  const hasCards = totalCardsCount > 0;
-  const isDone = todaySelectedTag.status === CompletionStatus.Finished;
   const isFirst = currentIndex === 0;
   const completedTodayCount = todaySelectedTag.completed;
 
@@ -88,6 +85,10 @@ const PracticeOverlay = ({
     currentCardRefUid,
     sessions,
   });
+
+  const totalCardsCount = todaySelectedTag.new + todaySelectedTag.due;
+  const hasCards = totalCardsCount > 0;
+  const isDone = todaySelectedTag.status === CompletionStatus.Finished || !currentCardData;
 
   const newFixedSessionDefaults = React.useMemo(
     () => generateNewSession({ reviewMode: ReviewModes.FixedInterval }),
@@ -165,7 +166,7 @@ const PracticeOverlay = ({
   // When sessions are updated, reset current index
   React.useEffect(() => {
     setCurrentIndex(0);
-  }, [sessions]);
+  }, [practiceData]);
 
   const onPracticeClick = React.useCallback(
     (props) => {

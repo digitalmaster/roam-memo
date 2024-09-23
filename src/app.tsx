@@ -77,7 +77,10 @@ const App = () => {
     fetchPracticeData();
   };
 
-  useOnVisibilityStateChange(refreshData);
+  useOnVisibilityStateChange(() => {
+    if (showPracticeOverlay) return;
+    refreshData();
+  });
 
   const onShowPracticeOverlay = () => {
     refreshData();
