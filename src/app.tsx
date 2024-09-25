@@ -90,6 +90,7 @@ const App = () => {
 
   const onClosePracticeOverlayCallback = () => {
     setShowPracticeOverlay(false);
+    setIsCramming(false);
     refreshData();
   };
 
