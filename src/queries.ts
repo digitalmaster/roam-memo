@@ -189,7 +189,7 @@ export const getPluginPageCachedData = async ({ dataPageTitle }) => {
   return mapPluginPageCachedData(queryResultsData);
 };
 
-export const getDueCardUids = (currentTagSessionData: CompleteRecords) => {
+export const getDueCardUids = (currentTagSessionData: CompleteRecords, isCramming) => {
   const results: RecordUid[] = [];
   if (!Object.keys(currentTagSessionData).length) return results;
 
@@ -202,7 +202,7 @@ export const getDueCardUids = (currentTagSessionData: CompleteRecords) => {
 
     const nextDueDate = latestSession.nextDueDate;
 
-    if (nextDueDate <= now) {
+    if (isCramming || nextDueDate <= now) {
       results.push(cardUid);
     }
   });
@@ -285,10 +285,10 @@ const addNewCards = ({
   }
 };
 
-const addDueCards = ({ today, tagsList, sessionData }) => {
+const addDueCards = ({ today, tagsList, sessionData, isCramming }) => {
   for (const currentTag of tagsList) {
     const currentTagSessionData = sessionData[currentTag];
-    const dueCardsUids = getDueCardUids(currentTagSessionData);
+    const dueCardsUids = getDueCardUids(currentTagSessionData, isCramming);
 
     today.tags[currentTag] = {
       ...today.tags[currentTag],
@@ -603,6 +603,7 @@ export const getPracticeData = async ({ tagsList, dataPageTitle, dailyLimit, isC
       tag,
       dataPageTitle,
     });
+
     sessionData[tag] = currentSessionData;
     cardUids[tag] = currentCardUids;
   }
@@ -618,6 +619,7 @@ export const getPracticeData = async ({ tagsList, dataPageTitle, dailyLimit, isC
     today,
     tagsList,
     sessionData,
+    isCramming,
   });
 
   calculateCombinedCounts({ today, tagsList });
