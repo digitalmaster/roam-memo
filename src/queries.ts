@@ -263,8 +263,9 @@ const addNewCards = ({
   for (const currentTag of tagsList) {
     const allSelectedTagCardsUids = cardUids[currentTag];
     const newCardsUids: RecordUid[] = [];
+
     allSelectedTagCardsUids.forEach((referenceId) => {
-      if (!pluginPageData[referenceId]) {
+      if (!pluginPageData[referenceId] || !pluginPageData[referenceId].length) {
         // New
         newCardsUids.push(referenceId);
         pluginPageData[referenceId] = [generateNewSession()];
