@@ -56,7 +56,7 @@ describe('PracticeOverlay', () => {
     expect(displayCountTotal).toHaveTextContent('1');
   });
 
-  it('Grading works correctly on a single deck', async () => {
+  it('Entire Flow', async () => {
     const mockBuilder = new testUtils.MockDataBuilder();
 
     // Add a due card today
@@ -120,15 +120,15 @@ describe('PracticeOverlay', () => {
 
     // Verify completed view
     // Renders display count 0/0
-    const displayCountCurrent = screen.queryByTestId('display-count-current');
+    let displayCountCurrent = screen.queryByTestId('display-count-current');
     expect(displayCountCurrent).toBeInTheDocument();
     expect(displayCountCurrent).toHaveTextContent('0');
 
-    const displayCountTotal = screen.queryByTestId('display-count-total');
+    let displayCountTotal = screen.queryByTestId('display-count-total');
     expect(displayCountTotal).toBeInTheDocument();
     expect(displayCountTotal).toHaveTextContent('0');
 
-    const doneState = screen.queryByTestId('practice-overlay-done-state');
+    let doneState = screen.queryByTestId('practice-overlay-done-state');
     expect(doneState).toBeInTheDocument();
 
     // Continue Cramming Mode
@@ -138,6 +138,42 @@ describe('PracticeOverlay', () => {
 
     statusBadge = screen.queryByTestId('status-badge');
     expect(statusBadge).toHaveTextContent('Cramming');
+
+    // Verify count
+    displayCountCurrent = screen.queryByTestId('display-count-current');
+    expect(displayCountCurrent).toBeInTheDocument();
+    expect(displayCountCurrent).toHaveTextContent('1');
+
+    displayCountTotal = screen.queryByTestId('display-count-total');
+    expect(displayCountTotal).toBeInTheDocument();
+    expect(displayCountTotal).toHaveTextContent('2');
+
+    // Skip till end
+    await act(async () => {
+      testUtils.actions.clickControlButton('Show Answer');
+    });
+    await act(async () => {
+      testUtils.actions.clickControlButton('Skip');
+    });
+    await act(async () => {
+      testUtils.actions.clickControlButton('Show Answer');
+    });
+    await act(async () => {
+      testUtils.actions.clickControlButton('Skip');
+    });
+
+    // Verify completed view
+    // Renders display count 0/0
+    displayCountCurrent = screen.queryByTestId('display-count-current');
+    expect(displayCountCurrent).toBeInTheDocument();
+    expect(displayCountCurrent).toHaveTextContent('0');
+
+    displayCountTotal = screen.queryByTestId('display-count-total');
+    expect(displayCountTotal).toBeInTheDocument();
+    expect(displayCountTotal).toHaveTextContent('0');
+
+    doneState = screen.queryByTestId('practice-overlay-done-state');
+    expect(doneState).toBeInTheDocument();
   });
 
   it('Grading works correctly when switching review modes', async () => {

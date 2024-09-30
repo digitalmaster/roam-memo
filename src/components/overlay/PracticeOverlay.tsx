@@ -140,16 +140,6 @@ const PracticeOverlay = ({
     }
   }, [hasBlockChildren, hasCloze, currentIndex, tagsList]);
 
-  // On show "done" screen
-  React.useEffect(() => {
-    if (isDone) {
-      if (isCramming) {
-        setIsCramming(false);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isDone]);
-
   const onTagChange = async (tag) => {
     setCurrentIndex(0);
     handleMemoTagChange(tag);
@@ -537,7 +527,9 @@ const Header = ({
   const completedTodayCount = todaySelectedTag.completed;
   const remainingTodayCount = todaySelectedTag.due + todaySelectedTag.new;
 
-  const currentDisplayCount = completedTodayCount + currentIndex + 1;
+  const currentIndexDelta = isCramming ? 0 : completedTodayCount;
+  const currentDisplayCount = currentIndexDelta + currentIndex + 1;
+
   return (
     <HeaderWrapper className={className} tabIndex={0}>
       <div className="flex items-center">
@@ -573,7 +565,7 @@ const Header = ({
           <span data-testid="display-count-current">{isDone ? 0 : currentDisplayCount}</span>
           <span className="opacity-50 mx-1">/</span>
           <span className="opacity-50" data-testid="display-count-total">
-            {remainingTodayCount}
+            {isDone ? 0 : remainingTodayCount}
           </span>
         </span>
         <button
