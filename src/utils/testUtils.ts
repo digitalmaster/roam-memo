@@ -1,25 +1,147 @@
+import { act, screen, within } from '@testing-library/react';
+import { Settings, defaultSettings } from '~/hooks/useSettings';
 import { ReviewModes, Session } from '~/models/session';
-import { generateNewSession } from '~/queries';
+import {
+  blockInfoQuery,
+  childBlocksOnPageQuery,
+  dataPageReferencesIdsQuery,
+  generateNewSession,
+  getDataPageQuery,
+  getPluginPageBlockDataQuery,
+  parentChainInfoQuery,
+  getPracticeData,
+  getPageQuery,
+} from '~/queries';
 import * as dateUtils from '~/utils/date';
+import * as testUtils from '~/utils/testUtils';
+import * as queries from '~/queries';
 
-export const mockQueryResult = (data) => {
-  const queryResult = generateMockRoamApiImplemtation(data);
+export const mockQueryResult = ({ queryMocks, settingsMock, tagsList }) => {
+  const mockRoamAlphaAPI = generateMockRoamAlphaAPI({ queryMocks, tagsList });
 
   Object.defineProperty(window, 'roamAlphaAPI', {
-    value: queryResult,
+    value: mockRoamAlphaAPI,
+    writable: true,
+  });
+
+  mockOtherDependencies({ settingsMock });
+};
+
+const mockOtherDependencies = ({ settingsMock }) => {
+  Object.defineProperty(window, 'roamMemo', {
+    value: {
+      extensionAPI: {
+        settings: {
+          getAll: () => settingsMock,
+          panel: {
+            create: () => {},
+          },
+        },
+      },
+    },
     writable: true,
   });
 };
 
-export const generateMockRoamApiImplemtation = (queryResult) => ({
-  q: jest.fn(() => Promise.resolve(queryResult)),
+export const dataPageTitle = 'roam/memo';
+const dataPageUid = 1234;
+const mockBlockInfo = {
+  string: 'mock block string',
+  children: [
+    {
+      order: 0,
+      string: 'mock child block string',
+    },
+  ],
+};
+interface MockQuery {
+  query: string;
+  result: any;
+  args?: any[];
+  shouldReturnPromise?: boolean;
+}
+export const generateMockRoamAlphaAPI = ({ queryMocks, tagsList }) => ({
+  q: jest.fn((q, ...queryArgs) => {
+    const defaultMocks: MockQuery[] = [
+      {
+        query: getDataPageQuery('roam/memo'),
+        result: [[dataPageUid]],
+        shouldReturnPromise: false,
+      },
+      ...tagsList.map((tag) => ({
+        query: dataPageReferencesIdsQuery,
+        args: [tag, dataPageUid],
+        result: [],
+        shouldReturnPromise: false,
+      })),
+      {
+        query: getPluginPageBlockDataQuery,
+        args: [dataPageTitle, 'cache'],
+        result: [],
+      },
+      ...tagsList.map((tag) => ({
+        query: childBlocksOnPageQuery,
+        args: [tag],
+        result: [],
+      })),
+      {
+        query: getPluginPageBlockDataQuery,
+        result: [],
+        args: [dataPageTitle, 'data'],
+      },
+      {
+        query: blockInfoQuery,
+        result: [[mockBlockInfo]],
+      },
+      {
+        query: parentChainInfoQuery,
+        result: [[]],
+      },
+      {
+        query: getPageQuery,
+        args: [dataPageTitle],
+        result: [[`${dataPageUid}`]],
+        shouldReturnPromise: false,
+      },
+    ];
+
+    const mocks = queryMocks.concat(defaultMocks);
+    const findMatchingMockFunction = (mock) => {
+      const isQuery = mock.query === q;
+      const hasMatchingArgs = !mock.args || mock.args.every((arg) => queryArgs.includes(arg));
+
+      return isQuery && hasMatchingArgs;
+    };
+
+    const mock = mocks.find(findMatchingMockFunction);
+    if (!mock) {
+      throw new Error(`Mock query not found for: ${q}, with args: ${queryArgs}`);
+    }
+
+    if ('shouldReturnPromise' in mock && mock.shouldReturnPromise === false) {
+      return mock.result;
+    }
+
+    return Promise.resolve(mock.result);
+  }),
+  ui: {
+    commandPalette: {
+      addCommand: jest.fn(),
+      removeCommand: jest.fn(),
+    },
+    components: {
+      unmountNode: jest.fn(),
+      renderBlock: jest.fn(),
+    },
+  },
   util: {
     pageTitleToDate: mockPageTitleToDate,
   },
 });
+
 export const generateMockRoamApiImplemtationRoot = ({ queryResult }) => {
   return () => ({
-    roamAlphaAPI: generateMockRoamApiImplemtation(queryResult),
+    roamAlphaAPI: generateMockRoamAlphaAPI(queryResult),
   });
 };
 
@@ -29,60 +151,145 @@ type Child = {
   children?: Child[];
 };
 
-export class TestSessionsResponse {
-  uid: string;
-  sessions: any[];
+export class MockDataBuilder {
+  tags: string[];
+  cards: { [key: string]: string[] };
+  sessions: { [key: string]: any[] };
+  settingsOverride: Partial<Settings>;
 
-  constructor({ uid = 'id_0' } = {}) {
-    this.uid = uid;
-    this.sessions = [];
+  constructor() {
+    this.tags = ['memo'];
+    this.cards = {};
+    this.sessions = {};
+    this.settingsOverride = {};
   }
 
-  withSession(overrides: { reviewMode?: ReviewModes } & { [key in keyof Session]?: any } = {}) {
-    this.sessions.push({
-      ...generateNewSession({ reviewMode: ReviewModes.DefaultSpacedInterval, isNew: false }),
+  mockQueryResults() {
+    const settingsMock = this.buildSettingsResult();
+    const queryMocks: MockQuery[] = [];
+
+    for (const tag of this.tags) {
+      queryMocks.push({
+        query: dataPageReferencesIdsQuery,
+        result: this.buildPageReferenceIdsQueryResult(tag),
+        args: [tag, dataPageUid],
+        shouldReturnPromise: false,
+      });
+    }
+
+    if (Object.keys(this.sessions).length) {
+      queryMocks.push({
+        query: getPluginPageBlockDataQuery,
+        result: this.buildSessionQueryResult(),
+        args: [dataPageTitle, 'data'],
+      });
+    }
+
+    testUtils.mockQueryResult({ queryMocks, settingsMock, tagsList: this.tags });
+  }
+
+  withTag(tagName: string) {
+    if (!this.tags.includes(tagName)) {
+      this.tags.push(tagName);
+    }
+
+    return this;
+  }
+
+  withCard({ uid = 'id_1', tag = this.tags[0] } = {}) {
+    if (!this.cards[tag]) this.cards[tag] = [];
+
+    this.cards[tag].push(uid);
+
+    return this;
+  }
+
+  buildPageReferenceIdsQueryResult(tag) {
+    return this.cards[tag]?.length ? this.cards[tag].map((c) => [c]) : [];
+  }
+
+  withSession(
+    uid: string,
+    overrides: { reviewMode?: ReviewModes; nextDueDate?: Date } & {
+      [key in keyof Session]?: any;
+    } = {}
+  ) {
+    if (!this.sessions[uid]) {
+      this.sessions[uid] = [];
+    }
+
+    this.sessions[uid].push({
+      ...generateNewSession({
+        reviewMode: ReviewModes.DefaultSpacedInterval,
+        isNew: false,
+      }),
       ...overrides,
     });
 
     return this;
   }
-
-  createChild(order: number, string: string, children?: Child[]): Child {
-    return { order, string, children };
+  withSetting(settingsOverride: Partial<Settings>) {
+    this.settingsOverride = settingsOverride;
+    return this;
   }
 
-  build() {
-    return [
-      [
-        this.createChild(0, 'data', [
-          this.createChild(
-            0,
-            `((${this.uid}))`,
-            this.sessions.map((session, index, sessions) =>
-              this.createChild(
-                sessions.length - 1 - index,
-                '[[August 23rd, 2022}]] 🟢',
-                Object.entries(session).map(([key, value], index, fieldList) => {
-                  let parsedValue = '';
-                  if (dateUtils.isDate(value)) {
-                    parsedValue = mockDateToRoamDateString(value);
-                  }
+  createChild(order: number, string: string, children?: Child[]): Child {
+    return { order, string, ...(children ? { children } : {}) };
+  }
 
-                  return this.createChild(
-                    fieldList.length - 1 - index,
-                    `${key}:: ${parsedValue || value}`
-                  );
-                })
-              )
-            )
-          ),
-        ]),
-      ],
-    ];
+  buildSettingsResult() {
+    return {
+      ...defaultSettings,
+      ...this.settingsOverride,
+      tagsListString: this.tags.join(', '),
+      isCramming: false,
+    };
+  }
+
+  buildSessionQueryResult() {
+    const renderedSessions = Object.entries(this.sessions).map(([uid, sessions]) =>
+      this.createChild(
+        0,
+        `((${uid}))`,
+        sessions.map((session, index, sessions) =>
+          this.createChild(
+            sessions.length - 1 - index,
+            `${mockDateToRoamDateString(session.dateCreated)} 🟢`,
+            Object.entries(session)
+              .filter(([key]) => key !== 'dateCreated')
+              .map(([key, value], index, fieldList) => {
+                let parsedValue = '';
+                if (dateUtils.isDate(value)) {
+                  parsedValue = mockDateToRoamDateString(value);
+                }
+
+                return this.createChild(
+                  fieldList.length - 1 - index,
+                  `${key}:: ${parsedValue || value}`
+                );
+              })
+          )
+        )
+      )
+    );
+
+    return [[this.createChild(0, 'data', renderedSessions)]];
+  }
+
+  async getPracticeData() {
+    const settings = this.buildSettingsResult();
+    const practiceData = await getPracticeData({
+      tagsList: this.tags,
+      dataPageTitle,
+      dailyLimit: settings.dailyLimit,
+      isCramming: !!settings.isCramming,
+    });
+
+    return practiceData;
   }
 }
 
-function mockDateToRoamDateString(date) {
+export function mockDateToRoamDateString(date) {
   const months = [
     'January',
     'February',
@@ -147,3 +354,61 @@ function mockPageTitleToDate(formattedDate) {
   // Create and return the Date object
   return new Date(year, monthIndex, day);
 }
+
+export const actions = {
+  launchModal: () => {
+    const sidePanelButtonElm = document.querySelector<HTMLSpanElement>(
+      '[data-testid="side-panel-wrapper"]'
+    );
+    sidePanelButtonElm?.click();
+  },
+  openTagSelector: () => {
+    const tagSelectorElm = document.querySelector<HTMLButtonElement>(
+      '[data-testid="tag-selector-cta"]'
+    );
+
+    tagSelectorElm?.click();
+  },
+  clickControlButton: (buttonText: string) => {
+    const footerActionsElm = screen.getByTestId('footer-actions-wrapper');
+    const showAnswerButton = within(footerActionsElm).getByText(buttonText);
+
+    // The button click sets a timeout to visually show the hover state when using keyboard shortcuts.
+    // So we need to manually run the timers here
+    jest.useFakeTimers();
+    const buttonElm = showAnswerButton.closest<HTMLButtonElement>('button');
+    buttonElm?.click();
+    jest.runAllTimers();
+  },
+  clickSwitchReviewModeButton: () => {
+    const footerActionsElm = screen.getByTestId('footer-actions-wrapper');
+    const reviewModeToggleButton = within(footerActionsElm).getByTestId('review-mode-button');
+
+    // The button click sets a timeout to visually show the hover state when using keyboard shortcuts.
+    // So we need to manually run the timers here
+    jest.useFakeTimers();
+    const buttonElm = reviewModeToggleButton.closest<HTMLButtonElement>('button');
+    buttonElm?.click();
+    jest.runAllTimers();
+  },
+};
+
+export const grade = async (gradeString: string, mockBuilder: MockDataBuilder) => {
+  const promise = new Promise((resolve) => {
+    const savePracticeDataSpy = jest.spyOn(queries, 'savePracticeData');
+    savePracticeDataSpy.mockImplementation(async (updatedRecord) => {
+      const { refUid, ...practiceData } = updatedRecord;
+
+      // Manually save next sessions
+      mockBuilder.withSession(refUid, practiceData);
+      mockBuilder.mockQueryResults();
+      resolve(updatedRecord);
+    });
+  });
+
+  await act(async () => {
+    actions.clickControlButton(gradeString);
+  });
+
+  return promise;
+};

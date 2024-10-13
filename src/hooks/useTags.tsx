@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 const splitStringByCommas = (str: string) => {
-  const result = [];
+  const result: string[] = [];
   let current = '';
   let isInsideQuote = false;
 
@@ -22,8 +22,8 @@ const splitStringByCommas = (str: string) => {
 };
 
 const useTags = ({ tagsListString }: { tagsListString: string }) => {
-  const [tagsList, setTagsList] = React.useState<string[]>([]);
-  const [selectedTag, setSelectedTag] = React.useState<string | undefined>();
+  const [tagsList, setTagsList] = React.useState<string[]>(splitStringByCommas(tagsListString));
+  const [selectedTag, setSelectedTag] = React.useState<string>(tagsList[0]);
 
   React.useEffect(() => {
     const tagsList = splitStringByCommas(tagsListString);

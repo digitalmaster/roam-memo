@@ -3,7 +3,7 @@ import * as dateUtils from '~/utils/date';
 describe('addDays', () => {
   test('Current timezone', () => {
     const timezoneOffset = new Date().getTimezoneOffset() / 60;
-
+    expect(process.env.TZ).toBe('UTC');
     expect(timezoneOffset).toEqual(0);
   });
 

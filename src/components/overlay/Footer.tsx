@@ -8,6 +8,22 @@ import ButtonTags from '~/components/ButtonTags';
 import { IntervalMultiplierType, ReviewModes } from '~/models/session';
 import { MainContext } from '~/components/overlay/PracticeOverlay';
 
+interface IntervalEstimate {
+  reviewMode: string;
+  grade: number;
+  repetitions: number;
+  interval: number;
+  eFactor: number;
+  dateCreated: string;
+  nextDueDate: string;
+  nextDueDateFromNow: string;
+}
+
+type IntervalEstimates =
+  | undefined
+  | {
+      [key: number]: IntervalEstimate;
+    };
 const Footer = ({
   setShowAnswers,
   showAnswers,
@@ -36,7 +52,9 @@ const Footer = ({
   };
 
   const showAnswerFn = React.useMemo(() => {
-    return () => setShowAnswers(true);
+    return () => {
+      setShowAnswers(true);
+    };
   }, [setShowAnswers]);
   const gradeFn = React.useMemo(
     () => (grade) => {
@@ -146,9 +164,13 @@ const Footer = ({
   );
   const { handleKeyDown, handleKeyUp } = Blueprint.useHotkeys(hotkeys);
 
-  const intervalEstimates = React.useMemo(() => {
+  const intervalEstimates: IntervalEstimates = React.useMemo(() => {
     if (!currentCardData) return;
 
+    if (!reviewMode) {
+      console.error('Review mode not set');
+      return;
+    }
     const grades = [0, 1, 2, 3, 4, 5];
     const { interval, repetitions, eFactor } = currentCardData;
     const estimates = {};
@@ -177,7 +199,10 @@ const Footer = ({
       onKeyDown={handleKeyDown}
       onKeyUp={handleKeyUp}
     >
-      <FooterActionsWrapper className="bp3-dialog-footer-actions flex-wrap gap-4 justify-center sm:justify-evenly w-full mx-5  my-3">
+      <FooterActionsWrapper
+        className="bp3-dialog-footer-actions flex-wrap gap-4 justify-center sm:justify-evenly w-full mx-5  my-3"
+        data-testid="footer-actions-wrapper"
+      >
         {isDone || !hasCards ? (
           <FinishedControls
             onStartCrammingClick={onStartCrammingClick}
@@ -259,11 +284,21 @@ const GradingControlsWrapper = ({
   isIntervalEditorOpen,
   toggleIntervalEditorOpen,
 }) => {
-  const { reviewMode, setReviewMode } = React.useContext(MainContext);
+  const { reviewMode, setReviewModeOverride } = React.useContext(MainContext);
 
   const toggleReviewMode = () => {
-    setReviewMode((prev: ReviewModes) => {
-      return prev === ReviewModes.DefaultSpacedInterval
+    if (setReviewModeOverride === undefined) return;
+
+    setReviewModeOverride((prev: ReviewModes | undefined) => {
+      const isOverrideSet = prev !== undefined;
+
+      if (isOverrideSet) {
+        // If set we clear it
+        return undefined;
+      }
+
+      // Toggle Review Mode
+      return reviewMode === ReviewModes.DefaultSpacedInterval
         ? ReviewModes.FixedInterval
         : ReviewModes.DefaultSpacedInterval;
     });
@@ -311,6 +346,7 @@ const GradingControlsWrapper = ({
           onClick={() => {
             activateButtonFn('space-button', toggleReviewMode);
           }}
+          data-testid="review-mode-button"
           active={activeButtonKey === 'space-button'}
           outlined
         ></ControlButton>
@@ -417,15 +453,24 @@ const FixedIntervalModeControls = ({
   isIntervalEditorOpen,
   toggleIntervalEditorOpen,
   intervalEstimates,
-}) => {
+}: {
+  activeButtonKey: string;
+  intervalPractice: () => void;
+  isIntervalEditorOpen: boolean;
+  toggleIntervalEditorOpen: () => void;
+  intervalEstimates: IntervalEstimates;
+}): JSX.Element | undefined => {
   const { intervalMultiplier, intervalMultiplierType } = React.useContext(MainContext);
   const onInteractionhandler = (nextState) => {
     if (!nextState && isIntervalEditorOpen) toggleIntervalEditorOpen();
   };
+  if (!intervalEstimates) {
+    console.error('Interval estimates not set');
+    return;
+  }
 
   return (
     <>
-      {/* @ts-expect-error */}
       <Blueprint.Popover isOpen={isIntervalEditorOpen} onInteraction={onInteractionhandler}>
         <ControlButton
           icon="time"
@@ -451,7 +496,7 @@ const FixedIntervalModeControls = ({
         className="text-base font-medium py-1"
         intent="success"
         onClick={() => intervalPractice()}
-        tooltipText={`Review ${intervalEstimates[0]?.nextDueDateFromNow}`}
+        tooltipText={`Review ${intervalEstimates[0].nextDueDateFromNow}`}
         active={activeButtonKey === 'next-button'}
         outlined
       >
@@ -464,63 +509,78 @@ const FixedIntervalModeControls = ({
   );
 };
 
-const SpacedIntervalModeControls = ({ activeButtonKey, gradeFn, intervalEstimates }) => (
-  <>
-    <ControlButton
-      key="forget-button"
-      className="text-base font-medium py-1"
-      intent="danger"
-      tooltipText={`Review ${intervalEstimates[0]?.nextDueDateFromNow}`}
-      onClick={() => gradeFn(0)}
-      active={activeButtonKey === 'forgot-button'}
-      outlined
-    >
-      Forgot{' '}
-      <span className="ml-2">
-        <ButtonTags>F</ButtonTags>
-      </span>
-    </ControlButton>
-    <ControlButton
-      className="text-base font-medium py-1"
-      intent="warning"
-      onClick={() => gradeFn(2)}
-      tooltipText={`Review ${intervalEstimates[2]?.nextDueDateFromNow}`}
-      active={activeButtonKey === 'hard-button'}
-      outlined
-    >
-      Hard{' '}
-      <span className="ml-2">
-        <ButtonTags>H</ButtonTags>
-      </span>
-    </ControlButton>
-    <ControlButton
-      className="text-base font-medium py-1"
-      intent="primary"
-      onClick={() => gradeFn(4)}
-      tooltipText={`Review ${intervalEstimates[4]?.nextDueDateFromNow}`}
-      active={activeButtonKey === 'good-button'}
-      outlined
-    >
-      Good{' '}
-      <span className="ml-2">
-        <ButtonTags>G</ButtonTags>
-      </span>
-    </ControlButton>
-    <ControlButton
-      className="text-base font-medium py-1"
-      intent="success"
-      onClick={() => gradeFn(5)}
-      tooltipText={`Review ${intervalEstimates[5]?.nextDueDateFromNow}`}
-      active={activeButtonKey === 'perfect-button'}
-      outlined
-    >
-      Perfect{' '}
-      <span className="ml-2">
-        <ButtonTags>SPACE</ButtonTags>
-      </span>
-    </ControlButton>
-  </>
-);
+const SpacedIntervalModeControls = ({
+  activeButtonKey,
+  gradeFn,
+  intervalEstimates,
+}: {
+  activeButtonKey: string;
+  gradeFn: (grade: number) => void;
+  intervalEstimates: IntervalEstimates;
+}) => {
+  if (!intervalEstimates) {
+    console.error('Interval estimates not set');
+    return;
+  }
+
+  return (
+    <>
+      <ControlButton
+        key="forget-button"
+        className="text-base font-medium py-1"
+        intent="danger"
+        tooltipText={`Review ${intervalEstimates[0]?.nextDueDateFromNow}`}
+        onClick={() => gradeFn(0)}
+        active={activeButtonKey === 'forgot-button'}
+        outlined
+      >
+        Forgot{' '}
+        <span className="ml-2">
+          <ButtonTags>F</ButtonTags>
+        </span>
+      </ControlButton>
+      <ControlButton
+        className="text-base font-medium py-1"
+        intent="warning"
+        onClick={() => gradeFn(2)}
+        tooltipText={`Review ${intervalEstimates[2]?.nextDueDateFromNow}`}
+        active={activeButtonKey === 'hard-button'}
+        outlined
+      >
+        Hard{' '}
+        <span className="ml-2">
+          <ButtonTags>H</ButtonTags>
+        </span>
+      </ControlButton>
+      <ControlButton
+        className="text-base font-medium py-1"
+        intent="primary"
+        onClick={() => gradeFn(4)}
+        tooltipText={`Review ${intervalEstimates[4]?.nextDueDateFromNow}`}
+        active={activeButtonKey === 'good-button'}
+        outlined
+      >
+        Good{' '}
+        <span className="ml-2">
+          <ButtonTags>G</ButtonTags>
+        </span>
+      </ControlButton>
+      <ControlButton
+        className="text-base font-medium py-1"
+        intent="success"
+        onClick={() => gradeFn(5)}
+        tooltipText={`Review ${intervalEstimates[5]?.nextDueDateFromNow}`}
+        active={activeButtonKey === 'perfect-button'}
+        outlined
+      >
+        Perfect{' '}
+        <span className="ml-2">
+          <ButtonTags>SPACE</ButtonTags>
+        </span>
+      </ControlButton>
+    </>
+  );
+};
 
 const FooterWrapper = styled.div`
   background-color: #f6f9fd;

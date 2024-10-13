@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as Blueprint from '@blueprintjs/core';
 import PracticeOverlay from '~/components/overlay/PracticeOverlay';
-import SidePandelWidget from '~/components/SidePandelWidget';
+import SidePannelWidget from '~/components/SidePanelWidget';
 import practice from '~/practice';
 import usePracticeData from '~/hooks/usePracticeData';
 import useTags from '~/hooks/useTags';
@@ -13,7 +13,7 @@ import useCachedData from '~/hooks/useCachedData';
 import useOnVisibilityStateChange from '~/hooks/useOnVisibilityStateChange';
 import { IntervalMultiplierType, ReviewModes } from '~/models/session';
 
-interface handlePracticeProps {
+export interface handlePracticeProps {
   refUid: string;
   grade: number;
   reviewMode: ReviewModes;
@@ -28,27 +28,14 @@ const App = () => {
   const { tagsListString, dataPageTitle, dailyLimit, rtlEnabled } = useSettings();
   const { selectedTag, setSelectedTag, tagsList } = useTags({ tagsListString });
 
-  const {
-    data: { lastCompletedDate },
-    saveCacheData,
-    fetchCacheData,
-    deleteCacheDataKey,
-  } = useCachedData({ dataPageTitle, selectedTag });
+  const { fetchCacheData } = useCachedData({ dataPageTitle, selectedTag });
 
-  const {
-    practiceCardsUids,
-    practiceData,
-    displayCardCounts,
-    fetchPracticeData,
-    completedTodayCount,
-    remainingDueCardsCount,
-  } = usePracticeData({
+  const { practiceData, today, fetchPracticeData } = usePracticeData({
     tagsList,
     selectedTag,
     dataPageTitle,
     isCramming,
     dailyLimit,
-    lastCompletedDate,
   });
 
   const handlePracticeClick = async ({
@@ -64,9 +51,11 @@ const App = () => {
     }
 
     const cardData = practiceData[refUid];
+    const latestSession = cardData[cardData.length - 1];
+
     try {
       await practice({
-        ...cardData,
+        ...latestSession,
         grade,
         refUid,
         dataPageTitle,
@@ -76,21 +65,22 @@ const App = () => {
         intervalMultiplier,
         intervalMultiplierType,
       });
+
+      refreshData();
     } catch (error) {
       console.error('Error Saving Practice Data', error);
     }
   };
 
-  /**
-   * Warning: Calling this function while the overlay is open resets the state
-   * of the current practice session. Causing you to lose your progress.
-   */
   const refreshData = () => {
     fetchCacheData();
     fetchPracticeData();
   };
 
-  useOnVisibilityStateChange(refreshData);
+  useOnVisibilityStateChange(() => {
+    if (showPracticeOverlay) return;
+    refreshData();
+  });
 
   const onShowPracticeOverlay = () => {
     refreshData();
@@ -100,6 +90,7 @@ const App = () => {
 
   const onClosePracticeOverlayCallback = () => {
     setShowPracticeOverlay(false);
+    setIsCramming(false);
     refreshData();
   };
 
@@ -108,8 +99,7 @@ const App = () => {
   };
 
   const handleReviewMoreClick = async () => {
-    await deleteCacheDataKey('lastCompletedDate');
-
+    // @TODOZ: Handle this case.
     refreshData();
   };
 
@@ -139,15 +129,10 @@ const App = () => {
   return (
     <Blueprint.HotkeysProvider>
       <>
-        <SidePandelWidget
-          onClickCallback={onShowPracticeOverlay}
-          displayCardCounts={displayCardCounts}
-        />
+        <SidePannelWidget onClickCallback={onShowPracticeOverlay} today={today} />
         {showPracticeOverlay && (
           <PracticeOverlay
-            dataPageTitle={dataPageTitle}
             isOpen={true}
-            practiceCardUids={practiceCardsUids}
             practiceData={practiceData}
             handlePracticeClick={handlePracticeClick}
             onCloseCallback={onClosePracticeOverlayCallback}
@@ -157,13 +142,8 @@ const App = () => {
             selectedTag={selectedTag}
             isCramming={isCramming}
             setIsCramming={setIsCramming}
-            saveCacheData={saveCacheData}
-            lastCompletedDate={lastCompletedDate}
-            completedTodayCount={completedTodayCount}
-            dailyLimit={dailyLimit}
-            remainingDueCardsCount={remainingDueCardsCount}
             rtlEnabled={rtlEnabled}
-            displayCardCounts={displayCardCounts}
+            today={today}
           />
         )}
       </>

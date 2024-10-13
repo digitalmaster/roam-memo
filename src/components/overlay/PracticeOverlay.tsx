@@ -14,82 +14,109 @@ import mediaQueries from '~/utils/mediaQueries';
 import CardBlock from '~/components/overlay/CardBlock';
 import Footer from '~/components/overlay/Footer';
 import ButtonTags from '~/components/ButtonTags';
-import { IntervalMultiplierType, ReviewModes } from '~/models/session';
+import { CompleteRecords, IntervalMultiplierType, ReviewModes } from '~/models/session';
 import useCurrentCardData from '~/hooks/useCurrentCardData';
 import { generateNewSession } from '~/queries';
+import { CompletionStatus, Today } from '~/models/practice';
+import { handlePracticeProps } from '~/app';
+import { useSafeContext } from '~/hooks/useSafeContext';
 
 interface MainContextProps {
-  reviewMode?: ReviewModes;
-  setReviewMode?: React.Dispatch<React.SetStateAction<ReviewModes>>;
-  intervalMultiplier?: number;
-  setIntervalMultiplier?: (multiplier: number) => void;
-  intervalMultiplierType?: IntervalMultiplierType;
-  setIntervalMultiplierType?: (type: IntervalMultiplierType) => void;
-  onPracticeClick?: (props: any) => void;
+  reviewMode: ReviewModes | undefined;
+  setReviewModeOverride: React.Dispatch<React.SetStateAction<ReviewModes | undefined>>;
+  intervalMultiplier: number;
+  setIntervalMultiplier: (multiplier: number) => void;
+  intervalMultiplierType: IntervalMultiplierType;
+  setIntervalMultiplierType: (type: IntervalMultiplierType) => void;
+  onPracticeClick: (props: any) => void;
+  today: Today;
+  selectedTag: string;
+  currentIndex: number;
 }
-export const MainContext = React.createContext<MainContextProps>({});
+
+export const MainContext = React.createContext<MainContextProps>({} as MainContextProps);
+
+interface Props {
+  isOpen: boolean;
+  tagsList: string[];
+  selectedTag: string;
+  onCloseCallback: () => void;
+  practiceData: CompleteRecords;
+  today: Today;
+  handlePracticeClick: (props: handlePracticeProps) => void;
+  handleMemoTagChange: (tag: string) => void;
+  handleReviewMoreClick: () => void;
+  isCramming: boolean;
+  setIsCramming: (isCramming: boolean) => void;
+  rtlEnabled: boolean;
+}
 
 const PracticeOverlay = ({
-  dataPageTitle,
   isOpen,
   tagsList,
   selectedTag,
   onCloseCallback,
-  practiceCardUids,
   practiceData,
-  displayCardCounts,
+  today,
   handlePracticeClick,
   handleMemoTagChange,
   handleReviewMoreClick,
   isCramming,
   setIsCramming,
-  saveCacheData,
-  lastCompletedDate,
-  dailyLimit,
-  completedTodayCount,
-  remainingDueCardsCount,
   rtlEnabled,
-}) => {
+}: Props) => {
+  const todaySelectedTag = today.tags[selectedTag];
+  const newCardsUids = todaySelectedTag.newUids;
+  const dueCardsUids = todaySelectedTag.dueUids;
+  // Always practice due cards first
+  // @MAYBE: Make this order configurable?
+  const practiceCardUids = [...dueCardsUids, ...newCardsUids];
   const [currentIndex, setCurrentIndex] = React.useState(0);
-  const totalCardsCount = practiceCardUids.length;
-  const hasCards = totalCardsCount > 0;
-  const isDone = currentIndex > practiceCardUids.length - 1;
-  const isLastCompleteDateToday = dateUtils.isSameDay(lastCompletedDate, new Date());
+
   const isFirst = currentIndex === 0;
-  const reviewCountReset = completedTodayCount && !lastCompletedDate;
+  const completedTodayCount = todaySelectedTag.completed;
 
-  const dailyLimitDelta =
-    dailyLimit && completedTodayCount && !isDone && !reviewCountReset ? completedTodayCount : 0;
-
-  const currentCardRefUid = practiceCardUids[currentIndex];
-  const { currentCardData, reviewMode, setReviewMode } = useCurrentCardData({
-    practiceData,
-    dataPageTitle,
+  const currentCardRefUid = practiceCardUids[currentIndex] as string | undefined;
+  const sessions = React.useMemo(
+    () => (currentCardRefUid ? practiceData[currentCardRefUid] : []),
+    [currentCardRefUid, practiceData]
+  );
+  const { currentCardData, reviewMode, setReviewModeOverride } = useCurrentCardData({
     currentCardRefUid,
+    sessions,
   });
+
+  const totalCardsCount = todaySelectedTag.new + todaySelectedTag.due;
+  const hasCards = totalCardsCount > 0;
+  const isDone = todaySelectedTag.status === CompletionStatus.Finished || !currentCardData;
 
   const newFixedSessionDefaults = React.useMemo(
     () => generateNewSession({ reviewMode: ReviewModes.FixedInterval }),
     []
   );
   const [intervalMultiplier, setIntervalMultiplier] = React.useState<number>(
-    currentCardData?.intervalMultiplier || newFixedSessionDefaults.intervalMultiplier
+    currentCardData?.intervalMultiplier || (newFixedSessionDefaults.intervalMultiplier as number)
   );
   const [intervalMultiplierType, setIntervalMultiplierType] =
     React.useState<IntervalMultiplierType>(
-      currentCardData?.intervalMultiplierType || newFixedSessionDefaults.intervalMultiplierType
+      currentCardData?.intervalMultiplierType ||
+        (newFixedSessionDefaults.intervalMultiplierType as IntervalMultiplierType)
     );
 
   // When card changes, update multiplier state
   React.useEffect(() => {
+    if (!currentCardData) return;
+
     if (currentCardData?.reviewMode === ReviewModes.FixedInterval) {
       // If card has multiplier, use that
-      setIntervalMultiplier(currentCardData?.intervalMultiplier);
-      setIntervalMultiplierType(currentCardData?.intervalMultiplierType);
+      setIntervalMultiplier(currentCardData.intervalMultiplier as number);
+      setIntervalMultiplierType(currentCardData.intervalMultiplierType as IntervalMultiplierType);
     } else {
       // Otherwise, just reset to default
-      setIntervalMultiplier(newFixedSessionDefaults.intervalMultiplier);
-      setIntervalMultiplierType(newFixedSessionDefaults.intervalMultiplierType);
+      setIntervalMultiplier(newFixedSessionDefaults.intervalMultiplier as number);
+      setIntervalMultiplierType(
+        newFixedSessionDefaults.intervalMultiplierType as IntervalMultiplierType
+      );
     }
   }, [currentCardData, newFixedSessionDefaults]);
 
@@ -113,17 +140,6 @@ const PracticeOverlay = ({
     }
   }, [hasBlockChildren, hasCloze, currentIndex, tagsList]);
 
-  // On show "done" screen
-  React.useEffect(() => {
-    if (isDone) {
-      if (isCramming) {
-        setIsCramming(false);
-      } else if (!isLastCompleteDateToday) {
-        saveCacheData({ lastCompletedDate: new Date() });
-      }
-    }
-  }, [isDone]);
-
   const onTagChange = async (tag) => {
     setCurrentIndex(0);
     handleMemoTagChange(tag);
@@ -137,6 +153,11 @@ const PracticeOverlay = ({
     }
   };
 
+  // When sessions are updated, reset current index
+  React.useEffect(() => {
+    setCurrentIndex(0);
+  }, [practiceData]);
+
   const onPracticeClick = React.useCallback(
     (props) => {
       if (isDone) return;
@@ -145,12 +166,12 @@ const PracticeOverlay = ({
       setCurrentIndex(currentIndex + 1);
     },
     [
-      currentIndex,
       handlePracticeClick,
       isDone,
       reviewMode,
       intervalMultiplier,
       intervalMultiplierType,
+      currentIndex,
     ]
   );
 
@@ -204,12 +225,15 @@ const PracticeOverlay = ({
     <MainContext.Provider
       value={{
         reviewMode,
-        setReviewMode,
+        setReviewModeOverride,
         intervalMultiplier,
         setIntervalMultiplier,
         intervalMultiplierType,
         setIntervalMultiplierType,
         onPracticeClick,
+        today,
+        selectedTag,
+        currentIndex,
       }}
     >
       {/* @ts-ignore */}
@@ -222,9 +246,6 @@ const PracticeOverlay = ({
         <Header
           className="bp3-dialog-header outline-none focus:outline-none focus-visible:outline-none"
           tagsList={tagsList}
-          selectedTag={selectedTag}
-          currentIndex={currentIndex}
-          totalCardsCount={totalCardsCount}
           onCloseCallback={onCloseCallback}
           onTagChange={onTagChange}
           status={status}
@@ -233,8 +254,6 @@ const PracticeOverlay = ({
           showBreadcrumbs={showBreadcrumbs}
           setShowBreadcrumbs={setShowBreadcrumbs}
           isCramming={isCramming}
-          dailyLimitDelta={dailyLimitDelta}
-          displayCardCounts={displayCardCounts}
         />
 
         <DialogBody
@@ -250,16 +269,27 @@ const PracticeOverlay = ({
               showBreadcrumbs={showBreadcrumbs}
             />
           ) : (
-            <div className="flex items-center flex-col">
+            <div data-testid="practice-overlay-done-state" className="flex items-center flex-col">
               <Lottie options={lottieAnimationOption} style={lottieStyle} />
-              {remainingDueCardsCount ? (
+              {/* @TODOZ: Add support for review more*/}
+              {/* eslint-disable-next-line no-constant-condition */}
+              {false ? (
                 <div>
-                  Reviewed {completedTodayCount}{' '}
+                  Reviewed {todaySelectedTag.completed}{' '}
                   {stringUtils.pluralize(completedTodayCount, 'card', 'cards')} today.{' '}
                   <a onClick={handleReviewMoreClick}>Review more</a>
                 </div>
               ) : (
-                <div>No cards left to review!</div>
+                <div>
+                  You&apos;re all caught up! 🌟{' '}
+                  {todaySelectedTag.completed > 0
+                    ? `Reviewed ${todaySelectedTag.completed} ${stringUtils.pluralize(
+                        todaySelectedTag.completed,
+                        'card',
+                        'cards'
+                      )} today.`
+                    : ''}
+                </div>
               )}
             </div>
           )}
@@ -321,7 +351,7 @@ const HeaderWrapper = styled.div`
   }
 `;
 
-const TagSelector = ({ tagsList, selectedTag, onTagChange, displayCardCounts }) => {
+const TagSelector = ({ tagsList, selectedTag, onTagChange }) => {
   return (
     // @ts-ignore
     <BlueprintSelect.Select
@@ -336,7 +366,6 @@ const TagSelector = ({ tagsList, selectedTag, onTagChange, displayCardCounts }) 
             active={modifiers.active}
             key={tag}
             onClick={handleClick}
-            displayCardCounts={displayCardCounts}
           />
         );
       }}
@@ -345,7 +374,12 @@ const TagSelector = ({ tagsList, selectedTag, onTagChange, displayCardCounts }) 
       }}
       popoverProps={{ minimal: true }}
     >
-      <Blueprint.Button text={selectedTag} rightIcon="caret-down" minimal />
+      <Blueprint.Button
+        text={selectedTag}
+        rightIcon="caret-down"
+        minimal
+        data-testid="tag-selector-cta"
+      />
     </BlueprintSelect.Select>
   );
 };
@@ -372,20 +406,34 @@ const Tag = styled(Blueprint.Tag)`
   }
 `;
 
-const TagSelectorItem = ({ text, onClick, active, tagsList, displayCardCounts }) => {
-  const dueCount = displayCardCounts[text].due;
-  const newCount = displayCardCounts[text].new;
+const TagSelectorItem = ({ text, onClick, active, tagsList }) => {
+  const { today } = React.useContext(MainContext);
+  const dueCount = today.tags[text].due;
+  const newCount = today.tags[text].new;
+
   const index = tagsList.indexOf(text);
   const placement = index === tagsList.length - 1 ? 'bottom' : 'top';
 
   return (
-    <TagSelectorItemWrapper onClick={onClick} active={active} key={text} tabIndex={-1}>
+    <TagSelectorItemWrapper
+      onClick={onClick}
+      active={active}
+      key={text}
+      tabIndex={-1}
+      data-testid="tag-selector-item"
+    >
       {text}
       <div className="ml-2">
         {dueCount > 0 && (
           // @ts-ignore
           <Tooltip content="Due" placement={placement}>
-            <Tag active minimal intent="primary" className="text-center">
+            <Tag
+              active
+              minimal
+              intent="primary"
+              className="text-center"
+              data-testid="tag-selector-due"
+            >
               {dueCount}
             </Tag>
           </Tooltip>
@@ -393,7 +441,13 @@ const TagSelectorItem = ({ text, onClick, active, tagsList, displayCardCounts })
         {newCount > 0 && (
           // @ts-ignore
           <Tooltip content="New" placement={placement}>
-            <Tag active minimal intent="success" className="text-center ml-2">
+            <Tag
+              active
+              minimal
+              intent="success"
+              className="text-center ml-2"
+              data-testid="tag-selector-new"
+            >
               {newCount}
             </Tag>
           </Tooltip>
@@ -458,10 +512,7 @@ const BreadcrumbTooltipContent = ({ showBreadcrumbs }) => {
 
 const Header = ({
   tagsList,
-  selectedTag,
-  currentIndex,
   onCloseCallback,
-  totalCardsCount,
   onTagChange,
   className,
   status,
@@ -470,20 +521,21 @@ const Header = ({
   showBreadcrumbs,
   setShowBreadcrumbs,
   isCramming,
-  dailyLimitDelta,
-  displayCardCounts,
 }) => {
+  const { selectedTag, today, currentIndex } = useSafeContext(MainContext);
+  const todaySelectedTag = today.tags[selectedTag];
+  const completedTodayCount = todaySelectedTag.completed;
+  const remainingTodayCount = todaySelectedTag.due + todaySelectedTag.new;
+
+  const currentIndexDelta = isCramming ? 0 : completedTodayCount;
+  const currentDisplayCount = currentIndexDelta + currentIndex + 1;
+
   return (
     <HeaderWrapper className={className} tabIndex={0}>
       <div className="flex items-center">
         <BoxIcon icon="box" size={14} />
         <div tabIndex={-1}>
-          <TagSelector
-            tagsList={tagsList}
-            selectedTag={selectedTag}
-            onTagChange={onTagChange}
-            displayCardCounts={displayCardCounts}
-          />
+          <TagSelector tagsList={tagsList} selectedTag={selectedTag} onTagChange={onTagChange} />
         </div>
       </div>
       <div className="flex items-center justify-end">
@@ -501,17 +553,20 @@ const Header = ({
             </Tooltip>
           </div>
         )}
-        <StatusBadge status={status} nextDueDate={nextDueDate} isCramming={isCramming} />
+        <span data-testid="status-badge">
+          <StatusBadge
+            status={status}
+            nextDueDate={nextDueDate}
+            isCramming={isCramming}
+            data-testid="status-badge"
+          />
+        </span>
         <span className="text-sm mx-2 font-medium">
-          <span>
-            {totalCardsCount === 0
-              ? 0
-              : isDone
-              ? currentIndex + dailyLimitDelta
-              : currentIndex + 1 + dailyLimitDelta}
-          </span>
+          <span data-testid="display-count-current">{isDone ? 0 : currentDisplayCount}</span>
           <span className="opacity-50 mx-1">/</span>
-          <span className="opacity-50">{totalCardsCount + dailyLimitDelta}</span>
+          <span className="opacity-50" data-testid="display-count-total">
+            {isDone ? 0 : remainingTodayCount}
+          </span>
         </span>
         <button
           aria-label="Close"
