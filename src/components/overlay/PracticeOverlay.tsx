@@ -127,7 +127,7 @@ const PracticeOverlay = ({
   const isDueToday = dateUtils.daysBetween(nextDueDate, new Date()) === 0;
   const status = isNew ? 'new' : isDueToday ? 'dueToday' : hasNextDueDate ? 'pastDue' : null;
 
-  const { data: blockInfo } = useBlockInfo({ refUid: currentCardRefUid });
+  const { blockInfo } = useBlockInfo({ refUid: currentCardRefUid });
   const hasBlockChildren = !!blockInfo.children && !!blockInfo.children.length;
   const [showAnswers, setShowAnswers] = React.useState(false);
   const [hasCloze, setHasCloze] = React.useState(true);
