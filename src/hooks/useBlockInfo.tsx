@@ -10,14 +10,14 @@ const useBlockInfo = ({ refUid }) => {
     const fetch = async () => {
       const blockInfo = await fetchBlockInfo(refUid);
 
-      setBlockInfo(blockInfo);
+      setBlockInfo({ ...blockInfo, refUid });
     };
 
     fetch();
   }, [refUid]);
 
   return {
-    data: blockInfo,
+    blockInfo,
   };
 };
 

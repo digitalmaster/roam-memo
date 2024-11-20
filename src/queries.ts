@@ -658,6 +658,8 @@ export interface BlockInfo {
   string: string;
   children: any[];
   breadcrumbs: Breadcrumbs[];
+
+  refUid: string;
 }
 export interface Breadcrumbs {
   [index: number]: { uid: string; title: string };

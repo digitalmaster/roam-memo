@@ -65,8 +65,6 @@ const App = () => {
         intervalMultiplier,
         intervalMultiplierType,
       });
-
-      refreshData();
     } catch (error) {
       console.error('Error Saving Practice Data', error);
     }
