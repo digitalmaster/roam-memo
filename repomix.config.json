@@ -1,0 +1,20 @@
+{
+  "output": {
+    "filePath": "project-output.txt",
+    "style": "plain",
+    "removeComments": false,
+    "removeEmptyLines": false,
+    "topFilesLength": 5,
+    "showLineNumbers": false,
+    "copyToClipboard": false
+  },
+  "include": [],
+  "ignore": {
+    "useGitignore": true,
+    "useDefaultPatterns": true,
+    "customPatterns": ["src/lotties"]
+  },
+  "security": {
+    "enableSecurityCheck": true
+  }
+}
