@@ -49,6 +49,7 @@ interface Props {
   isCramming: boolean;
   setIsCramming: (isCramming: boolean) => void;
   rtlEnabled: boolean;
+  shuffleCards: boolean;
 }
 
 const PracticeOverlay = ({
@@ -64,13 +65,27 @@ const PracticeOverlay = ({
   isCramming,
   setIsCramming,
   rtlEnabled,
+  shuffleCards,
 }: Props) => {
   const todaySelectedTag = today.tags[selectedTag];
   const newCardsUids = todaySelectedTag.newUids;
   const dueCardsUids = todaySelectedTag.dueUids;
-  // Always practice due cards first
-  // @MAYBE: Make this order configurable?
-  const practiceCardUids = [...dueCardsUids, ...newCardsUids];
+
+  /**
+   * Always practice due cards first, followed by new cards. The rationale is we want to prioritize practicing the cards
+   * that are most likely to be forgotten.
+   * If shuffleCards is true, we shuffle the cards in place (maintaining the order of due/new cards).
+   */
+  const practiceCardUids = React.useMemo(() => {
+    const dueCardsShuffled = shuffleCards
+      ? [...dueCardsUids].sort(() => Math.random() - 0.5)
+      : dueCardsUids;
+    const newCardsShuffled = shuffleCards
+      ? [...newCardsUids].sort(() => Math.random() - 0.5)
+      : newCardsUids;
+    return [...dueCardsShuffled, ...newCardsShuffled];
+  }, [dueCardsUids, newCardsUids, shuffleCards]);
+
   const [currentIndex, setCurrentIndex] = React.useState(0);
 
   const isFirst = currentIndex === 0;

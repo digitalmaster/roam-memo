@@ -76,6 +76,17 @@ const settingsPanelConfig = ({ settings, setSettings }) => {
           },
         },
       },
+      {
+        id: 'shuffleCards',
+        name: 'Shuffle Cards',
+        description: 'Randomly shuffle the order of new and due cards during review.',
+        action: {
+          type: 'switch',
+          onChange: (e) => {
+            processChange({ key: 'shuffleCards', value: e.target.checked });
+          },
+        },
+      },
     ],
   };
 };
