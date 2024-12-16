@@ -1,10 +1,12 @@
 import React from 'react';
 import settingsPanelConfig from '~/settingsPanelConfig';
+
 export type Settings = {
   tagsListString: string;
   dataPageTitle: string;
   dailyLimit: number;
   rtlEnabled: boolean;
+  shuffleCards: boolean;
 };
 
 export const defaultSettings: Settings = {
@@ -12,6 +14,7 @@ export const defaultSettings: Settings = {
   dataPageTitle: 'roam/memo',
   dailyLimit: 0, // 0 = no limit,
   rtlEnabled: false,
+  shuffleCards: true,
 };
 
 // @TODO: Refactor/Hoist this so we can call useSettings in multiple places
@@ -30,6 +33,16 @@ const useSettings = () => {
   }, [settings]);
 
   React.useEffect(() => {
+    // Set default values
+    Object.entries(settings).forEach(([key, value]) => {
+      if (!settings[key]) {
+        setSettings((currentSettings) => ({
+          ...currentSettings,
+          [key]: value,
+        }));
+      }
+    });
+
     // Init config panel
     window.roamMemo.extensionAPI.settings.panel.create(
       settingsPanelConfig({ settings, setSettings })

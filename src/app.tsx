@@ -25,7 +25,7 @@ const App = () => {
   const [showPracticeOverlay, setShowPracticeOverlay] = React.useState(false);
   const [isCramming, setIsCramming] = React.useState(false);
 
-  const { tagsListString, dataPageTitle, dailyLimit, rtlEnabled } = useSettings();
+  const { tagsListString, dataPageTitle, dailyLimit, rtlEnabled, shuffleCards } = useSettings();
   const { selectedTag, setSelectedTag, tagsList } = useTags({ tagsListString });
 
   const { fetchCacheData } = useCachedData({ dataPageTitle, selectedTag });
@@ -141,6 +141,7 @@ const App = () => {
             isCramming={isCramming}
             setIsCramming={setIsCramming}
             rtlEnabled={rtlEnabled}
+            shuffleCards={shuffleCards}
             today={today}
           />
         )}
