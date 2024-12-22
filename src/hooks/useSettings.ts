@@ -23,6 +23,7 @@ export const defaultSettings: Settings = {
 const useSettings = () => {
   const [settings, setSettings] = React.useState(defaultSettings);
 
+  // If tagsListString is empty, set it to the default
   React.useEffect(() => {
     if (!settings.tagsListString.trim()) {
       setSettings((currentSettings) => ({
@@ -32,18 +33,8 @@ const useSettings = () => {
     }
   }, [settings]);
 
+  // Create settings panel
   React.useEffect(() => {
-    // Set default values
-    Object.entries(settings).forEach(([key, value]) => {
-      if (!settings[key]) {
-        setSettings((currentSettings) => ({
-          ...currentSettings,
-          [key]: value,
-        }));
-      }
-    });
-
-    // Init config panel
     window.roamMemo.extensionAPI.settings.panel.create(
       settingsPanelConfig({ settings, setSettings })
     );
@@ -52,6 +43,12 @@ const useSettings = () => {
 
   React.useEffect(() => {
     const allSettings = window.roamMemo.extensionAPI.settings.getAll() || {};
+    // Manually set shuffleCards to true if it doesn't exist. Reason: Can't
+    // figure out how to make the switch UI default to on so let's just set it
+    // to true here unless toggled off
+    if (!('shuffleCards' in allSettings)) {
+      window.roamMemo.extensionAPI.settings.set('shuffleCards', defaultSettings.shuffleCards);
+    }
 
     // For some reason the getAll() method casts numbers to strings, so here we
     // map keys in this list back to numbers
@@ -59,10 +56,7 @@ const useSettings = () => {
 
     const filteredSettings = Object.keys(allSettings).reduce((acc, key) => {
       const value = allSettings[key];
-      // Filterout out any settings that are falsey
-      if (value) {
-        acc[key] = numbers.includes(key) ? Number(value) : value;
-      }
+      acc[key] = numbers.includes(key) ? Number(value) : value;
       return acc;
     }, {});
 

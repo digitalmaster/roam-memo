@@ -11,6 +11,7 @@ const settingsPanelConfig = ({ settings, setSettings }) => {
   };
 
   const processChange = asyncUtils.debounce((e) => syncFn(e));
+
   return {
     tabTitle: 'Memo',
     settings: [
