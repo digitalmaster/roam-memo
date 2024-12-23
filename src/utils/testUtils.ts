@@ -14,7 +14,7 @@ import {
 } from '~/queries';
 import * as dateUtils from '~/utils/date';
 import * as testUtils from '~/utils/testUtils';
-import * as queries from '~/queries';
+import * as queries from '~/queries/save';
 
 export const mockQueryResult = ({ queryMocks, settingsMock, tagsList }) => {
   const mockRoamAlphaAPI = generateMockRoamAlphaAPI({ queryMocks, tagsList });
