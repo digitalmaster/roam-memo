@@ -403,12 +403,12 @@ const TagSelectorItemWrapper = styled.div<{ active: boolean }>`
   display: flex;
   justify-content: space-between;
   padding: 4px 6px;
-  background-color: ${({ active }) => (active ? '#e8edf4' : 'white')};
+  background-color: ${({ active }) => (active ? 'rgba(0, 0, 0, 0.05)' : 'transparent')};
   user-select: none;
 
   &:hover {
     cursor: pointer;
-    background-color: ${({ active }) => (active ? '#e8edf4' : '#f6f9fd')};
+    background-color: ${({ active }) => (active ? 'rgba(0, 0, 0, 0.05)' : 'rgba(0, 0, 0, 0.03)')};
   }
 `;
 
