@@ -602,9 +602,7 @@ const FooterActionsWrapper = styled.div`
 
 const SetIntervalToggleWrapper = styled.div``;
 
-const ControlButtonWrapper = styled(Blueprint.Button)`
-  background: ${(props) => (props.active ? 'inherit' : 'white !important')};
-`;
+const ControlButtonWrapper = styled(Blueprint.Button)``;
 
 const ControlButton = ({ tooltipText, wrapperClassName = '', ...props }) => {
   return (
