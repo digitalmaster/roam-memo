@@ -23,7 +23,8 @@ module.exports = function (Handlebars) {
           const excludeList = exclude.split('|');
           for (const e of excludeList) {
             const pattern = new RegExp(e, 'm');
-            if (pattern.test(commit.message)) {
+            // Test against subject instead of full message for exclusions
+            if (pattern.test(commit.subject)) {
               return false;
             }
           }
