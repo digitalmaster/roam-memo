@@ -92,10 +92,11 @@ const PracticeOverlay = ({
   const completedTodayCount = todaySelectedTag.completed;
 
   const currentCardRefUid = practiceCardUids[currentIndex] as string | undefined;
-  const sessions = React.useMemo(
-    () => (currentCardRefUid ? practiceData[currentCardRefUid] : []),
-    [currentCardRefUid, practiceData]
-  );
+  const sessions = React.useMemo(() => {
+    const sessions = currentCardRefUid ? practiceData[currentCardRefUid] : [];
+    if (!sessions) return [];
+    return sessions;
+  }, [currentCardRefUid, practiceData]);
   const { currentCardData, reviewMode, setReviewModeOverride } = useCurrentCardData({
     currentCardRefUid,
     sessions,
