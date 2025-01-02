@@ -56,6 +56,39 @@ describe('PracticeOverlay', () => {
     expect(displayCountTotal).toHaveTextContent('1');
   });
 
+  it("Renders correctly when 1 new card, even when data page doesn't exist yet", async () => {
+    const mockBuilder = new testUtils.MockDataBuilder();
+
+    mockBuilder.withCard({ uid: 'id_new_1' });
+    mockBuilder.mockQueryResultsWithoutDataPage();
+
+    await act(async () => {
+      render(<App />);
+    });
+
+    // Renders new tag count in sidepanel
+    const newTag = screen.queryByTestId('new-tag');
+    expect(newTag).toHaveTextContent('1');
+
+    await act(async () => {
+      testUtils.actions.launchModal();
+    });
+
+    // Renders "New" status badge
+    const statusBadge = screen.queryByTestId('status-badge');
+    expect(statusBadge).toBeInTheDocument();
+    expect(statusBadge).toHaveTextContent('New');
+
+    // Renders display count 1/1
+    const displayCountCurrent = screen.queryByTestId('display-count-current');
+    expect(displayCountCurrent).toBeInTheDocument();
+    expect(displayCountCurrent).toHaveTextContent('1');
+
+    const displayCountTotal = screen.queryByTestId('display-count-total');
+    expect(displayCountTotal).toBeInTheDocument();
+    expect(displayCountTotal).toHaveTextContent('1');
+  });
+
   it('Entire Flow', async () => {
     const mockBuilder = new testUtils.MockDataBuilder();
 

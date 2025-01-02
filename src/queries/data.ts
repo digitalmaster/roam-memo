@@ -82,7 +82,8 @@ export const dataPageReferencesIdsQuery = `[
 const getPageReferenceIds = async (tag, dataPageTitle): Promise<string[]> => {
   // First query the data page so that we can exclude those references from the results
   const dataPageResult = window.roamAlphaAPI.q(getDataPageQuery(dataPageTitle));
-  const dataPageUid = dataPageResult[0][0];
+
+  const dataPageUid = dataPageResult.length ? dataPageResult[0][0] : '';
 
   const results = window.roamAlphaAPI.q(dataPageReferencesIdsQuery, tag, dataPageUid);
 

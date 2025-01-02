@@ -45,6 +45,7 @@ const mockOtherDependencies = ({ settingsMock }) => {
 
 export const dataPageTitle = 'roam/memo';
 const dataPageUid = 1234;
+const undefinedDataPageUid = '';
 const mockBlockInfo = {
   string: 'mock block string',
   children: [
@@ -60,7 +61,13 @@ interface MockQuery {
   args?: any[];
   shouldReturnPromise?: boolean;
 }
-export const generateMockRoamAlphaAPI = ({ queryMocks, tagsList }) => ({
+export const generateMockRoamAlphaAPI = ({
+  queryMocks,
+  tagsList,
+}: {
+  queryMocks: MockQuery[];
+  tagsList: string[];
+}) => ({
   q: jest.fn((q, ...queryArgs) => {
     const defaultMocks: MockQuery[] = [
       {
@@ -182,6 +189,28 @@ export class MockDataBuilder {
         query: getPluginPageBlockDataQuery,
         result: this.buildSessionQueryResult(),
         args: [dataPageTitle, 'data'],
+      });
+    }
+
+    testUtils.mockQueryResult({ queryMocks, settingsMock, tagsList: this.tags });
+  }
+
+  mockQueryResultsWithoutDataPage() {
+    const settingsMock = this.buildSettingsResult();
+    const queryMocks: MockQuery[] = [];
+
+    queryMocks.push({
+      query: getDataPageQuery('roam/memo'),
+      result: [],
+      shouldReturnPromise: false,
+    });
+
+    for (const tag of this.tags) {
+      queryMocks.push({
+        query: dataPageReferencesIdsQuery,
+        result: this.buildPageReferenceIdsQueryResult(tag),
+        args: [tag, undefinedDataPageUid],
+        shouldReturnPromise: false,
       });
     }
 
