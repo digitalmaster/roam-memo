@@ -263,4 +263,45 @@ describe('PracticeOverlay', () => {
     const statusBadge = screen.queryByTestId('status-badge');
     expect(statusBadge).toHaveTextContent('New');
   });
+
+  it('Grading works correctly when switching review modes starting with fixed', async () => {
+    const mockBuilder = new testUtils.MockDataBuilder();
+
+    // Add a due card today
+    const dueCard1 = 'id_due_1';
+    mockBuilder.withCard({ uid: dueCard1 }).withSession(dueCard1, {
+      reviewMode: ReviewModes.FixedInterval,
+      grade: 1,
+      dateCreated: dateUtils.subtractDays(new Date(), 1),
+      nextDueDate: new Date(),
+    });
+
+    mockBuilder.mockQueryResults();
+    await act(async () => {
+      render(<App />);
+    });
+
+    await act(async () => {
+      testUtils.actions.launchModal();
+    });
+
+    await act(async () => {
+      testUtils.actions.clickControlButton('Show Answer');
+    });
+
+    // Switch to spaced interval mode
+    await act(async () => {
+      testUtils.actions.clickSwitchReviewModeButton();
+    });
+
+    // Grade the card
+    const result = await testUtils.grade('Perfect', mockBuilder);
+    expect(result).toMatchObject({
+      reviewMode: ReviewModes.DefaultSpacedInterval,
+      dataPageTitle: testUtils.dataPageTitle,
+      dateCreated: new Date(),
+      refUid: 'id_due_1',
+      nextDueDate: dateUtils.addDays(new Date(), 1),
+    });
+  });
 });

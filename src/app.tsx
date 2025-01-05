@@ -38,32 +38,19 @@ const App = () => {
     dailyLimit,
   });
 
-  const handlePracticeClick = async ({
-    refUid,
-    grade,
-    reviewMode,
-    intervalMultiplier,
-    intervalMultiplierType,
-  }: handlePracticeProps) => {
+  const handlePracticeClick = async ({ refUid, ...cardData }: handlePracticeProps) => {
     if (!refUid) {
       console.error('HandlePracticeFn Error: No refUid provided');
       return;
     }
 
-    const cardData = practiceData[refUid];
-    const latestSession = cardData[cardData.length - 1];
-
     try {
       await practice({
-        ...latestSession,
-        grade,
-        refUid,
+        ...cardData,
         dataPageTitle,
         dateCreated: new Date(),
+        refUid,
         isCramming,
-        reviewMode,
-        intervalMultiplier,
-        intervalMultiplierType,
       });
     } catch (error) {
       console.error('Error Saving Practice Data', error);

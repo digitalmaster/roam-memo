@@ -177,17 +177,22 @@ const PracticeOverlay = ({
   const onPracticeClick = React.useCallback(
     (props) => {
       if (isDone) return;
-      handlePracticeClick({ ...props, reviewMode, intervalMultiplier, intervalMultiplierType });
+      handlePracticeClick({
+        ...props,
+        ...currentCardData,
+        intervalMultiplier,
+        intervalMultiplierType,
+      });
       setShowAnswers(false);
       setCurrentIndex(currentIndex + 1);
     },
     [
       handlePracticeClick,
       isDone,
-      reviewMode,
+      currentIndex,
+      currentCardData,
       intervalMultiplier,
       intervalMultiplierType,
-      currentIndex,
     ]
   );
 
