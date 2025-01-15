@@ -96,6 +96,7 @@ describe('PracticeOverlay', () => {
     const dueCard1 = 'id_due_1';
     mockBuilder.withCard({ uid: dueCard1 }).withSession(dueCard1, {
       dateCreated: dateUtils.subtractDays(new Date(), 1),
+      grade: 5,
       nextDueDate: new Date(),
     });
 
@@ -121,14 +122,22 @@ describe('PracticeOverlay', () => {
       testUtils.actions.clickControlButton('Show Answer');
     });
 
-    // Grade the card
-    let result = await testUtils.grade('Perfect', mockBuilder);
-    expect(result).toMatchObject({
+    // Grade the due card
+    let result = await testUtils.grade('Good', mockBuilder);
+    expect(result.practiceInput).toMatchObject({
+      grade: 4,
+      reviewMode: ReviewModes.DefaultSpacedInterval,
+      interval: 0,
+      repetitions: 0,
+      isCramming: false,
+      refUid: 'id_due_1',
+    });
+    expect(result.updatedRecord).toMatchObject({
       reviewMode: ReviewModes.DefaultSpacedInterval,
       dataPageTitle: testUtils.dataPageTitle,
       dateCreated: new Date(),
-      eFactor: 2.6,
-      grade: 5,
+      eFactor: 2.5,
+      grade: 4,
       refUid: 'id_due_1',
       nextDueDate: dateUtils.addDays(new Date(), 1),
     });
@@ -141,7 +150,15 @@ describe('PracticeOverlay', () => {
       testUtils.actions.clickControlButton('Show Answer');
     });
     result = await testUtils.grade('Good', mockBuilder);
-    expect(result).toMatchObject({
+    expect(result.practiceInput).toMatchObject({
+      grade: 4,
+      reviewMode: ReviewModes.DefaultSpacedInterval,
+      interval: 0,
+      repetitions: 0,
+      isCramming: false,
+      refUid: 'id_new_1',
+    });
+    expect(result.updatedRecord).toMatchObject({
       reviewMode: ReviewModes.DefaultSpacedInterval,
       dataPageTitle: testUtils.dataPageTitle,
       dateCreated: new Date(),
@@ -249,7 +266,7 @@ describe('PracticeOverlay', () => {
 
     // Grade the card
     const result = await testUtils.grade('Next', mockBuilder);
-    expect(result).toMatchObject({
+    expect(result.updatedRecord).toMatchObject({
       reviewMode: ReviewModes.FixedInterval,
       dataPageTitle: testUtils.dataPageTitle,
       dateCreated: new Date(),
@@ -296,7 +313,7 @@ describe('PracticeOverlay', () => {
 
     // Grade the card
     const result = await testUtils.grade('Perfect', mockBuilder);
-    expect(result).toMatchObject({
+    expect(result.updatedRecord).toMatchObject({
       reviewMode: ReviewModes.DefaultSpacedInterval,
       dataPageTitle: testUtils.dataPageTitle,
       dateCreated: new Date(),

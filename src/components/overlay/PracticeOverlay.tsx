@@ -210,14 +210,16 @@ const PracticeOverlay = ({
   }, [practiceData]);
 
   const onPracticeClick = React.useCallback(
-    (props) => {
+    (gradeData) => {
       if (isDone) return;
-      handlePracticeClick({
-        ...props,
+      const practiceProps = {
         ...currentCardData,
+        ...gradeData,
         intervalMultiplier,
         intervalMultiplierType,
-      });
+      };
+
+      handlePracticeClick(practiceProps);
       setShowAnswers(false);
       setCurrentIndex(currentIndex + 1);
     },

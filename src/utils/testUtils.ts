@@ -15,6 +15,8 @@ import {
 import * as dateUtils from '~/utils/date';
 import * as testUtils from '~/utils/testUtils';
 import * as queries from '~/queries/save';
+import * as practice from '~/practice';
+import { PracticeProps } from '~/practice';
 
 export const mockQueryResult = ({ queryMocks, settingsMock, tagsList }) => {
   const mockRoamAlphaAPI = generateMockRoamAlphaAPI({ queryMocks, tagsList });
@@ -425,13 +427,16 @@ export const actions = {
 export const grade = async (gradeString: string, mockBuilder: MockDataBuilder) => {
   const promise = new Promise((resolve) => {
     const savePracticeDataSpy = jest.spyOn(queries, 'savePracticeData');
+    const practiceSpy = jest.spyOn(practice, 'default');
+    practiceSpy.mockClear(); // Reset calls so that if grade is called multiple times in the same test we always get the input from the last call
+
     savePracticeDataSpy.mockImplementation(async (updatedRecord) => {
       const { refUid, ...practiceData } = updatedRecord;
 
       // Manually save next sessions
       mockBuilder.withSession(refUid, practiceData);
       mockBuilder.mockQueryResults();
-      resolve(updatedRecord);
+      resolve({ updatedRecord, practiceInput: practiceSpy.mock.calls[0]?.[0] });
     });
   });
 
