@@ -16,7 +16,6 @@ import * as dateUtils from '~/utils/date';
 import * as testUtils from '~/utils/testUtils';
 import * as queries from '~/queries/save';
 import * as practice from '~/practice';
-import { PracticeProps } from '~/practice';
 
 export const mockQueryResult = ({ queryMocks, settingsMock, tagsList }) => {
   const mockRoamAlphaAPI = generateMockRoamAlphaAPI({ queryMocks, tagsList });
