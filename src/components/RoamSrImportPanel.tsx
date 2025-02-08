@@ -185,8 +185,10 @@ const TokenPage = ({ token, setToken, setShowImportPage, dataPageTitle }) => {
     setIsLoading(true);
     const dataPageUid = await queries.getOrCreatePage(dataPageTitle);
     const testBlockUid = window.roamAlphaAPI.util.generateUID();
+    const graphName = window.roamAlphaAPI.graph.name;
+
     const payload = {
-      graphName: 'jcb',
+      graphName,
       data: {
         action: 'batch-actions',
         actions: [

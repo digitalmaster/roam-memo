@@ -84,9 +84,10 @@ export const bulkSavePracticeData = async ({
     open: false,
     heading: 3,
   });
+  const graphName = window.roamAlphaAPI.graph.name;
 
   const payload = {
-    graphName: 'jcb',
+    graphName,
     data: {
       action: 'batch-actions',
       actions: [],
