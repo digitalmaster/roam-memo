@@ -23,10 +23,26 @@ const CardBlock = ({
   const [renderedBlockElm, setRenderedBlockElm] = React.useState(null);
   useCloze({ renderedBlockElm: renderedBlockElm, hasClozeCallback: setHasCloze });
 
+  // Store the current refUid in a ref to access it inside the debounced function
+  const refUidRef = React.useRef(refUid);
+
+  // Update the ref when refUid changes
   React.useEffect(() => {
-    const asyncFn = async () => {
+    refUidRef.current = refUid;
+  }, [refUid]);
+
+  // Create a ref to store the debounced function
+  const debouncedFnRef = React.useRef(null);
+
+  // Set up the debounced function only once when the component mounts
+  React.useEffect(() => {
+    // Define the function to be debounced
+    const renderBlock = async () => {
+      const currentRefUid = refUidRef.current;
+      if (!ref.current) return;
+
       await window.roamAlphaAPI.ui.components.unmountNode({ el: ref.current });
-      await window.roamAlphaAPI.ui.components.renderBlock({ uid: refUid, el: ref.current });
+      await window.roamAlphaAPI.ui.components.renderBlock({ uid: currentRefUid, el: ref.current });
 
       // Ensure block is not collapsed (so we can reveal children programatically)
       const roamBlockElm = ref.current.querySelector('.rm-block');
@@ -42,8 +58,22 @@ const CardBlock = ({
         domUtils.simulateMouseClick(expandControlBtn);
       }
     };
-    asyncFn();
-  }, [ref, refUid]);
+
+    // Create the debounced function only once
+    debouncedFnRef.current = asyncUtils.debounce(renderBlock, 100);
+
+    // Clean up function
+    return () => {
+      debouncedFnRef.current = null;
+    };
+  }, []);
+
+  // Call the debounced function when refUid changes
+  React.useEffect(() => {
+    if (debouncedFnRef.current) {
+      debouncedFnRef.current();
+    }
+  }, [refUid]);
 
   return (
     <div>
