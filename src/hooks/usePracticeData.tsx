@@ -3,7 +3,14 @@ import { Today, TodayInitial } from '~/models/practice';
 import { CompleteRecords } from '~/models/session';
 import * as queries from '~/queries';
 
-const usePracticeCardsData = ({ tagsList, selectedTag, dataPageTitle, isCramming, dailyLimit }) => {
+const usePracticeCardsData = ({
+  tagsList,
+  selectedTag,
+  dataPageTitle,
+  isCramming,
+  dailyLimit,
+  shuffleCards,
+}) => {
   const [practiceData, setPracticeData] = React.useState<CompleteRecords>({});
   const [refetchTrigger, setRefetchTrigger] = React.useState(false);
   const [today, setToday] = React.useState<Today>(TodayInitial);
@@ -19,6 +26,7 @@ const usePracticeCardsData = ({ tagsList, selectedTag, dataPageTitle, isCramming
         dataPageTitle,
         dailyLimit,
         isCramming,
+        shuffleCards,
       });
 
       setToday(todayStats);

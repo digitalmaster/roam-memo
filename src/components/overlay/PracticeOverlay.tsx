@@ -49,53 +49,7 @@ interface Props {
   isCramming: boolean;
   setIsCramming: (isCramming: boolean) => void;
   rtlEnabled: boolean;
-  shuffleCards: boolean;
 }
-
-/**
- * Always practice due cards first, followed by new cards. The rationale is we want to prioritize practicing the cards
- * that are most likely to be forgotten.
- * If shuffleCards is true, we shuffle the cards in place (maintaining the order of due/new cards).
- */
-const organizePracticeCards = (
-  dueCardsUids: string[],
-  newCardsUids: string[],
-  practiceData: CompleteRecords,
-  shuffleCards: boolean
-) => {
-  const today = new Date();
-  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  const todayEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
-
-  // Split due cards into those due today and others
-  const todayDueCards: string[] = [];
-  const otherDueCards: string[] = [];
-  dueCardsUids.forEach((uid) => {
-    const cardData = practiceData[uid];
-    const latestSession = cardData[cardData.length - 1];
-    const nextDueDate = latestSession.nextDueDate;
-
-    if (nextDueDate && nextDueDate >= todayStart && nextDueDate < todayEnd) {
-      todayDueCards.push(uid);
-    } else {
-      otherDueCards.push(uid);
-    }
-  });
-
-  // Shuffle each group if needed
-  const todayDueCardsShuffled = shuffleCards
-    ? [...todayDueCards].sort(() => Math.random() - 0.5)
-    : todayDueCards;
-  const otherDueCardsShuffled = shuffleCards
-    ? [...otherDueCards].sort(() => Math.random() - 0.5)
-    : otherDueCards;
-  const newCardsShuffled = shuffleCards
-    ? [...newCardsUids].sort(() => Math.random() - 0.5)
-    : newCardsUids;
-
-  // Combine in priority order: today's due cards first, then other due cards, then new cards
-  return [...todayDueCardsShuffled, ...otherDueCardsShuffled, ...newCardsShuffled];
-};
 
 const PracticeOverlay = ({
   isOpen,
@@ -110,16 +64,11 @@ const PracticeOverlay = ({
   isCramming,
   setIsCramming,
   rtlEnabled,
-  shuffleCards,
 }: Props) => {
   const todaySelectedTag = today.tags[selectedTag];
   const newCardsUids = todaySelectedTag.newUids;
   const dueCardsUids = todaySelectedTag.dueUids;
-
-  const practiceCardUids = React.useMemo(
-    () => organizePracticeCards(dueCardsUids, newCardsUids, practiceData, shuffleCards),
-    [dueCardsUids, newCardsUids, shuffleCards, practiceData]
-  );
+  const practiceCardUids = [...dueCardsUids, ...newCardsUids];
 
   const [currentIndex, setCurrentIndex] = React.useState(0);
 

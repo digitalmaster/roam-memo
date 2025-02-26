@@ -13,7 +13,13 @@ import {
 } from '~/queries/today';
 import { getChildBlocksOnPage } from './utils';
 
-export const getPracticeData = async ({ tagsList, dataPageTitle, dailyLimit, isCramming }) => {
+export const getPracticeData = async ({
+  tagsList,
+  dataPageTitle,
+  dailyLimit,
+  isCramming,
+  shuffleCards,
+}) => {
   const pluginPageData = (await getPluginPageData({
     dataPageTitle,
     limitToLatest: false,
@@ -40,12 +46,13 @@ export const getPracticeData = async ({ tagsList, dataPageTitle, dailyLimit, isC
     sessionData,
   });
 
-  addNewCards({ today, tagsList, cardUids, pluginPageData });
+  addNewCards({ today, tagsList, cardUids, pluginPageData, shuffleCards });
   addDueCards({
     today,
     tagsList,
     sessionData,
     isCramming,
+    shuffleCards,
   });
 
   calculateCombinedCounts({ today, tagsList });

@@ -36,6 +36,7 @@ const App = () => {
     dataPageTitle,
     isCramming,
     dailyLimit,
+    shuffleCards,
   });
 
   const handlePracticeClick = async ({ refUid, ...cardData }: handlePracticeProps) => {
@@ -128,7 +129,6 @@ const App = () => {
             isCramming={isCramming}
             setIsCramming={setIsCramming}
             rtlEnabled={rtlEnabled}
-            shuffleCards={shuffleCards}
             today={today}
           />
         )}

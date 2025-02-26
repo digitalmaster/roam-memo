@@ -131,11 +131,13 @@ export const addNewCards = ({
   tagsList,
   cardUids,
   pluginPageData,
+  shuffleCards,
 }: {
   today: Today;
   tagsList: string[];
   cardUids: Record<string, RecordUid[]>;
   pluginPageData: CompleteRecords;
+  shuffleCards: boolean;
 }) => {
   for (const currentTag of tagsList) {
     const allSelectedTagCardsUids = cardUids[currentTag];
@@ -149,10 +151,15 @@ export const addNewCards = ({
       }
     });
 
-    // Currently list seems to be sorted from newest to oldest so refersing so
-    // oldest new (this double flip hurts to say out loud but it's true) cards are
-    // first
-    newCardsUids.reverse();
+    // Shuffle cards if necessary in the most efficient way possible
+    if (shuffleCards) {
+      newCardsUids.sort(() => Math.random() - 0.5);
+    } else {
+      // Currently list seems to be sorted from newest to oldest so refersing so
+      // oldest new (this double flip hurts to say out loud but it's true) cards are
+      // first
+      newCardsUids.reverse();
+    }
 
     today.tags[currentTag] = {
       ...today.tags[currentTag],
@@ -194,10 +201,14 @@ export const getDueCardUids = (currentTagSessionData: CompleteRecords, isCrammin
   return results;
 };
 
-export const addDueCards = ({ today, tagsList, sessionData, isCramming }) => {
+export const addDueCards = ({ today, tagsList, sessionData, isCramming, shuffleCards }) => {
   for (const currentTag of tagsList) {
     const currentTagSessionData = sessionData[currentTag];
     const dueCardsUids = getDueCardUids(currentTagSessionData, isCramming);
+
+    if (shuffleCards) {
+      dueCardsUids.sort(() => Math.random() - 0.5);
+    }
 
     today.tags[currentTag] = {
       ...today.tags[currentTag],
