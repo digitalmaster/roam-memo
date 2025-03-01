@@ -14,7 +14,7 @@ export const defaultSettings: Settings = {
   dataPageTitle: 'roam/memo',
   dailyLimit: 0, // 0 = no limit,
   rtlEnabled: false,
-  shuffleCards: true,
+  shuffleCards: false,
 };
 
 // @TODO: Refactor/Hoist this so we can call useSettings in multiple places
