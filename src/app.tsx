@@ -98,6 +98,9 @@ const App = () => {
     setTagsOnEnter(tags);
   };
   const onBlockLeaveHandler = (elm: HTMLTextAreaElement) => {
+    // Don't refetch data if overlay is open (to avoid removing cards while editing)
+    if (showPracticeOverlay) return;
+
     const tags = tagsList.filter((tag) => elm.value.includes(tag));
 
     if (tagsOnEnter.length !== tags.length) {
