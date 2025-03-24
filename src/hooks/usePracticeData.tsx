@@ -7,6 +7,7 @@ const usePracticeCardsData = ({
   tagsList,
   selectedTag,
   dataPageTitle,
+  cachedData,
   isCramming,
   dailyLimit,
   shuffleCards,
@@ -27,12 +28,22 @@ const usePracticeCardsData = ({
         dailyLimit,
         isCramming,
         shuffleCards,
+        cachedData,
       });
 
       setToday(todayStats);
       setPracticeData(practiceData);
     })();
-  }, [selectedTag, dataPageTitle, refetchTrigger, isCramming, dailyLimit, tagsList]);
+  }, [
+    selectedTag,
+    dataPageTitle,
+    refetchTrigger,
+    isCramming,
+    dailyLimit,
+    tagsList,
+    shuffleCards,
+    cachedData,
+  ]);
 
   return {
     practiceData,

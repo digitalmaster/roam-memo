@@ -1,5 +1,6 @@
 import ReactDOM from 'react-dom';
 import App from './app';
+import { FocusStyleManager } from '@blueprintjs/core';
 
 console.log('Memo: Initializing...');
 
@@ -21,6 +22,8 @@ function onload({ extensionAPI }) {
   window.roamMemo = {
     extensionAPI,
   };
+
+  FocusStyleManager.onlyShowFocusOnTabs();
 
   const container = createAndRenderContainer();
   ReactDOM.render(<App />, container);

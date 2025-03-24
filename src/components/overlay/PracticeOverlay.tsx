@@ -17,7 +17,7 @@ import ButtonTags from '~/components/ButtonTags';
 import { CompleteRecords, IntervalMultiplierType, ReviewModes } from '~/models/session';
 import useCurrentCardData from '~/hooks/useCurrentCardData';
 import { generateNewSession } from '~/queries';
-import { CompletionStatus, Today } from '~/models/practice';
+import { CompletionStatus, Today, RenderMode } from '~/models/practice';
 import { handlePracticeProps } from '~/app';
 import { useSafeContext } from '~/hooks/useSafeContext';
 
@@ -28,10 +28,12 @@ interface MainContextProps {
   setIntervalMultiplier: (multiplier: number) => void;
   intervalMultiplierType: IntervalMultiplierType;
   setIntervalMultiplierType: (type: IntervalMultiplierType) => void;
-  onPracticeClick: (props: any) => void;
+  onPracticeClick: (props: handlePracticeProps) => void;
   today: Today;
   selectedTag: string;
   currentIndex: number;
+  renderMode: RenderMode;
+  setRenderMode: (tag: string, mode: RenderMode) => void;
 }
 
 export const MainContext = React.createContext<MainContextProps>({} as MainContextProps);
@@ -49,6 +51,7 @@ interface Props {
   isCramming: boolean;
   setIsCramming: (isCramming: boolean) => void;
   rtlEnabled: boolean;
+  setRenderMode: (tag: string, mode: RenderMode) => void;
 }
 
 const PracticeOverlay = ({
@@ -64,11 +67,13 @@ const PracticeOverlay = ({
   isCramming,
   setIsCramming,
   rtlEnabled,
+  setRenderMode,
 }: Props) => {
   const todaySelectedTag = today.tags[selectedTag];
   const newCardsUids = todaySelectedTag.newUids;
   const dueCardsUids = todaySelectedTag.dueUids;
   const practiceCardUids = [...dueCardsUids, ...newCardsUids];
+  const renderMode = todaySelectedTag.renderMode;
 
   const [currentIndex, setCurrentIndex] = React.useState(0);
 
@@ -129,16 +134,22 @@ const PracticeOverlay = ({
 
   const { blockInfo } = useBlockInfo({ refUid: currentCardRefUid });
   const hasBlockChildren = !!blockInfo.children && !!blockInfo.children.length;
+  const hasBlockChildrenUids = !!blockInfo.childrenUids && !!blockInfo.childrenUids.length;
+
   const [showAnswers, setShowAnswers] = React.useState(false);
   const [hasCloze, setHasCloze] = React.useState(true);
 
+  const shouldShowAnswerFirst =
+    renderMode === RenderMode.AnswerFirst && hasBlockChildrenUids && !showAnswers;
+
+  // Reset showAnswers state
   React.useEffect(() => {
     if (hasBlockChildren || hasCloze) {
       setShowAnswers(false);
     } else {
       setShowAnswers(true);
     }
-  }, [hasBlockChildren, hasCloze, currentIndex, tagsList]);
+  }, [hasBlockChildren, hasCloze, currentIndex, tagsList, selectedTag]);
 
   const onTagChange = async (tag) => {
     setCurrentIndex(0);
@@ -241,6 +252,8 @@ const PracticeOverlay = ({
         today,
         selectedTag,
         currentIndex,
+        renderMode,
+        setRenderMode,
       }}
     >
       {/* @ts-ignore */}
@@ -268,13 +281,28 @@ const PracticeOverlay = ({
           dir={rtlEnabled ? 'rtl' : undefined}
         >
           {currentCardRefUid ? (
-            <CardBlock
-              refUid={currentCardRefUid}
-              showAnswers={showAnswers}
-              setHasCloze={setHasCloze}
-              breadcrumbs={blockInfo.breadcrumbs}
-              showBreadcrumbs={showBreadcrumbs}
-            />
+            <>
+              {shouldShowAnswerFirst ? (
+                blockInfo.childrenUids?.map((uid) => (
+                  <CardBlock
+                    key={uid}
+                    refUid={uid}
+                    showAnswers={showAnswers}
+                    setHasCloze={setHasCloze}
+                    breadcrumbs={blockInfo.breadcrumbs}
+                    showBreadcrumbs={false}
+                  />
+                ))
+              ) : (
+                <CardBlock
+                  refUid={currentCardRefUid}
+                  showAnswers={showAnswers}
+                  setHasCloze={setHasCloze}
+                  breadcrumbs={blockInfo.breadcrumbs}
+                  showBreadcrumbs={showBreadcrumbs}
+                />
+              )}
+            </>
           ) : (
             <div data-testid="practice-overlay-done-state" className="flex items-center flex-col">
               <Lottie options={lottieAnimationOption} style={lottieStyle} />
@@ -414,12 +442,47 @@ const Tag = styled(Blueprint.Tag)`
 `;
 
 const TagSelectorItem = ({ text, onClick, active, tagsList }) => {
-  const { today } = React.useContext(MainContext);
+  const { today, setRenderMode } = React.useContext(MainContext);
   const dueCount = today.tags[text].due;
   const newCount = today.tags[text].new;
+  const tagRenderMode = today.tags[text].renderMode || RenderMode.Normal;
+  const [showTagSettings, setShowTagSettings] = React.useState(false);
 
   const index = tagsList.indexOf(text);
   const placement = index === tagsList.length - 1 ? 'bottom' : 'top';
+
+  const toggleTagSettings = () => {
+    setShowTagSettings(!showTagSettings);
+  };
+
+  const toggleRenderMode = () => {
+    const newRenderMode =
+      tagRenderMode === RenderMode.Normal ? RenderMode.AnswerFirst : RenderMode.Normal;
+
+    setRenderMode(text, newRenderMode);
+  };
+
+  const tagSettingsMenu = (
+    <div onClick={(e) => e.stopPropagation()}>
+      <Blueprint.Menu className="bg-transparent min-w-full text-sm">
+        <Blueprint.MenuItem
+          text={
+            <div className="flex items-center justify-between">
+              <span className="text-xs">Swap Q/A</span>
+              <Blueprint.Switch
+                alignIndicator={Blueprint.Alignment.RIGHT}
+                checked={tagRenderMode === RenderMode.AnswerFirst}
+                onChange={toggleRenderMode}
+                className="mb-0"
+              />
+            </div>
+          }
+          className="hover:bg-transparent hover:no-underline"
+        />
+        <Blueprint.MenuDivider />
+      </Blueprint.Menu>
+    </div>
+  );
 
   return (
     <TagSelectorItemWrapper
@@ -428,38 +491,49 @@ const TagSelectorItem = ({ text, onClick, active, tagsList }) => {
       key={text}
       tabIndex={-1}
       data-testid="tag-selector-item"
+      className="flex-col"
     >
-      {text}
-      <div className="ml-2">
-        {dueCount > 0 && (
-          // @ts-ignore
-          <Tooltip content="Due" placement={placement}>
-            <Tag
-              active
-              minimal
-              intent="primary"
-              className="text-center"
-              data-testid="tag-selector-due"
-            >
-              {dueCount}
-            </Tag>
-          </Tooltip>
-        )}
-        {newCount > 0 && (
-          // @ts-ignore
-          <Tooltip content="New" placement={placement}>
-            <Tag
-              active
-              minimal
-              intent="success"
-              className="text-center ml-2"
-              data-testid="tag-selector-new"
-            >
-              {newCount}
-            </Tag>
-          </Tooltip>
-        )}
+      <div className="flex">
+        <div className="flex items-center">{text}</div>
+        <div className="ml-2">
+          {dueCount > 0 && (
+            <Tooltip content="Due" placement={placement}>
+              <Tag
+                active
+                minimal
+                intent="primary"
+                className="text-center"
+                data-testid="tag-selector-due"
+              >
+                {dueCount}
+              </Tag>
+            </Tooltip>
+          )}
+          {newCount > 0 && (
+            <Tooltip content="New" placement={placement}>
+              <Tag
+                active
+                minimal
+                intent="success"
+                className="text-center ml-2"
+                data-testid="tag-selector-new"
+              >
+                {newCount}
+              </Tag>
+            </Tooltip>
+          )}
+        </div>
+        <div onClick={(e) => e.stopPropagation()} className="">
+          <Blueprint.Button
+            icon={<Blueprint.Icon icon={showTagSettings ? 'chevron-up' : 'cog'} size={11} />}
+            className="ml-1 bp3-small"
+            data-testid="tag-settings-button"
+            minimal
+            onClick={toggleTagSettings}
+          />
+        </div>
       </div>
+      <Blueprint.Collapse isOpen={showTagSettings}>{tagSettingsMenu}</Blueprint.Collapse>
     </TagSelectorItemWrapper>
   );
 };

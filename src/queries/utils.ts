@@ -20,6 +20,7 @@ const getParentChainInfo = async ({ refUid }) => {
 export interface BlockInfo {
   string: string;
   children: any[];
+  childrenUids?: string[];
   breadcrumbs: Breadcrumbs[];
 
   refUid: string;
@@ -32,7 +33,7 @@ export const blockInfoQuery = `[
   :find (pull ?block [
     :block/string
     :block/children
-    {:block/children ...}])
+    {:block/children [:block/uid :block/string :block/order]}])
   :in $ ?refId
   :where
     [?block :block/uid ?refId]
@@ -41,10 +42,14 @@ export const fetchBlockInfo: (refUid: any) => Promise<BlockInfo> = async (refUid
   const blockInfo = (await window.roamAlphaAPI.q(blockInfoQuery, refUid))[0][0];
   const parentChainInfo = await getParentChainInfo({ refUid });
 
+  const sortedChildren = blockInfo.children?.sort((a, b) => a.order - b.order);
+
   return {
     string: blockInfo.string,
-    children: blockInfo.children?.map((child) => child.string),
+    children: sortedChildren?.map((child) => child.string),
+    childrenUids: sortedChildren?.map((child) => child.uid),
     breadcrumbs: parentChainInfo,
+    refUid,
   };
 };
 

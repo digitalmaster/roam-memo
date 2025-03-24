@@ -31,8 +31,9 @@ const useCachedData = ({
     [setRefetchTrigger]
   );
   return {
-    saveCacheData: async (data: { [key: string]: any }) => {
-      await saveCacheData({ dataPageTitle, data, selectedTag });
+    saveCacheData: async (data: { [key: string]: any }, overrides?: { [key: string]: any }) => {
+      await saveCacheData({ dataPageTitle, data, selectedTag, ...overrides });
+
       setRefetchTrigger((prev) => prev + 1);
     },
     deleteCacheDataKey,

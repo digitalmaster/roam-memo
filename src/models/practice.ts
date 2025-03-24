@@ -5,6 +5,12 @@ export enum CompletionStatus {
   Partial = 'partial',
   Unstarted = 'unstarted',
 }
+
+export enum RenderMode {
+  Normal = 'normal',
+  AnswerFirst = 'answerFirst',
+}
+
 export type Today = {
   tags: {
     [tag: string]: {
@@ -19,6 +25,7 @@ export type Today = {
       completedNew: number;
       completedDueUids: RecordUid[];
       completedNewUids: RecordUid[];
+      renderMode: RenderMode;
     };
   };
   combinedToday: {

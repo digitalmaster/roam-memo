@@ -1,13 +1,15 @@
 import * as dateUtils from '~/utils/date';
 import * as objectUtils from '~/utils/object';
 import { CompleteRecords, RecordUid, Session } from '~/models/session';
-import { CompletionStatus, Today, TodayInitial } from '~/models/practice';
+import { CompletionStatus, RenderMode, Today, TodayInitial } from '~/models/practice';
 import { generateNewSession } from '~/queries/utils';
 
-export const initializeToday = ({ tagsList }) => {
+export const initializeToday = ({ tagsList, cachedData }) => {
   const today: Today = objectUtils.deepClone(TodayInitial);
 
   for (const tag of tagsList) {
+    const cachedTagData = cachedData?.[tag];
+
     today.tags[tag] = {
       status: CompletionStatus.Unstarted,
       completed: 0,
@@ -20,6 +22,7 @@ export const initializeToday = ({ tagsList }) => {
       completedNew: 0,
       completedDueUids: [],
       completedNewUids: [],
+      renderMode: cachedTagData?.renderMode || RenderMode.Normal,
     };
   }
 

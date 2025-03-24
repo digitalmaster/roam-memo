@@ -12,6 +12,7 @@ import useCommandPaletteAction from '~/hooks/useCommandPaletteAction';
 import useCachedData from '~/hooks/useCachedData';
 import useOnVisibilityStateChange from '~/hooks/useOnVisibilityStateChange';
 import { IntervalMultiplierType, ReviewModes } from '~/models/session';
+import { RenderMode } from '~/models/practice';
 
 export interface handlePracticeProps {
   refUid: string;
@@ -28,12 +29,13 @@ const App = () => {
   const { tagsListString, dataPageTitle, dailyLimit, rtlEnabled, shuffleCards } = useSettings();
   const { selectedTag, setSelectedTag, tagsList } = useTags({ tagsListString });
 
-  const { fetchCacheData } = useCachedData({ dataPageTitle, selectedTag });
+  const { fetchCacheData, saveCacheData, data: cachedData } = useCachedData({ dataPageTitle });
 
   const { practiceData, today, fetchPracticeData } = usePracticeData({
     tagsList,
     selectedTag,
     dataPageTitle,
+    cachedData,
     isCramming,
     dailyLimit,
     shuffleCards,
@@ -56,6 +58,11 @@ const App = () => {
     } catch (error) {
       console.error('Error Saving Practice Data', error);
     }
+  };
+
+  const setRenderMode = (tag: string, mode: RenderMode) => {
+    saveCacheData({ renderMode: mode }, { selectedTag: tag });
+    fetchCacheData();
   };
 
   const refreshData = () => {
@@ -121,6 +128,7 @@ const App = () => {
         <SidePannelWidget onClickCallback={onShowPracticeOverlay} today={today} />
         {showPracticeOverlay && (
           <PracticeOverlay
+            setRenderMode={setRenderMode}
             isOpen={true}
             practiceData={practiceData}
             handlePracticeClick={handlePracticeClick}

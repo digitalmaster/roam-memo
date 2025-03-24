@@ -19,13 +19,14 @@ export const getPracticeData = async ({
   dailyLimit,
   isCramming,
   shuffleCards,
+  cachedData,
 }) => {
   const pluginPageData = (await getPluginPageData({
     dataPageTitle,
     limitToLatest: false,
   })) as CompleteRecords;
 
-  const today = initializeToday({ tagsList });
+  const today = initializeToday({ tagsList, cachedData });
   const sessionData = {};
   const cardUids: Record<string, RecordUid[]> = {};
 
