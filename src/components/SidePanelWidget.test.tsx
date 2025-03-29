@@ -832,15 +832,22 @@ describe('Side Panel Widget', () => {
       });
 
       // Here we expect the first deck to be marked complete, and the second deck retains its 1 due card
-      const tagListElements = screen.queryAllByTestId('tag-selector-item');
+      const tagListElements = screen.getAllByTestId('tag-selector-item');
 
-      const defaultDeck = within(tagListElements[0].parentNode as HTMLElement).getByText('memo');
-      const secondDeck = within(tagListElements[0].parentNode as HTMLElement).getByText('deck-two');
+      // Since we know there are only two decks (memo and deck-two), we can use indices
+      // The first item should be 'memo' and the second should be 'deck-two'
+      const defaultDeckItem = tagListElements[0]; // memo
+      const secondDeckItem = tagListElements[1]; // deck-two
 
-      const defaultDeckDue = within(defaultDeck).queryByTestId('tag-selector-due');
-      const defaultDeckNew = within(defaultDeck).queryByTestId('tag-selector-new');
-      const secondDeckDue = within(secondDeck).queryByTestId('tag-selector-due');
-      const secondDeckNew = within(secondDeck).queryByTestId('tag-selector-new');
+      // Verify the text content to make sure we have the right items
+      expect(defaultDeckItem.textContent).toContain('memo');
+      expect(secondDeckItem.textContent).toContain('deck-two');
+
+      // Query for the due and new tags within each item
+      const defaultDeckDue = within(defaultDeckItem).queryByTestId('tag-selector-due');
+      const defaultDeckNew = within(defaultDeckItem).queryByTestId('tag-selector-new');
+      const secondDeckDue = within(secondDeckItem).queryByTestId('tag-selector-due');
+      const secondDeckNew = within(secondDeckItem).queryByTestId('tag-selector-new');
 
       expect(defaultDeckDue).not.toBeInTheDocument();
       expect(defaultDeckNew).not.toBeInTheDocument();

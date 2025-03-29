@@ -7,7 +7,6 @@ import Tooltip from '~/components/Tooltip';
 import ButtonTags from '~/components/ButtonTags';
 import { IntervalMultiplierType, ReviewModes } from '~/models/session';
 import { MainContext } from '~/components/overlay/PracticeOverlay';
-import { RenderMode } from '~/models/practice';
 
 interface IntervalEstimate {
   reviewMode: string;
