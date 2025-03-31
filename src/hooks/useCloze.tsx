@@ -63,8 +63,8 @@ const useCustomCloze = ({ renderedBlockElm, setClozeCounts }: UseCustomClozeProp
       // @TODO: Perhaps make this customizable
       const left = '{';
       const right = '}';
-      const re = new RegExp(`${left}(.+?)${right}`, 'g');
-      const clozeRegex = new RegExp(re, 'g');
+      const re = new RegExp(`${left}(.+?)${right}`, 'gs');
+      const clozeRegex = new RegExp(re, 'gs');
       wrapMatches(mainBlockElm, clozeRegex);
 
       const clozeElms = renderedBlockElm.querySelectorAll('.roam-memo-cloze');
