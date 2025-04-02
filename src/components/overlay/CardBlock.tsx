@@ -20,11 +20,16 @@ const CardBlock = ({
   showBreadcrumbs: boolean;
 }) => {
   const ref = React.useRef<HTMLDivElement | null>(null);
-  const [renderedBlockElm, setRenderedBlockElm] = React.useState(null);
-  useCloze({ renderedBlockElm: renderedBlockElm, hasClozeCallback: setHasCloze });
+  const [renderedBlockElm, setRenderedBlockElm] = React.useState<HTMLElement | null>(null);
+  useCloze({ renderedBlockElm: renderedBlockElm as HTMLElement, hasClozeCallback: setHasCloze });
+
+  const [forceUpdate, setForceUpdate] = React.useState(0);
 
   // Store the current refUid in a ref to access it inside the debounced function
   const refUidRef = React.useRef(refUid);
+
+  // Create a ref for the mutation observer
+  const observerRef = React.useRef<MutationObserver | null>(null);
 
   // Update the ref when refUid changes
   React.useEffect(() => {
@@ -32,7 +37,13 @@ const CardBlock = ({
   }, [refUid]);
 
   // Create a ref to store the debounced function
-  const debouncedFnRef = React.useRef(null);
+  const debouncedFnRef = React.useRef<(() => void) | null>(null);
+
+  const handleBlockBlur = React.useCallback(() => {
+    setForceUpdate((prev) => {
+      return prev + 1;
+    });
+  }, []);
 
   // Set up the debounced function only once when the component mounts
   React.useEffect(() => {
@@ -45,7 +56,7 @@ const CardBlock = ({
       await window.roamAlphaAPI.ui.components.renderBlock({ uid: currentRefUid, el: ref.current });
 
       // Ensure block is not collapsed (so we can reveal children programatically)
-      const roamBlockElm = ref.current.querySelector('.rm-block');
+      const roamBlockElm = ref.current.querySelector('.rm-block') as HTMLElement | null;
       setRenderedBlockElm(roamBlockElm);
       const isCollapsed = roamBlockElm?.classList.contains('rm-block--closed');
       if (isCollapsed) {
@@ -57,6 +68,33 @@ const CardBlock = ({
         await asyncUtils.sleep(100);
         domUtils.simulateMouseClick(expandControlBtn);
       }
+
+      // Disconnect any existing observer
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+
+      // Add a mutation observer to detect dynamically added textareas (so we can add blur listeners)
+      const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+            mutation.addedNodes.forEach((node) => {
+              if (node instanceof HTMLElement) {
+                const newTextareas = node.querySelectorAll('textarea');
+                if (newTextareas.length > 0) {
+                  newTextareas.forEach((textarea) => {
+                    textarea.removeEventListener('blur', handleBlockBlur);
+                    textarea.addEventListener('blur', handleBlockBlur);
+                  });
+                }
+              }
+            });
+          }
+        });
+      });
+
+      observer.observe(ref.current, { childList: true, subtree: true });
+      observerRef.current = observer;
     };
 
     // Create the debounced function only once
@@ -65,15 +103,21 @@ const CardBlock = ({
     // Clean up function
     return () => {
       debouncedFnRef.current = null;
+
+      // Disconnect the mutation observer
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+        observerRef.current = null;
+      }
     };
-  }, []);
+  }, [handleBlockBlur]);
 
   // Call the debounced function when refUid changes
   React.useEffect(() => {
     if (debouncedFnRef.current) {
       debouncedFnRef.current();
     }
-  }, [refUid]);
+  }, [refUid, forceUpdate]);
 
   return (
     <div>
